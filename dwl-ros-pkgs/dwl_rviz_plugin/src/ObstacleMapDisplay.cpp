@@ -25,8 +25,8 @@ ObstacleMapDisplay::ObstacleMapDisplay() : rviz::Display(), messages_received_(0
 {
 	obstaclemap_topic_property_ = new RosTopicProperty( "Topic",
 														 "",
-														 QString::fromStdString(ros::message_traits::datatype<terrain_server::ObstacleMap>()),
-														 "terrain_server::ObstacleMap topic to subscribe to reward map",
+														 QString::fromStdString(ros::message_traits::datatype<dwl_terrain::ObstacleMap>()),
+														 "dwl_terrain::ObstacleMap topic to subscribe to reward map",
 														 this, SLOT( updateTopic() ));
 
 	queue_size_property_ = new IntProperty( "Queue Size",
@@ -126,7 +126,7 @@ void ObstacleMapDisplay::subscribe()
 		const std::string& topicStr = obstaclemap_topic_property_->getStdString();
 
 		if (!topicStr.empty()) {
-			sub_.reset(new message_filters::Subscriber<terrain_server::ObstacleMap>());
+			sub_.reset(new message_filters::Subscriber<dwl_terrain::ObstacleMap>());
 
 			sub_->subscribe(threaded_nh_, topicStr, queue_size_);
 			sub_->registerCallback(boost::bind(&ObstacleMapDisplay::incomingMessageCallback, this, _1));
@@ -151,7 +151,7 @@ void ObstacleMapDisplay::unsubscribe()
 }
 
 
-void ObstacleMapDisplay::incomingMessageCallback(const terrain_server::ObstacleMapConstPtr& msg)
+void ObstacleMapDisplay::incomingMessageCallback(const dwl_terrain::ObstacleMapConstPtr& msg)
 {
 	++messages_received_;
 	setStatus(StatusProperty::Ok, "Messages", QString::number(messages_received_) + " reward map messages received");
