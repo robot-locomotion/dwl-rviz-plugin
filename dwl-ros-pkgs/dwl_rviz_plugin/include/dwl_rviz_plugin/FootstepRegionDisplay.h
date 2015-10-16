@@ -1,9 +1,9 @@
 #ifndef RVIZ_FootstepRegionDisplay_H
 #define RVIZ_FootstepRegionDisplay_H
 
-#include "rviz/display.h"
+#include <rviz/display.h>
 
-#include <utils/Orientation.h>
+#include <dwl/utils/Orientation.h>
 #include <dwl_msgs/ContactRegion.h>
 #include <nav_msgs/MapMetaData.h>
 
