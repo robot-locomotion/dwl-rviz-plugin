@@ -317,5 +317,3 @@ void RewardMapDisplay::updateColorMode()
 
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(dwl_rviz_plugin::RewardMapDisplay, rviz::Display)
-
-
