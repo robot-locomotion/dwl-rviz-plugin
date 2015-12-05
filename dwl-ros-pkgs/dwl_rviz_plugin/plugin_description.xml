@@ -1,6 +1,13 @@
 
 <library path="libdwl_rviz_plugin">
-
+	<class name="dwl_rviz_plugin/WholeBodyTrajectory"
+           type="dwl_rviz_plugin::WholeBodyTrajectoryDisplay"
+           base_class_type="rviz::Display">
+	<description>
+		Displays the whole-body trajectory generated from reward map server messages.
+	</description>
+	</class>
+	
 	<class name="dwl_rviz_plugin/RewardMap"
            type="dwl_rviz_plugin::RewardMapDisplay"
            base_class_type="rviz::Display">
@@ -9,10 +16,6 @@
 	</description>
 	</class>
 	
-</library>
-
-<library path="libdwl_rviz_plugin">
-
 	<class name="dwl_rviz_plugin/ObstacleMap"
            type="dwl_rviz_plugin::ObstacleMapDisplay"
            base_class_type="rviz::Display">
@@ -21,10 +24,6 @@
 	</description>
 	</class>
 	
-</library>
-
-<library path="libdwl_rviz_plugin">
-
 	<class name="dwl_rviz_plugin/FootstepRegion"
            type="dwl_rviz_plugin::FootstepRegionDisplay"
            base_class_type="rviz::Display">
@@ -32,5 +31,4 @@
 		Displays the contact regions messages.
 	</description>
 	</class>
-	
 </library>
