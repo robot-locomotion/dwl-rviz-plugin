@@ -58,7 +58,7 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 		// Helper function to apply color and alpha to all visuals.
 		// Set the current color and alpha values for each visual.
 		void updateColorAndAlpha();
-		void updateRobotDescription();
+		void updateRobotModel();
 
 	// Function to handle an incoming ROS message.
 	private:

@@ -38,7 +38,7 @@ WholeBodyStateDisplay::WholeBodyStateDisplay()
 	robot_model_property_ = new StringProperty("Robot Description", "robot_model",
 												"Name of the parameter to search for to load"
 												" the robot description.",
-												this, SLOT(updateRobotDescription()));
+												this, SLOT(updateRobotModel()));
 }
 
 
@@ -134,7 +134,7 @@ void WholeBodyStateDisplay::updateColorAndAlpha()
 }
 
 
-void WholeBodyStateDisplay::updateRobotDescription()
+void WholeBodyStateDisplay::updateRobotModel()
 {
 	if (isEnabled()) {
 		load();
