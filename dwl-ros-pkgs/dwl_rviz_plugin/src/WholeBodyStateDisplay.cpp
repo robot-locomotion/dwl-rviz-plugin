@@ -10,8 +10,6 @@
 #include <rviz/frame_manager.h>
 #include <rviz/validate_floats.h>
 
-#include <rviz/default_plugin/point_visual.h>
-
 
 using namespace rviz;
 
@@ -31,16 +29,9 @@ WholeBodyStateDisplay::WholeBodyStateDisplay()
 									this, SLOT(updateColorAndAlpha()));
 
 	radius_property_ =
-			new rviz::FloatProperty("Radius", 0.2,
+			new rviz::FloatProperty("Radius", 0.04,
 									"Radius of a point",
 									this, SLOT(updateColorAndAlpha()));
-
-	history_length_property_ =
-			new rviz::IntProperty("History Length", 1,
-								  "Number of prior measurements to display.",
-								  this, SLOT(updateHistoryLength()));
-	history_length_property_->setMin(1);
-	history_length_property_->setMax(100000);
 
 
 
@@ -68,14 +59,12 @@ void WholeBodyStateDisplay::clear()
 void WholeBodyStateDisplay::onInitialize()
 {
 	MFDClass::onInitialize();
-	updateHistoryLength();
 }
 
 
 void WholeBodyStateDisplay::reset()
 {
 	MFDClass::reset();
-	visuals_.clear();
 }
 
 
@@ -107,6 +96,9 @@ void WholeBodyStateDisplay::load()
 
 	robot_model_ = content;
 
+	// Initializing the dynamics from the URDF model
+	dynamics_.modelFromURDFModel(robot_model_);
+
 //	TiXmlDocument doc;
 //	doc.Parse(robot_model_.c_str());
 //	if (!doc.RootElement()) {
@@ -137,16 +129,8 @@ void WholeBodyStateDisplay::updateColorAndAlpha()
 	float radius = radius_property_->getFloat();
 	Ogre::ColourValue color = color_property_->getOgreColor();
 
-	for (size_t i = 0; i < visuals_.size(); i++) {
-		visuals_[i]->setColor(color.r, color.g, color.b, alpha);
-		visuals_[i]->setRadius(radius);
-	}
-}
-
-
-void WholeBodyStateDisplay::updateHistoryLength()
-{
-	visuals_.rset_capacity(history_length_property_->getInt());
+	visual_->setColor(color.r, color.g, color.b, alpha);
+	visual_->setRadius(radius);
 }
 
 
@@ -161,10 +145,37 @@ void WholeBodyStateDisplay::updateRobotDescription()
 
 void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::ConstPtr& msg)
 {
-/*	if (!rviz::validateFloats(msg->point)) {
-		setStatus(rviz::StatusProperty::Error, "Topic", "Message contained invalid floating point values (nans or infs)");
-		return;
+	// Getting the contact wrenches and positions
+	dwl::rbd::BodySelector contact_names;
+	dwl::rbd::BodyVector contact_pos;
+	dwl::rbd::BodyWrench contact_for;
+	unsigned int num_contacts = msg->contacts.size();
+	for (unsigned int i = 0; i < num_contacts; i++) {
+		dwl_msgs::ContactState contact = msg->contacts[i];
+
+		// Getting the name
+		std::string name = contact.name;
+		contact_names.push_back(name);
+
+		// Getting the contact position
+		Eigen::VectorXd position = Eigen::VectorXd::Zero(3);
+		position << contact.position.x, contact.position.y, contact.position.z;
+		contact_pos[name] = position;
+
+		// Getting the contact wrench
+		dwl::rbd::Vector6d wrench;
+		wrench(dwl::rbd::AX) = contact.wrench.torque.x;
+		wrench(dwl::rbd::AY) = contact.wrench.torque.y;
+		wrench(dwl::rbd::AZ) = contact.wrench.torque.z;
+		wrench(dwl::rbd::LX) = contact.wrench.force.x;
+		wrench(dwl::rbd::LY) = contact.wrench.force.y;
+		wrench(dwl::rbd::LZ) = contact.wrench.force.z;
+		contact_for[name] = wrench;
 	}
+
+	// Computing the center of pressure position
+	Eigen::Vector3d com_pos;
+	dynamics_.computeCenterOfPressure(com_pos, contact_for, contact_pos, contact_names);
 
 	// Here we call the rviz::FrameManager to get the transform from the
 	// fixed frame to the frame in the header of this Point message.  If
@@ -179,29 +190,19 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 		return;
 	}
 
-	// We are keeping a circular buffer of visual pointers.  This gets
-	// the next one, or creates and stores it if the buffer is not full
-	boost::shared_ptr<PointStampedVisual> visual;
-	if (visuals_.full()) {
-		visual = visuals_.front();
-	} else {
-		visual.reset(new PointStampedVisual(context_->getSceneManager(), scene_node_));
-	}
+	visual_.reset(new PointVisual(context_->getSceneManager(), scene_node_));
 
+	// Defining the center of mass as Ogre::Vector3
+	Ogre::Vector3 com_point;
+	com_point.x = com_pos(dwl::rbd::X);
+	com_point.y = com_pos(dwl::rbd::Y);
+	com_point.z = com_pos(dwl::rbd::Z);
 
 	// Now set or update the contents of the chosen visual.
-	visual->setMessage(msg);
-	visual->setFramePosition(position);
-	visual->setFrameOrientation(orientation);
-	float alpha = alpha_property_->getFloat();
-	float radius = radius_property_->getFloat();
-	Ogre::ColourValue color = color_property_->getOgreColor();
-	visual->setColor(color.r, color.g,  color.b, alpha);
-	visual->setRadius(radius);
-
-
-	// And send it to the end of the circular buffer
-	visuals_.push_back(visual);*/
+	updateColorAndAlpha();
+	visual_->setPoint(com_point);
+	visual_->setFramePosition(position);
+	visual_->setFrameOrientation(orientation);
 }
 
 } //@namespace dwl_rviz_plugin

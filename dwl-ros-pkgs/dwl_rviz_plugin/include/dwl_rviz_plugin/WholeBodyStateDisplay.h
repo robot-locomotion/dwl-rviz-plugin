@@ -6,7 +6,9 @@
 #endif
 
 #include <rviz/message_filter_display.h>
+#include <dwl_rviz_plugin/PointVisual.h>
 #include <dwl_msgs/WholeBodyState.h>
+#include <dwl/model/WholeBodyDynamics.h>
 
 
 namespace Ogre
@@ -56,8 +58,6 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 		// Helper function to apply color and alpha to all visuals.
 		// Set the current color and alpha values for each visual.
 		void updateColorAndAlpha();
-		// Set the number of past visuals to show.
-		void updateHistoryLength();
 		void updateRobotDescription();
 
 	// Function to handle an incoming ROS message.
@@ -65,15 +65,14 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 		// This is our callback to handle an incoming message.
 		void processMessage(const dwl_msgs::WholeBodyState::ConstPtr& msg);
 
-		// Storage for the list of visuals.  It is a circular buffer where
-		// data gets popped from the front (oldest) and pushed to the back (newest)
-		boost::circular_buffer<boost::shared_ptr<rviz::PointStampedVisual> > visuals_;
+		boost::shared_ptr<PointVisual> visual_;
 
 		// Property objects for user-editable properties.
 		rviz::ColorProperty *color_property_;
         rviz::FloatProperty *alpha_property_, *radius_property_;
-        rviz::IntProperty *history_length_property_;
         rviz::StringProperty* robot_model_property_;
+
+        dwl::model::WholeBodyDynamics dynamics_;
 };
 
 } //@namespace dwl_rviz_plugin
