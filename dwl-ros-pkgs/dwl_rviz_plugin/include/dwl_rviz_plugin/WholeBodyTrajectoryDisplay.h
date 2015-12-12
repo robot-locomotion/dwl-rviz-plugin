@@ -46,7 +46,7 @@ class WholeBodyTrajectoryDisplay: public rviz::MessageFilterDisplay<dwl_msgs::Wh
 		virtual void onInitialize();
 
 		/** @brief Overridden from MessageFilterDisplay. */
-		void processMessage( const dwl_msgs::WholeBodyTrajectory::ConstPtr& msg );
+		void processMessage(const dwl_msgs::WholeBodyTrajectory::ConstPtr& msg);
 
 	private Q_SLOTS:
 		void updateBufferLength();
