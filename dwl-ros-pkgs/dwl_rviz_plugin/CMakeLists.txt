@@ -32,6 +32,7 @@ link_directories(${catkin_LIBRARY_DIRS}
                  ${dwl_LIBRARY_DIRS})
                  
 qt4_wrap_cpp(MOC_FILES
+  include/dwl_rviz_plugin/WholeBodyStateDisplay.h
   include/dwl_rviz_plugin/WholeBodyTrajectoryDisplay.h
   include/dwl_rviz_plugin/RewardMapDisplay.h
   include/dwl_rviz_plugin/ObstacleMapDisplay.h
@@ -39,6 +40,7 @@ qt4_wrap_cpp(MOC_FILES
   OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED)
 
 set(SOURCE_FILES
+  src/WholeBodyStateDisplay.cpp
   src/WholeBodyTrajectoryDisplay.cpp
   src/RewardMapDisplay.cpp
   src/ObstacleMapDisplay.cpp

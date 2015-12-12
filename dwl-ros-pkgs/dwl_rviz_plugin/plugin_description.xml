@@ -1,10 +1,18 @@
 
 <library path="libdwl_rviz_plugin">
+	<class name="dwl_rviz_plugin/WholeBodyState"
+           type="dwl_rviz_plugin::WholeBodyStateDisplay"
+           base_class_type="rviz::Display">
+	<description>
+		Displays the whole-body state published.
+	</description>
+	</class>
+
 	<class name="dwl_rviz_plugin/WholeBodyTrajectory"
            type="dwl_rviz_plugin::WholeBodyTrajectoryDisplay"
            base_class_type="rviz::Display">
 	<description>
-		Displays the whole-body trajectory generated from reward map server messages.
+		Displays the whole-body trajectory generated.
 	</description>
 	</class>
 	
