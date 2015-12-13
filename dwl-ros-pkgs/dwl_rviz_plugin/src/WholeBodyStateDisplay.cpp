@@ -211,6 +211,7 @@ void WholeBodyStateDisplay::updateGRFArrowGeometry()
 void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::ConstPtr& msg)
 {
 	// Getting the contact wrenches and positions
+	Eigen::Vector3d total_force = Eigen::Vector3d::Zero();
 	dwl::rbd::BodySelector contact_names;
 	dwl::rbd::BodyVector contact_pos;
 	dwl::rbd::BodyWrench contact_for;
@@ -236,7 +237,13 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 		wrench(dwl::rbd::LY) = contact.wrench.force.y;
 		wrench(dwl::rbd::LZ) = contact.wrench.force.z;
 		contact_for[name] = wrench;
+
+		// Computing the total force
+		total_force += dwl::rbd::linearPart(wrench);
 	}
+
+	// Computing the normalized force per contact which is uses for scaling the arrows
+	double norm_force = total_force.norm() / num_contacts;
 
 	// Computing the center of pressure position
 	Eigen::Vector3d cop_pos;
@@ -300,7 +307,7 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 		Ogre::ColourValue color = grf_color_property_->getOgreColor();
 		color.a = grf_alpha_property_->getFloat();
 		arrow->setColor(color.r, color.g, color.b, color.a);
-		float shaft_length = grf_shaft_length_property_->getFloat();
+		float shaft_length = grf_shaft_length_property_->getFloat() * for_dir.norm() / norm_force;
 		float shaft_radius = grf_shaft_radius_property_->getFloat();
 		float head_length = grf_head_length_property_->getFloat();
 		float head_radius = grf_head_radius_property_->getFloat();
