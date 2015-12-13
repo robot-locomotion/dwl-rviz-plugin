@@ -7,6 +7,7 @@
 
 #include <rviz/message_filter_display.h>
 #include <dwl_rviz_plugin/PointVisual.h>
+#include <dwl_rviz_plugin/ArrowVisual.h>
 #include <dwl_msgs/WholeBodyState.h>
 #include <dwl/model/WholeBodyDynamics.h>
 
@@ -18,14 +19,10 @@ class SceneNode;
 
 namespace rviz
 {
-
 class ColorProperty;
 class FloatProperty;
 class IntProperty;
-class Arrow;
-
-} //@namespace rviz
-
+}
 
 namespace dwl_rviz_plugin
 {
@@ -87,8 +84,8 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
         rviz::FloatProperty* grf_shaft_radius_property_;
         rviz::FloatProperty* grf_shaft_length_property_;
 
-        boost::shared_ptr<PointVisual> visual_;
-        rviz::Arrow* arrow_;
+        boost::shared_ptr<PointVisual> cop_visual_;
+        std::vector<boost::shared_ptr<ArrowVisual> > grf_visual_;
 
         dwl::model::WholeBodyDynamics dynamics_;
 };

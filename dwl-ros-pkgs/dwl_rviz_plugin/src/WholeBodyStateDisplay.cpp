@@ -5,7 +5,6 @@
 
 #include <rviz/frame_manager.h>
 #include <rviz/validate_floats.h>
-#include <rviz/ogre_helpers/arrow.h>
 #include <rviz/visualization_manager.h>
 #include <rviz/properties/color_property.h>
 #include <rviz/properties/float_property.h>
@@ -84,9 +83,7 @@ WholeBodyStateDisplay::WholeBodyStateDisplay()
 
 WholeBodyStateDisplay::~WholeBodyStateDisplay()
 {
-	if (initialized()) {
-		delete arrow_;
-	}
+
 }
 
 
@@ -102,15 +99,6 @@ void WholeBodyStateDisplay::onInitialize()
 {
 	MFDClass::onInitialize();
 
-	arrow_ = new rviz::Arrow(scene_manager_, scene_node_,
-							 grf_shaft_length_property_->getFloat(),
-							 grf_shaft_radius_property_->getFloat(),
-							 grf_head_length_property_->getFloat(),
-							 grf_head_radius_property_->getFloat());
-	// Arrow points in -Z direction, so rotate the orientation before display.
-	// TODO: is it safe to change Arrow to point in +X direction?
-	arrow_->setOrientation( Ogre::Quaternion( Ogre::Degree( -90 ), Ogre::Vector3::UNIT_Y ));
-
 	updateGRFColorAndAlpha();
 }
 
@@ -118,6 +106,7 @@ void WholeBodyStateDisplay::onInitialize()
 void WholeBodyStateDisplay::reset()
 {
 	MFDClass::reset();
+	grf_visual_.clear();
 }
 
 
@@ -186,12 +175,12 @@ void WholeBodyStateDisplay::updateRobotModel()
 
 void WholeBodyStateDisplay::updateCoPColorAndAlpha()
 {
-	float alpha = cop_alpha_property_->getFloat();
 	float radius = cop_radius_property_->getFloat();
 	Ogre::ColourValue color = cop_color_property_->getOgreColor();
+	color.a = cop_alpha_property_->getFloat();
 
-	visual_->setColor(color.r, color.g, color.b, alpha);
-	visual_->setRadius(radius);
+	cop_visual_->setColor(color.r, color.g, color.b, color.a);
+	cop_visual_->setRadius(radius);
 }
 
 
@@ -200,7 +189,8 @@ void WholeBodyStateDisplay::updateGRFColorAndAlpha()
 	Ogre::ColourValue color = grf_color_property_->getOgreColor();
 	color.a = grf_alpha_property_->getFloat();
 
-	arrow_->setColor(color);
+	for (size_t i = 0; i < grf_visual_.size(); i++ )
+		grf_visual_[i]->setColor(color.r, color.g, color.b, color.a);
 
 	context_->queueRender();
 }
@@ -208,10 +198,14 @@ void WholeBodyStateDisplay::updateGRFColorAndAlpha()
 
 void WholeBodyStateDisplay::updateGRFArrowGeometry()
 {
-	arrow_->set(grf_shaft_length_property_->getFloat(),
-				grf_shaft_radius_property_->getFloat(),
-				grf_head_length_property_->getFloat(),
-				grf_head_radius_property_->getFloat());
+	float shaft_length = grf_shaft_length_property_->getFloat();
+	float shaft_radius = grf_shaft_radius_property_->getFloat();
+	float head_length = grf_head_length_property_->getFloat();
+	float head_radius = grf_head_radius_property_->getFloat();
+
+	for (size_t i = 0; i < grf_visual_.size(); i++ )
+		grf_visual_[i]->setProperties(shaft_length, shaft_radius, head_length, head_radius);
+
 	context_->queueRender();
 }
 
@@ -263,7 +257,7 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 		return;
 	}
 
-	visual_.reset(new PointVisual(context_->getSceneManager(), scene_node_));
+	cop_visual_.reset(new PointVisual(context_->getSceneManager(), scene_node_));
 
 	// Defining the center of mass as Ogre::Vector3
 	Ogre::Vector3 cop_point;
@@ -273,9 +267,44 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 
 	// Now set or update the contents of the chosen visual.
 	updateCoPColorAndAlpha();
-	visual_->setPoint(cop_point);
-	visual_->setFramePosition(position);
-	visual_->setFrameOrientation(orientation);
+	cop_visual_->setPoint(cop_point);
+	cop_visual_->setFramePosition(position);
+	cop_visual_->setFrameOrientation(orientation);
+
+
+	grf_visual_.clear();
+	for (unsigned int i = 0; i < num_contacts; i++) {
+		dwl_msgs::ContactState contact = msg->contacts[i];
+
+		// Getting the name
+		std::string name = contact.name;
+
+		// Getting the contact position
+		Ogre::Vector3 contact_pos(contact.position.x, contact.position.y, contact.position.z);
+		Ogre::Quaternion contact_for_orientation(Ogre::Degree( -90 ), Ogre::Vector3::UNIT_Y);
+//		Ogre::Quaternion orientation(contact.)
+
+		// We are keeping a vector of visual pointers. This creates the next one and stores it
+		// in the vector
+		boost::shared_ptr<ArrowVisual> arrow;
+		arrow.reset(new ArrowVisual(context_->getSceneManager(), scene_node_));
+		arrow->setArrow(contact_pos, contact_for_orientation);
+		arrow->setFramePosition(position);
+		arrow->setFrameOrientation(orientation);
+
+		// Setting the arrow color and properties
+		Ogre::ColourValue color = grf_color_property_->getOgreColor();
+		color.a = grf_alpha_property_->getFloat();
+		arrow->setColor(color.r, color.g, color.b, color.a);
+		float shaft_length = grf_shaft_length_property_->getFloat();
+		float shaft_radius = grf_shaft_radius_property_->getFloat();
+		float head_length = grf_head_length_property_->getFloat();
+		float head_radius = grf_head_radius_property_->getFloat();
+		arrow->setProperties(shaft_length, shaft_radius, head_length, head_radius);
+
+		// And send it to the end of the vector
+		grf_visual_.push_back(arrow);
+	}
 }
 
 } //@namespace dwl_rviz_plugin
