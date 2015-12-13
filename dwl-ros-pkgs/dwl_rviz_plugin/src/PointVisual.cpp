@@ -21,8 +21,7 @@ PointVisual::PointVisual(Ogre::SceneManager* scene_manager,
 	// fixed frame.
 	frame_node_ = parent_node->createChildSceneNode();
 
-	// We create the arrow object within the frame node so that we can set its position and
-	// direction relative to its header frame.
+	// We create the point object within the frame node so that we can set its position.
 	point_ = new rviz::Shape(rviz::Shape::Sphere, scene_manager_, frame_node_);
 }
 
