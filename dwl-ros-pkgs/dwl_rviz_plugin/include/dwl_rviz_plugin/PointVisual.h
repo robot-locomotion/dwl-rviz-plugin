@@ -4,66 +4,88 @@
 
 namespace Ogre
 {
-    class Vector3;
-    class Quaternion;
+class Vector3;
+class Quaternion;
 }
 
 namespace rviz
 {
-    class Shape;
+class Shape;
 }
 
 namespace dwl_rviz_plugin
 {
 
-// Each instance of PointStampedVisual represents the visualization of a single
-// sensor_msgs::Point message.  Currently it just shows an arrow with
-// the direction and magnitude of the acceleration vector, but could
-// easily be expanded to include more of the message data.
+/**
+ * @class PointVisual
+ * @brief Visualizes 3d point
+ * Each instance of PointVisual represents the visualization of a single Ogre::Vector3 data.
+ * Currently it just shows a sphere in the point position
+ */
 class PointVisual
 {
 	public:
-		// Constructor.  Creates the visual stuff and puts it into the
-		// scene, but in an unconfigured state.
+		/**
+		 * @brief Constructor that creates the visual stuff and puts it into the scene
+		 * @param Ogre::SceneManager* Manager the organization and rendering of the scene
+		 * @param Ogre::SceneNode* Represent the point as node in the scene
+		 */
 		PointVisual(Ogre::SceneManager* scene_manager,
 					Ogre::SceneNode* parent_node);
 
-		// Destructor.  Removes the visual stuff from the scene.
+		/** @brief Destructor that removes the visual stuff from the scene */
 		virtual ~PointVisual();
 
 		// set rainbow color
-		void getRainbowColor(float value, Ogre::ColourValue& color);
+//		void getRainbowColor(float value, Ogre::ColourValue& color);
 
-		// Configure the visual to show the data in the message.
+		/**
+		 * @brief Configure the visual to show the data in the message
+		 * @param const Ogre::Vector3& Point position
+		 */
 		void setPoint(const Ogre::Vector3& point);
 
-		// Set the pose of the coordinate frame the message refers to.
-		// These could be done inside setMessage(), but that would require
-		// calls to FrameManager and error handling inside setMessage(),
-		// which doesn't seem as clean.  This way PointStampedVisual is only
-		// responsible for visualization.
+		/**
+		 * @brief Set the position of the coordinate frame
+		 * @param const Ogre::Vector3& Frame position
+		 */
 		void setFramePosition(const Ogre::Vector3& position);
+
+		/**
+		 * @brief Set the orientation of the coordinate frame
+		 * @param const Ogre::Quaternion& Frame orientation
+		 */
 		void setFrameOrientation(const Ogre::Quaternion& orientation);
 
-		// Set the color and alpha of the visual, which are user-editable
-		// parameters and therefore don't come from the Point message.
+		/**
+		 * @brief Set the color and alpha of the visual, which are user-editable
+		 * @param float Red value
+		 * @param float Green value
+		 * @param float Blue value
+		 * @param float Alpha value
+		 */
 		void setColor(float r, float g, float b, float a);
 
+		/**
+		 * @brief Set the radius of the point
+		 * @param float Radius value
+		 */
 		void setRadius(float r);
 
 
 	private:
-		// The object implementing the point circle
+		/** @brief The object implementing the point circle */
 		rviz::Shape* point_;
 
-		// A SceneNode whose pose is set to match the coordinate frame of
-		// the Point message header.
+		/** @brief A SceneNode whose pose is set to match the coordinate frame */
 		Ogre::SceneNode* frame_node_;
 
-		// The SceneManager, kept here only so the destructor can ask it to
-		// destroy the ``frame_node_``.
+		/** @brief The SceneManager, kept here only so the destructor can ask it to destroy
+		 * the ``frame_node_``.
+		 */
 		Ogre::SceneManager* scene_manager_;
 
+		/** @brief Radius value */
 		float radius_;
 };
 
