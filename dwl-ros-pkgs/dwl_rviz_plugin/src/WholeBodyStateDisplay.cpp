@@ -3,12 +3,13 @@
 #include <OgreSceneNode.h>
 #include <OgreSceneManager.h>
 
+#include <rviz/frame_manager.h>
+#include <rviz/validate_floats.h>
+#include <rviz/ogre_helpers/arrow.h>
 #include <rviz/visualization_manager.h>
 #include <rviz/properties/color_property.h>
 #include <rviz/properties/float_property.h>
 #include <rviz/properties/int_property.h>
-#include <rviz/frame_manager.h>
-#include <rviz/validate_floats.h>
 
 
 using namespace rviz;
@@ -20,6 +21,7 @@ WholeBodyStateDisplay::WholeBodyStateDisplay()
 {
 	// Category Groups
 	cop_category_  = new rviz::Property("Center Of Pressure", QVariant(), "", this);
+	grf_category_  = new rviz::Property("Contact Forces", QVariant(), "", this);
 
 	robot_model_property_ = new StringProperty("Robot Description", "robot_model",
 												"Name of the parameter to search for to load"
@@ -35,17 +37,56 @@ WholeBodyStateDisplay::WholeBodyStateDisplay()
 			new rviz::FloatProperty("Alpha", 1.0,
 									"0 is fully transparent, 1.0 is fully opaque.",
 									cop_category_, SLOT(updateCoPColorAndAlpha()), this);
+	cop_alpha_property_->setMin(0);
+	cop_alpha_property_->setMax(1);
 
 	cop_radius_property_ =
 			new rviz::FloatProperty("Radius", 0.04,
 									"Radius of a point",
 									cop_category_, SLOT(updateCoPColorAndAlpha()), this);
+
+
+	grf_color_property_ =
+			new ColorProperty("Color", QColor(255, 25, 0),
+							  "Color to draw the arrow.",
+							  grf_category_, SLOT(updateGRFColorAndAlpha()), this);
+
+	grf_alpha_property_ =
+			new FloatProperty("Alpha", 1.0,
+							  "Amount of transparency to apply to the arrow.",
+							  grf_category_, SLOT(updateGRFColorAndAlpha()), this);
+	grf_alpha_property_->setMin(0);
+	grf_alpha_property_->setMax(1);
+
+	grf_shaft_length_property_ =
+			new FloatProperty("Shaft Length", 1.0,
+							  "Length of the arrow's shaft, in meters.",
+							  grf_category_, SLOT(updateGRFArrowGeometry()), this);
+
+	// aleeper: default changed from 0.1 to match change in arrow.cpp
+	grf_shaft_radius_property_ =
+			new FloatProperty("Shaft Radius", 0.05,
+							  "Radius of the arrow's shaft, in meters.",
+							  grf_category_, SLOT(updateGRFArrowGeometry()), this);
+
+	grf_head_length_property_ =
+			new FloatProperty("Head Length", 0.3,
+							  "Length of the arrow's head, in meters.",
+							  grf_category_, SLOT(updateGRFArrowGeometry()), this);
+
+	// aleeper: default changed from 0.2 to match change in arrow.cpp
+	grf_head_radius_property_ =
+			new FloatProperty("Head Radius", 0.1,
+							  "Radius of the arrow's head, in meters.",
+							  grf_category_, SLOT(updateGRFArrowGeometry()), this);
 }
 
 
 WholeBodyStateDisplay::~WholeBodyStateDisplay()
 {
-
+	if (initialized()) {
+		delete arrow_;
+	}
 }
 
 
@@ -60,6 +101,17 @@ void WholeBodyStateDisplay::clear()
 void WholeBodyStateDisplay::onInitialize()
 {
 	MFDClass::onInitialize();
+
+	arrow_ = new rviz::Arrow(scene_manager_, scene_node_,
+							 grf_shaft_length_property_->getFloat(),
+							 grf_shaft_radius_property_->getFloat(),
+							 grf_head_length_property_->getFloat(),
+							 grf_head_radius_property_->getFloat());
+	// Arrow points in -Z direction, so rotate the orientation before display.
+	// TODO: is it safe to change Arrow to point in +X direction?
+	arrow_->setOrientation( Ogre::Quaternion( Ogre::Degree( -90 ), Ogre::Vector3::UNIT_Y ));
+
+	updateGRFColorAndAlpha();
 }
 
 
@@ -140,6 +192,27 @@ void WholeBodyStateDisplay::updateCoPColorAndAlpha()
 
 	visual_->setColor(color.r, color.g, color.b, alpha);
 	visual_->setRadius(radius);
+}
+
+
+void WholeBodyStateDisplay::updateGRFColorAndAlpha()
+{
+	Ogre::ColourValue color = grf_color_property_->getOgreColor();
+	color.a = grf_alpha_property_->getFloat();
+
+	arrow_->setColor(color);
+
+	context_->queueRender();
+}
+
+
+void WholeBodyStateDisplay::updateGRFArrowGeometry()
+{
+	arrow_->set(grf_shaft_length_property_->getFloat(),
+				grf_shaft_radius_property_->getFloat(),
+				grf_head_length_property_->getFloat(),
+				grf_head_radius_property_->getFloat());
+	context_->queueRender();
 }
 
 

@@ -22,14 +22,13 @@ namespace rviz
 class ColorProperty;
 class FloatProperty;
 class IntProperty;
-class PointStampedVisual;
+class Arrow;
 
 } //@namespace rviz
 
 
 namespace dwl_rviz_plugin
 {
-
 
 class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBodyState>
 {
@@ -48,6 +47,7 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 
 		// Clear the visuals by deleting their objects.
 		virtual void reset();
+
 		/** @brief Loads a URDF from the ros-param named by our
 		 * "Robot Description" property, iterates through the links, and
 		 * loads any necessary models. */
@@ -61,6 +61,8 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 		// Set the current color and alpha values for each visual.
 		void updateRobotModel();
 		void updateCoPColorAndAlpha();
+		void updateGRFColorAndAlpha();
+		void updateGRFArrowGeometry();
 
 
 	// Function to handle an incoming ROS message.
@@ -70,6 +72,7 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 
 		// properties to show on side panel
 		rviz::Property* cop_category_;
+		rviz::Property* grf_category_;
 
 		// Property objects for user-editable properties.
 		rviz::StringProperty* robot_model_property_;
@@ -77,7 +80,15 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
         rviz::FloatProperty* cop_alpha_property_;
         rviz::FloatProperty* cop_radius_property_;
 
+        rviz::ColorProperty* grf_color_property_;
+        rviz::FloatProperty* grf_alpha_property_;
+        rviz::FloatProperty* grf_head_radius_property_;
+        rviz::FloatProperty* grf_head_length_property_;
+        rviz::FloatProperty* grf_shaft_radius_property_;
+        rviz::FloatProperty* grf_shaft_length_property_;
+
         boost::shared_ptr<PointVisual> visual_;
+        rviz::Arrow* arrow_;
 
         dwl::model::WholeBodyDynamics dynamics_;
 };
