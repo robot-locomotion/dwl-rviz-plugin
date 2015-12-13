@@ -46,7 +46,7 @@ WholeBodyStateDisplay::WholeBodyStateDisplay()
 
 
 	grf_color_property_ =
-			new ColorProperty("Color", QColor(255, 25, 0),
+			new ColorProperty("Color", QColor(85, 0, 255),
 							  "Color to draw the arrow.",
 							  grf_category_, SLOT(updateGRFColorAndAlpha()), this);
 
@@ -58,24 +58,22 @@ WholeBodyStateDisplay::WholeBodyStateDisplay()
 	grf_alpha_property_->setMax(1);
 
 	grf_shaft_length_property_ =
-			new FloatProperty("Shaft Length", 1.0,
+			new FloatProperty("Shaft Length", 0.4,
 							  "Length of the arrow's shaft, in meters.",
 							  grf_category_, SLOT(updateGRFArrowGeometry()), this);
 
-	// aleeper: default changed from 0.1 to match change in arrow.cpp
 	grf_shaft_radius_property_ =
-			new FloatProperty("Shaft Radius", 0.05,
+			new FloatProperty("Shaft Radius", 0.02,
 							  "Radius of the arrow's shaft, in meters.",
 							  grf_category_, SLOT(updateGRFArrowGeometry()), this);
 
 	grf_head_length_property_ =
-			new FloatProperty("Head Length", 0.3,
+			new FloatProperty("Head Length", 0.08,
 							  "Length of the arrow's head, in meters.",
 							  grf_category_, SLOT(updateGRFArrowGeometry()), this);
 
-	// aleeper: default changed from 0.2 to match change in arrow.cpp
 	grf_head_radius_property_ =
-			new FloatProperty("Head Radius", 0.1,
+			new FloatProperty("Head Radius", 0.04,
 							  "Radius of the arrow's head, in meters.",
 							  grf_category_, SLOT(updateGRFArrowGeometry()), this);
 }
@@ -281,8 +279,14 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 
 		// Getting the contact position
 		Ogre::Vector3 contact_pos(contact.position.x, contact.position.y, contact.position.z);
-		Ogre::Quaternion contact_for_orientation(Ogre::Degree( -90 ), Ogre::Vector3::UNIT_Y);
-//		Ogre::Quaternion orientation(contact.)
+
+		// Getting the force direction
+		Eigen::Vector3d ref_dir = -Eigen::Vector3d::UnitZ();
+		Eigen::Vector3d for_dir;
+		for_dir << contact.wrench.force.x, contact.wrench.force.y, contact.wrench.force.z;
+		Eigen::Quaterniond q;
+		q.setFromTwoVectors(ref_dir, for_dir);
+		Ogre::Quaternion contact_for_orientation(q.w(), q.x(), q.y(), q.z());
 
 		// We are keeping a vector of visual pointers. This creates the next one and stores it
 		// in the vector
