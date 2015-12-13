@@ -41,6 +41,7 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 		virtual ~WholeBodyStateDisplay();
 		void clear();
 
+
 	protected:
 		// Overrides of public virtual functions from the Display class.
 		virtual void onInitialize();
@@ -54,23 +55,29 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 
 		std::string robot_model_;
 
+
 	private Q_SLOTS:
 		// Helper function to apply color and alpha to all visuals.
 		// Set the current color and alpha values for each visual.
-		void updateColorAndAlpha();
 		void updateRobotModel();
+		void updateCoPColorAndAlpha();
+
 
 	// Function to handle an incoming ROS message.
 	private:
 		// This is our callback to handle an incoming message.
 		void processMessage(const dwl_msgs::WholeBodyState::ConstPtr& msg);
 
-		boost::shared_ptr<PointVisual> visual_;
+		// properties to show on side panel
+		rviz::Property* cop_category_;
 
 		// Property objects for user-editable properties.
-		rviz::ColorProperty *color_property_;
-        rviz::FloatProperty *alpha_property_, *radius_property_;
-        rviz::StringProperty* robot_model_property_;
+		rviz::StringProperty* robot_model_property_;
+		rviz::ColorProperty* cop_color_property_;
+        rviz::FloatProperty* cop_alpha_property_;
+        rviz::FloatProperty* cop_radius_property_;
+
+        boost::shared_ptr<PointVisual> visual_;
 
         dwl::model::WholeBodyDynamics dynamics_;
 };

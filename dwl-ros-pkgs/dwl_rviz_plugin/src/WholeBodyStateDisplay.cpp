@@ -18,27 +18,28 @@ namespace dwl_rviz_plugin
 
 WholeBodyStateDisplay::WholeBodyStateDisplay()
 {
-	color_property_ =
-			new rviz::ColorProperty("Color", QColor(204, 41, 204),
-									"Color of a point",
-									this, SLOT(updateColorAndAlpha()));
-
-	alpha_property_ =
-			new rviz::FloatProperty("Alpha", 1.0,
-									"0 is fully transparent, 1.0 is fully opaque.",
-									this, SLOT(updateColorAndAlpha()));
-
-	radius_property_ =
-			new rviz::FloatProperty("Radius", 0.04,
-									"Radius of a point",
-									this, SLOT(updateColorAndAlpha()));
-
-
+	// Category Groups
+	cop_category_  = new rviz::Property("Center Of Pressure", QVariant(), "", this);
 
 	robot_model_property_ = new StringProperty("Robot Description", "robot_model",
 												"Name of the parameter to search for to load"
 												" the robot description.",
 												this, SLOT(updateRobotModel()));
+
+	cop_color_property_ =
+			new rviz::ColorProperty("Color", QColor(204, 41, 204),
+									"Color of a point",
+									cop_category_, SLOT(updateCoPColorAndAlpha()), this);
+
+	cop_alpha_property_ =
+			new rviz::FloatProperty("Alpha", 1.0,
+									"0 is fully transparent, 1.0 is fully opaque.",
+									cop_category_, SLOT(updateCoPColorAndAlpha()), this);
+
+	cop_radius_property_ =
+			new rviz::FloatProperty("Radius", 0.04,
+									"Radius of a point",
+									cop_category_, SLOT(updateCoPColorAndAlpha()), this);
 }
 
 
@@ -122,24 +123,23 @@ void WholeBodyStateDisplay::load()
 }
 
 
-
-void WholeBodyStateDisplay::updateColorAndAlpha()
-{
-	float alpha = alpha_property_->getFloat();
-	float radius = radius_property_->getFloat();
-	Ogre::ColourValue color = color_property_->getOgreColor();
-
-	visual_->setColor(color.r, color.g, color.b, alpha);
-	visual_->setRadius(radius);
-}
-
-
 void WholeBodyStateDisplay::updateRobotModel()
 {
 	if (isEnabled()) {
 		load();
 		context_->queueRender();
 	}
+}
+
+
+void WholeBodyStateDisplay::updateCoPColorAndAlpha()
+{
+	float alpha = cop_alpha_property_->getFloat();
+	float radius = cop_radius_property_->getFloat();
+	Ogre::ColourValue color = cop_color_property_->getOgreColor();
+
+	visual_->setColor(color.r, color.g, color.b, alpha);
+	visual_->setRadius(radius);
 }
 
 
@@ -174,8 +174,8 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 	}
 
 	// Computing the center of pressure position
-	Eigen::Vector3d com_pos;
-	dynamics_.computeCenterOfPressure(com_pos, contact_for, contact_pos, contact_names);
+	Eigen::Vector3d cop_pos;
+	dynamics_.computeCenterOfPressure(cop_pos, contact_for, contact_pos, contact_names);
 
 	// Here we call the rviz::FrameManager to get the transform from the
 	// fixed frame to the frame in the header of this Point message.  If
@@ -193,14 +193,14 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 	visual_.reset(new PointVisual(context_->getSceneManager(), scene_node_));
 
 	// Defining the center of mass as Ogre::Vector3
-	Ogre::Vector3 com_point;
-	com_point.x = com_pos(dwl::rbd::X);
-	com_point.y = com_pos(dwl::rbd::Y);
-	com_point.z = com_pos(dwl::rbd::Z);
+	Ogre::Vector3 cop_point;
+	cop_point.x = cop_pos(dwl::rbd::X);
+	cop_point.y = cop_pos(dwl::rbd::Y);
+	cop_point.z = cop_pos(dwl::rbd::Z);
 
 	// Now set or update the contents of the chosen visual.
-	updateColorAndAlpha();
-	visual_->setPoint(com_point);
+	updateCoPColorAndAlpha();
+	visual_->setPoint(cop_point);
 	visual_->setFramePosition(position);
 	visual_->setFrameOrientation(orientation);
 }
