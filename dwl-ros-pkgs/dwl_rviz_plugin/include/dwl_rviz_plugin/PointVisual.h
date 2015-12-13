@@ -34,13 +34,10 @@ class PointVisual
 					Ogre::SceneNode* parent_node);
 
 		/** @brief Destructor that removes the visual stuff from the scene */
-		virtual ~PointVisual();
-
-		// set rainbow color
-//		void getRainbowColor(float value, Ogre::ColourValue& color);
+		~PointVisual();
 
 		/**
-		 * @brief Configure the visual to show the data in the message
+		 * @brief Configure the visual to show the point
 		 * @param const Ogre::Vector3& Point position
 		 */
 		void setPoint(const Ogre::Vector3& point);
