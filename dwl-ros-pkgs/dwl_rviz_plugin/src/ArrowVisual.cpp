@@ -24,10 +24,6 @@ ArrowVisual::ArrowVisual(Ogre::SceneManager* scene_manager,
 	// We create the arrow object within the frame node so that we can set its position and
 	// direction relative to its header frame.
 	arrow_ = new rviz::Arrow(scene_manager_, frame_node_);
-
-	// Arrow points in -Z direction, so rotate the orientation before display.
-	// TODO: is it safe to change Arrow to point in +X direction?
-	arrow_->setOrientation( Ogre::Quaternion( Ogre::Degree( -90 ), Ogre::Vector3::UNIT_Y ));
 }
 
 
@@ -46,10 +42,6 @@ void ArrowVisual::setArrow(const Ogre::Vector3& position,
 {
 	arrow_->setPosition(position);
 	arrow_->setOrientation(orientation);
-
-//	frame_property_->setStdString(message->header.frame_id);
-//	position_property_->setVector(position);
-//	orientation_property_->setQuaternion(orientation);
 }
 
 
