@@ -2,7 +2,6 @@
 #include <OgreSceneNode.h>
 #include <OgreSceneManager.h>
 
-#include <ros/ros.h>
 #include <rviz/ogre_helpers/shape.h>
 #include <dwl_rviz_plugin/PointVisual.h>
 
@@ -36,7 +35,7 @@ PointVisual::~PointVisual()
 	delete point_;
 
 	// Destroy the frame node since we don't need it anymore.
-	scene_manager_->destroySceneNode( frame_node_ );
+	scene_manager_->destroySceneNode(frame_node_);
 }
 
 
