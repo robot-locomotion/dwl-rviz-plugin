@@ -8,6 +8,7 @@
 #include <rviz/message_filter_display.h>
 #include <dwl_rviz_plugin/PointVisual.h>
 #include <dwl_rviz_plugin/ArrowVisual.h>
+#include <dwl_rviz_plugin/PolygonVisual.h>
 #include <dwl_msgs/WholeBodyState.h>
 #include <dwl/model/WholeBodyDynamics.h>
 
@@ -62,6 +63,7 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 		void updateCoPColorAndAlpha();
 		void updateGRFColorAndAlpha();
 		void updateGRFArrowGeometry();
+		void updateSupportColorAndAlpha();
 
 
 	// Function to handle an incoming ROS message.
@@ -73,6 +75,7 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 		rviz::Property* com_category_;
 		rviz::Property* cop_category_;
 		rviz::Property* grf_category_;
+		rviz::Property* support_category_;
 
 		// Property objects for user-editable properties.
 		rviz::StringProperty* robot_model_property_;
@@ -95,10 +98,15 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
         rviz::FloatProperty* grf_shaft_radius_property_;
         rviz::FloatProperty* grf_shaft_length_property_;
 
+		rviz::ColorProperty* support_color_property_;
+        rviz::FloatProperty* support_alpha_property_;
+        rviz::FloatProperty* support_width_property_;
+
         boost::shared_ptr<PointVisual> com_visual_;
         boost::shared_ptr<ArrowVisual> comd_visual_;
         boost::shared_ptr<PointVisual> cop_visual_;
         std::vector<boost::shared_ptr<ArrowVisual> > grf_visual_;
+        boost::shared_ptr<PolygonVisual> support_visual_;
 
         dwl::model::WholeBodyDynamics dynamics_;
 };

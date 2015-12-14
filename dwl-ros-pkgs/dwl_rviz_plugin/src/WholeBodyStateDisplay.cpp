@@ -22,6 +22,7 @@ WholeBodyStateDisplay::WholeBodyStateDisplay()
 	com_category_ = new rviz::Property("Center Of Mass", QVariant(), "", this);
 	cop_category_ = new rviz::Property("Center Of Pressure", QVariant(), "", this);
 	grf_category_ = new rviz::Property("Contact Forces", QVariant(), "", this);
+	support_category_ = new rviz::Property("Support Region", QVariant(), "", this);
 
 	// Robot properties
 	robot_model_property_ = new StringProperty("Robot Description", "robot_model",
@@ -118,6 +119,19 @@ WholeBodyStateDisplay::WholeBodyStateDisplay()
 			new FloatProperty("Head Radius", 0.04,
 							  "Radius of the arrow's head, in meters.",
 							  grf_category_, SLOT(updateGRFArrowGeometry()), this);
+
+	// Support region properties
+	support_color_property_ =
+			new ColorProperty("Color", QColor(85, 0, 255),
+							  "Color to draw the arrow.",
+							  support_category_, SLOT(updateSupportColorAndAlpha()), this);
+
+	support_alpha_property_ =
+			new FloatProperty("Alpha", 1.0,
+							  "Amount of transparency to apply to the arrow.",
+							  support_category_, SLOT(updateSupportColorAndAlpha()), this);
+	support_alpha_property_->setMin(0);
+	support_alpha_property_->setMax(1);
 }
 
 
@@ -275,6 +289,17 @@ void WholeBodyStateDisplay::updateGRFArrowGeometry()
 }
 
 
+void WholeBodyStateDisplay::updateSupportColorAndAlpha()
+{
+	Ogre::ColourValue color = support_color_property_->getOgreColor();
+	color.a = support_alpha_property_->getFloat();
+
+	double scale = 1.;
+	support_visual_->setColor(color.r, color.g, color.b, color.a);
+	support_visual_->setScale(Ogre::Vector3(scale, scale, scale));
+}
+
+
 void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::ConstPtr& msg)
 {
 	// Getting the base velocity
@@ -313,6 +338,7 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 	dwl::rbd::BodySelector contact_names;
 	dwl::rbd::BodyVector contact_pos;
 	dwl::rbd::BodyWrench contact_for;
+	std::vector<Ogre::Vector3> support;
 	unsigned int num_contacts = msg->contacts.size();
 	for (unsigned int i = 0; i < num_contacts; i++) {
 		dwl_msgs::ContactState contact = msg->contacts[i];
@@ -325,6 +351,9 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 		Eigen::VectorXd position = Eigen::VectorXd::Zero(3);
 		position << contact.position.x, contact.position.y, contact.position.z;
 		contact_pos[name] = position;
+		support.push_back(Ogre::Vector3(position(dwl::rbd::X),
+										position(dwl::rbd::Y),
+										position(dwl::rbd::Z)));
 
 		// Getting the contact wrench
 		dwl::rbd::Vector6d wrench;
@@ -374,6 +403,7 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 	com_visual_.reset(new PointVisual(context_->getSceneManager(), scene_node_));
 	comd_visual_.reset(new ArrowVisual(context_->getSceneManager(), scene_node_));
 	cop_visual_.reset(new PointVisual(context_->getSceneManager(), scene_node_));
+	support_visual_.reset(new PolygonVisual(context_->getSceneManager(), scene_node_));
 
 	// Defining the center of mass as Ogre::Vector3
 	Ogre::Vector3 com_point;
@@ -453,6 +483,12 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 		// And send it to the end of the vector
 		grf_visual_.push_back(arrow);
 	}
+
+	// Now set or update the contents of the chosen CoP visual
+	support_visual_->setVertexs(support);
+	updateSupportColorAndAlpha();
+	support_visual_->setFramePosition(position);
+	support_visual_->setFrameOrientation(orientation);
 }
 
 } //@namespace dwl_rviz_plugin
