@@ -392,7 +392,11 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 	com_visual_->setPoint(com_point);
 	com_visual_->setFramePosition(position);
 	com_visual_->setFrameOrientation(orientation);
-	updateCoMArrowGeometry();
+	float shaft_length = com_shaft_length_property_->getFloat() * com_vel.norm();
+	float shaft_radius = com_shaft_radius_property_->getFloat();
+	float head_length = com_head_length_property_->getFloat();
+	float head_radius = com_head_radius_property_->getFloat();
+	comd_visual_->setProperties(shaft_length, shaft_radius, head_length, head_radius);
 	comd_visual_->setArrow(com_point, comd_for_orientation);
 	comd_visual_->setFramePosition(position);
 	comd_visual_->setFrameOrientation(orientation);
