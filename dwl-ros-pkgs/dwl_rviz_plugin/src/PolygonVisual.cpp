@@ -45,7 +45,6 @@ void PolygonVisual::setVertexs(std::vector<Ogre::Vector3>& vertexs)
 
 	unsigned int num_vertex = vertexs.size();
 	unsigned int num_line = factorial(num_vertex - 1);
-	std::cout << "num_vertex = " << vertexs.size() << std::endl;
 	line_.resize(num_line);
 
 	unsigned int counter = 0;

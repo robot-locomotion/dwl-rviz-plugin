@@ -16,7 +16,7 @@ using namespace rviz;
 namespace dwl_rviz_plugin
 {
 
-WholeBodyStateDisplay::WholeBodyStateDisplay()
+WholeBodyStateDisplay::WholeBodyStateDisplay() : force_threshold_(0.)
 {
 	// Category Groups
 	com_category_ = new rviz::Property("Center Of Mass", QVariant(), "", this);
@@ -132,6 +132,11 @@ WholeBodyStateDisplay::WholeBodyStateDisplay()
 							  support_category_, SLOT(updateSupportColorAndAlpha()), this);
 	support_alpha_property_->setMin(0);
 	support_alpha_property_->setMax(1);
+
+	support_force_threshold_property_ =
+			new FloatProperty("Force Threshold", 1.0,
+							  "Threshold for defining active contacts.",
+							  support_category_, SLOT(updateSupportColorAndAlpha()), this);
 }
 
 
@@ -293,6 +298,7 @@ void WholeBodyStateDisplay::updateSupportColorAndAlpha()
 {
 	Ogre::ColourValue color = support_color_property_->getOgreColor();
 	color.a = support_alpha_property_->getFloat();
+	force_threshold_ = support_force_threshold_property_->getFloat();
 
 	double scale = 1.;
 	support_visual_->setColor(color.r, color.g, color.b, color.a);
@@ -351,9 +357,7 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 		Eigen::VectorXd position = Eigen::VectorXd::Zero(3);
 		position << contact.position.x, contact.position.y, contact.position.z;
 		contact_pos[name] = position;
-		support.push_back(Ogre::Vector3(position(dwl::rbd::X),
-										position(dwl::rbd::Y),
-										position(dwl::rbd::Z)));
+
 
 		// Getting the contact wrench
 		dwl::rbd::Vector6d wrench;
@@ -367,6 +371,13 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 
 		// Computing the total force
 		total_force += dwl::rbd::linearPart(wrench);
+
+		// Detecting active contacts
+		if (wrench.norm() > force_threshold_) {
+			support.push_back(Ogre::Vector3(position(dwl::rbd::X),
+											position(dwl::rbd::Y),
+											position(dwl::rbd::Z)));
+		}
 	}
 
 	// Computing the normalized force per contact which is uses for scaling the arrows
@@ -383,7 +394,6 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 	// Computing the center of pressure position
 	Eigen::Vector3d cop_pos;
 	dynamics_.computeCenterOfPressure(cop_pos, contact_for, contact_pos, contact_names);
-
 
 
 	// Here we call the rviz::FrameManager to get the transform from the
@@ -458,30 +468,34 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 		Eigen::Vector3d for_ref_dir = -Eigen::Vector3d::UnitZ();
 		Eigen::Vector3d for_dir;
 		for_dir << contact.wrench.force.x, contact.wrench.force.y, contact.wrench.force.z;
-		Eigen::Quaterniond for_q;
-		for_q.setFromTwoVectors(for_ref_dir, for_dir);
-		Ogre::Quaternion contact_for_orientation(for_q.w(), for_q.x(), for_q.y(), for_q.z());
 
-		// We are keeping a vector of visual pointers. This creates the next one and stores it
-		// in the vector
-		boost::shared_ptr<ArrowVisual> arrow;
-		arrow.reset(new ArrowVisual(context_->getSceneManager(), scene_node_));
-		arrow->setArrow(contact_pos, contact_for_orientation);
-		arrow->setFramePosition(position);
-		arrow->setFrameOrientation(orientation);
+		// Detecting active contacts
+		if (for_dir.norm() > force_threshold_) {
+			Eigen::Quaterniond for_q;
+			for_q.setFromTwoVectors(for_ref_dir, for_dir);
+			Ogre::Quaternion contact_for_orientation(for_q.w(), for_q.x(), for_q.y(), for_q.z());
 
-		// Setting the arrow color and properties
-		Ogre::ColourValue color = grf_color_property_->getOgreColor();
-		color.a = grf_alpha_property_->getFloat();
-		arrow->setColor(color.r, color.g, color.b, color.a);
-		float shaft_length = grf_shaft_length_property_->getFloat() * for_dir.norm() / norm_force;
-		float shaft_radius = grf_shaft_radius_property_->getFloat();
-		float head_length = grf_head_length_property_->getFloat();
-		float head_radius = grf_head_radius_property_->getFloat();
-		arrow->setProperties(shaft_length, shaft_radius, head_length, head_radius);
+			// We are keeping a vector of visual pointers. This creates the next one and stores it
+			// in the vector
+			boost::shared_ptr<ArrowVisual> arrow;
+			arrow.reset(new ArrowVisual(context_->getSceneManager(), scene_node_));
+			arrow->setArrow(contact_pos, contact_for_orientation);
+			arrow->setFramePosition(position);
+			arrow->setFrameOrientation(orientation);
 
-		// And send it to the end of the vector
-		grf_visual_.push_back(arrow);
+			// Setting the arrow color and properties
+			Ogre::ColourValue color = grf_color_property_->getOgreColor();
+			color.a = grf_alpha_property_->getFloat();
+			arrow->setColor(color.r, color.g, color.b, color.a);
+			float shaft_length = grf_shaft_length_property_->getFloat() * for_dir.norm() / norm_force;
+			float shaft_radius = grf_shaft_radius_property_->getFloat();
+			float head_length = grf_head_length_property_->getFloat();
+			float head_radius = grf_head_radius_property_->getFloat();
+			arrow->setProperties(shaft_length, shaft_radius, head_length, head_radius);
+
+			// And send it to the end of the vector
+			grf_visual_.push_back(arrow);
+		}
 	}
 
 	// Now set or update the contents of the chosen CoP visual

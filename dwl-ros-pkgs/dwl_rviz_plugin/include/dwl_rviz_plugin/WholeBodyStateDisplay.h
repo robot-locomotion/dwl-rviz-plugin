@@ -100,7 +100,7 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 
 		rviz::ColorProperty* support_color_property_;
         rviz::FloatProperty* support_alpha_property_;
-        rviz::FloatProperty* support_width_property_;
+        rviz::FloatProperty* support_force_threshold_property_;
 
         boost::shared_ptr<PointVisual> com_visual_;
         boost::shared_ptr<ArrowVisual> comd_visual_;
@@ -109,6 +109,7 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
         boost::shared_ptr<PolygonVisual> support_visual_;
 
         dwl::model::WholeBodyDynamics dynamics_;
+        double force_threshold_;
 };
 
 } //@namespace dwl_rviz_plugin
