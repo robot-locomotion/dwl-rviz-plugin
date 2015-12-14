@@ -57,6 +57,7 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 		// Helper function to apply color and alpha to all visuals.
 		// Set the current color and alpha values for each visual.
 		void updateRobotModel();
+		void updateCoMColorAndAlpha();
 		void updateCoPColorAndAlpha();
 		void updateGRFColorAndAlpha();
 		void updateGRFArrowGeometry();
@@ -68,11 +69,16 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 		void processMessage(const dwl_msgs::WholeBodyState::ConstPtr& msg);
 
 		// properties to show on side panel
+		rviz::Property* com_category_;
 		rviz::Property* cop_category_;
 		rviz::Property* grf_category_;
 
 		// Property objects for user-editable properties.
 		rviz::StringProperty* robot_model_property_;
+		rviz::ColorProperty* com_color_property_;
+        rviz::FloatProperty* com_alpha_property_;
+        rviz::FloatProperty* com_radius_property_;
+
 		rviz::ColorProperty* cop_color_property_;
         rviz::FloatProperty* cop_alpha_property_;
         rviz::FloatProperty* cop_radius_property_;
@@ -84,6 +90,7 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
         rviz::FloatProperty* grf_shaft_radius_property_;
         rviz::FloatProperty* grf_shaft_length_property_;
 
+        boost::shared_ptr<PointVisual> com_visual_;
         boost::shared_ptr<PointVisual> cop_visual_;
         std::vector<boost::shared_ptr<ArrowVisual> > grf_visual_;
 

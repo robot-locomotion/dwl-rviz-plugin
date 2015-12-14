@@ -19,14 +19,35 @@ namespace dwl_rviz_plugin
 WholeBodyStateDisplay::WholeBodyStateDisplay()
 {
 	// Category Groups
-	cop_category_  = new rviz::Property("Center Of Pressure", QVariant(), "", this);
-	grf_category_  = new rviz::Property("Contact Forces", QVariant(), "", this);
+	com_category_ = new rviz::Property("Center Of Mass", QVariant(), "", this);
+	cop_category_ = new rviz::Property("Center Of Pressure", QVariant(), "", this);
+	grf_category_ = new rviz::Property("Contact Forces", QVariant(), "", this);
 
+	// Robot properties
 	robot_model_property_ = new StringProperty("Robot Description", "robot_model",
 												"Name of the parameter to search for to load"
 												" the robot description.",
 												this, SLOT(updateRobotModel()));
 
+	// CoM properties
+	com_color_property_ =
+			new rviz::ColorProperty("Color", QColor(255, 85, 0),
+									"Color of a point",
+									com_category_, SLOT(updateCoMColorAndAlpha()), this);
+
+	com_alpha_property_ =
+			new rviz::FloatProperty("Alpha", 1.0,
+									"0 is fully transparent, 1.0 is fully opaque.",
+									com_category_, SLOT(updateCoMColorAndAlpha()), this);
+	com_alpha_property_->setMin(0);
+	com_alpha_property_->setMax(1);
+
+	com_radius_property_ =
+			new rviz::FloatProperty("Radius", 0.04,
+									"Radius of a point",
+									com_category_, SLOT(updateCoMColorAndAlpha()), this);
+
+	// CoP properties
 	cop_color_property_ =
 			new rviz::ColorProperty("Color", QColor(204, 41, 204),
 									"Color of a point",
@@ -44,7 +65,7 @@ WholeBodyStateDisplay::WholeBodyStateDisplay()
 									"Radius of a point",
 									cop_category_, SLOT(updateCoPColorAndAlpha()), this);
 
-
+	// GRF properties
 	grf_color_property_ =
 			new ColorProperty("Color", QColor(85, 0, 255),
 							  "Color to draw the arrow.",
@@ -171,6 +192,17 @@ void WholeBodyStateDisplay::updateRobotModel()
 }
 
 
+void WholeBodyStateDisplay::updateCoMColorAndAlpha()
+{
+	float radius = com_radius_property_->getFloat();
+	Ogre::ColourValue color = com_color_property_->getOgreColor();
+	color.a = com_alpha_property_->getFloat();
+
+	com_visual_->setColor(color.r, color.g, color.b, color.a);
+	com_visual_->setRadius(radius);
+}
+
+
 void WholeBodyStateDisplay::updateCoPColorAndAlpha()
 {
 	float radius = cop_radius_property_->getFloat();
@@ -210,6 +242,22 @@ void WholeBodyStateDisplay::updateGRFArrowGeometry()
 
 void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::ConstPtr& msg)
 {
+	// Getting the joint position
+	unsigned int num_joints = msg->joints.size();
+	Eigen::VectorXd joint_pos = Eigen::VectorXd::Zero(num_joints);
+	for (unsigned int i = 0; i < num_joints; i++) {
+		dwl_msgs::JointState joint = msg->joints[i];
+
+		// Getting the joint name
+		std::string name  = joint.name;
+
+		// Getting the joint id
+		unsigned int id = dynamics_.getFloatingBaseSystem().getJoints().find(name)->second;
+
+		// Setting the joint position
+		joint_pos(id) = joint.position;
+	}
+
 	// Getting the contact wrenches and positions
 	Eigen::Vector3d total_force = Eigen::Vector3d::Zero();
 	dwl::rbd::BodySelector contact_names;
@@ -245,9 +293,18 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 	// Computing the normalized force per contact which is uses for scaling the arrows
 	double norm_force = total_force.norm() / num_contacts;
 
+
+	// Computing the center of mass
+	dwl::rbd::Vector6d null_base_pos = dwl::rbd::Vector6d::Zero();
+	Eigen::Vector3d com_pos = dynamics_.getFloatingBaseSystem().getSystemCoM(null_base_pos,
+																			 joint_pos);
+
+
 	// Computing the center of pressure position
 	Eigen::Vector3d cop_pos;
 	dynamics_.computeCenterOfPressure(cop_pos, contact_for, contact_pos, contact_names);
+
+
 
 	// Here we call the rviz::FrameManager to get the transform from the
 	// fixed frame to the frame in the header of this Point message.  If
@@ -262,21 +319,34 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 		return;
 	}
 
+	com_visual_.reset(new PointVisual(context_->getSceneManager(), scene_node_));
 	cop_visual_.reset(new PointVisual(context_->getSceneManager(), scene_node_));
 
 	// Defining the center of mass as Ogre::Vector3
+	Ogre::Vector3 com_point;
+	com_point.x = com_pos(dwl::rbd::X);
+	com_point.y = com_pos(dwl::rbd::Y);
+	com_point.z = com_pos(dwl::rbd::Z);
+
+	// Now set or update the contents of the chosen CoM visual
+	updateCoMColorAndAlpha();
+	com_visual_->setPoint(com_point);
+	com_visual_->setFramePosition(position);
+	com_visual_->setFrameOrientation(orientation);
+
+	// Defining the center of pressure as Ogre::Vector3
 	Ogre::Vector3 cop_point;
 	cop_point.x = cop_pos(dwl::rbd::X);
 	cop_point.y = cop_pos(dwl::rbd::Y);
 	cop_point.z = cop_pos(dwl::rbd::Z);
 
-	// Now set or update the contents of the chosen visual.
+	// Now set or update the contents of the chosen CoP visual
 	updateCoPColorAndAlpha();
 	cop_visual_->setPoint(cop_point);
 	cop_visual_->setFramePosition(position);
 	cop_visual_->setFrameOrientation(orientation);
 
-
+	// Now set or update the contents of the chosen GRF visual
 	grf_visual_.clear();
 	for (unsigned int i = 0; i < num_contacts; i++) {
 		dwl_msgs::ContactState contact = msg->contacts[i];
