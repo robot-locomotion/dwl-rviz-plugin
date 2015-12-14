@@ -29,7 +29,7 @@ WholeBodyStateDisplay::WholeBodyStateDisplay()
 												" the robot description.",
 												this, SLOT(updateRobotModel()));
 
-	// CoM properties
+	// CoM position and velocity properties
 	com_color_property_ =
 			new rviz::ColorProperty("Color", QColor(255, 85, 0),
 									"Color of a point",
@@ -46,6 +46,27 @@ WholeBodyStateDisplay::WholeBodyStateDisplay()
 			new rviz::FloatProperty("Radius", 0.04,
 									"Radius of a point",
 									com_category_, SLOT(updateCoMColorAndAlpha()), this);
+
+	com_shaft_length_property_ =
+			new FloatProperty("Shaft Length", 0.4,
+							  "Length of the arrow's shaft, in meters.",
+							  com_category_, SLOT(updateCoMArrowGeometry()), this);
+
+	com_shaft_radius_property_ =
+			new FloatProperty("Shaft Radius", 0.02,
+							  "Radius of the arrow's shaft, in meters.",
+							  com_category_, SLOT(updateCoMArrowGeometry()), this);
+
+	com_head_length_property_ =
+			new FloatProperty("Head Length", 0.08,
+							  "Length of the arrow's head, in meters.",
+							  com_category_, SLOT(updateCoMArrowGeometry()), this);
+
+	com_head_radius_property_ =
+			new FloatProperty("Head Radius", 0.04,
+							  "Radius of the arrow's head, in meters.",
+							  com_category_, SLOT(updateCoMArrowGeometry()), this);
+
 
 	// CoP properties
 	cop_color_property_ =
@@ -199,7 +220,21 @@ void WholeBodyStateDisplay::updateCoMColorAndAlpha()
 	color.a = com_alpha_property_->getFloat();
 
 	com_visual_->setColor(color.r, color.g, color.b, color.a);
+	comd_visual_->setColor(color.r, color.g, color.b, color.a);
 	com_visual_->setRadius(radius);
+}
+
+
+void WholeBodyStateDisplay::updateCoMArrowGeometry()
+{
+	float shaft_length = com_shaft_length_property_->getFloat();
+	float shaft_radius = com_shaft_radius_property_->getFloat();
+	float head_length = com_head_length_property_->getFloat();
+	float head_radius = com_head_radius_property_->getFloat();
+
+	comd_visual_->setProperties(shaft_length, shaft_radius, head_length, head_radius);
+
+	context_->queueRender();
 }
 
 
@@ -242,9 +277,23 @@ void WholeBodyStateDisplay::updateGRFArrowGeometry()
 
 void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::ConstPtr& msg)
 {
-	// Getting the joint position
+	// Getting the base velocity
+	unsigned int num_base_joints = msg->base.size();
+	dwl::rbd::Vector6d base_vel = dwl::rbd::Vector6d::Zero();
+	for (unsigned int i = 0; i < num_base_joints; i++) {
+		dwl_msgs::BaseState base = msg->base[i];
+
+		// Getting the base joint id
+		unsigned int id = base.id;
+
+		// Setting the base velocity
+		base_vel(id) = base.velocity;
+	}
+
+	// Getting the joint position and velocity
 	unsigned int num_joints = msg->joints.size();
 	Eigen::VectorXd joint_pos = Eigen::VectorXd::Zero(num_joints);
+	Eigen::VectorXd joint_vel = Eigen::VectorXd::Zero(num_joints);
 	for (unsigned int i = 0; i < num_joints; i++) {
 		dwl_msgs::JointState joint = msg->joints[i];
 
@@ -254,8 +303,9 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 		// Getting the joint id
 		unsigned int id = dynamics_.getFloatingBaseSystem().getJoints().find(name)->second;
 
-		// Setting the joint position
+		// Setting the joint position and velocity
 		joint_pos(id) = joint.position;
+		joint_vel(id) = joint.velocity;
 	}
 
 	// Getting the contact wrenches and positions
@@ -293,13 +343,14 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 	// Computing the normalized force per contact which is uses for scaling the arrows
 	double norm_force = total_force.norm() / num_contacts;
 
-
-	// Computing the center of mass
+	// Computing the center of mass position and velocity
 	dwl::rbd::Vector6d null_base_pos = dwl::rbd::Vector6d::Zero();
 	Eigen::Vector3d com_pos = dynamics_.getFloatingBaseSystem().getSystemCoM(null_base_pos,
 																			 joint_pos);
-
-
+	Eigen::Vector3d com_vel = dynamics_.getFloatingBaseSystem().getSystemCoMRate(null_base_pos,
+																				 joint_pos,
+																				 base_vel,
+																				 joint_vel);
 	// Computing the center of pressure position
 	Eigen::Vector3d cop_pos;
 	dynamics_.computeCenterOfPressure(cop_pos, contact_for, contact_pos, contact_names);
@@ -319,7 +370,9 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 		return;
 	}
 
+	// Resetting the point visualizers
 	com_visual_.reset(new PointVisual(context_->getSceneManager(), scene_node_));
+	comd_visual_.reset(new ArrowVisual(context_->getSceneManager(), scene_node_));
 	cop_visual_.reset(new PointVisual(context_->getSceneManager(), scene_node_));
 
 	// Defining the center of mass as Ogre::Vector3
@@ -328,11 +381,21 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 	com_point.y = com_pos(dwl::rbd::Y);
 	com_point.z = com_pos(dwl::rbd::Z);
 
+	// Defining the center of mass velocity orientation
+	Eigen::Vector3d com_ref_dir = -Eigen::Vector3d::UnitZ();
+	Eigen::Quaterniond com_q;
+	com_q.setFromTwoVectors(com_ref_dir, com_vel);
+	Ogre::Quaternion comd_for_orientation(com_q.w(), com_q.x(), com_q.y(), com_q.z());
+
 	// Now set or update the contents of the chosen CoM visual
 	updateCoMColorAndAlpha();
 	com_visual_->setPoint(com_point);
 	com_visual_->setFramePosition(position);
 	com_visual_->setFrameOrientation(orientation);
+	updateCoMArrowGeometry();
+	comd_visual_->setArrow(com_point, comd_for_orientation);
+	comd_visual_->setFramePosition(position);
+	comd_visual_->setFrameOrientation(orientation);
 
 	// Defining the center of pressure as Ogre::Vector3
 	Ogre::Vector3 cop_point;
@@ -358,12 +421,12 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 		Ogre::Vector3 contact_pos(contact.position.x, contact.position.y, contact.position.z);
 
 		// Getting the force direction
-		Eigen::Vector3d ref_dir = -Eigen::Vector3d::UnitZ();
+		Eigen::Vector3d for_ref_dir = -Eigen::Vector3d::UnitZ();
 		Eigen::Vector3d for_dir;
 		for_dir << contact.wrench.force.x, contact.wrench.force.y, contact.wrench.force.z;
-		Eigen::Quaterniond q;
-		q.setFromTwoVectors(ref_dir, for_dir);
-		Ogre::Quaternion contact_for_orientation(q.w(), q.x(), q.y(), q.z());
+		Eigen::Quaterniond for_q;
+		for_q.setFromTwoVectors(for_ref_dir, for_dir);
+		Ogre::Quaternion contact_for_orientation(for_q.w(), for_q.x(), for_q.y(), for_q.z());
 
 		// We are keeping a vector of visual pointers. This creates the next one and stores it
 		// in the vector
