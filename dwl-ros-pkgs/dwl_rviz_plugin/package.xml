@@ -28,10 +28,11 @@
   <build_depend>rviz</build_depend>
   <build_depend>dwl</build_depend>
   <build_depend>dwl_terrain</build_depend>
-  
+  <build_depend>dwl_msgs</build_depend>
+
   <run_depend>roscpp</run_depend>
-  <run_depend>dwl</run_depend>
   <run_depend>rviz</run_depend>
+  <run_depend>dwl</run_depend>
   <run_depend>dwl_terrain</run_depend>
   <run_depend>dwl_msgs</run_depend>
 

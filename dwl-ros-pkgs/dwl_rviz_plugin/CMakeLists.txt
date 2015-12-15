@@ -3,6 +3,8 @@ project(dwl_rviz_plugin)
 
 
 find_package(catkin REQUIRED COMPONENTS
+  dwl
+  dwl_msgs
   roscpp
   rviz)
 
@@ -53,9 +55,12 @@ set(SOURCE_FILES
   src/FootstepRegionDisplay.cpp
   ${MOC_FILES})
 
+
 add_library(${PROJECT_NAME}  ${SOURCE_FILES})
 target_link_libraries(${PROJECT_NAME}  ${QT_LIBRARIES}
                                        ${Boost_LIBRARIES}
                                        ${dwl_LIBRARIES}
                                        ${catkin_LIBRARIES}
                                        -ldefault_plugin)
+add_dependencies(${PROJECT_NAME}  ${dwl_msgs_EXPORTED_TARGETS}
+                                  ${dwl_terrain_EXPORTED_TARGETS})
