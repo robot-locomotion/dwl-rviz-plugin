@@ -381,7 +381,9 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 	}
 
 	// Computing the normalized force per contact which is uses for scaling the arrows
-	double norm_force = total_force.norm() / num_contacts;
+	double norm_force = 0;
+	if (num_contacts != 0) // Sanity check of the number of contacts
+		norm_force = total_force.norm() / num_contacts;
 
 	// Computing the center of mass position and velocity
 	dwl::rbd::Vector6d null_base_pos = dwl::rbd::Vector6d::Zero();
