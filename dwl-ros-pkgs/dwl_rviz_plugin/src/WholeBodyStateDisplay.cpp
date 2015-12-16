@@ -200,26 +200,7 @@ void WholeBodyStateDisplay::load()
 	// Initializing the dynamics from the URDF model
 	dynamics_.modelFromURDFModel(robot_model_);
 
-//	TiXmlDocument doc;
-//	doc.Parse(robot_model_.c_str());
-//	if (!doc.RootElement()) {
-//		clear();
-//		setStatus(StatusProperty::Error, "URDF", "URDF failed XML parse");
-//		return;
-//	}
-
-//	urdf::Model descr;
-//	if (!descr.initXml(doc.RootElement())) {
-//		clear();
-//		setStatus(StatusProperty::Error, "URDF", "URDF failed Model parse");
-//		return;
-//	}
-
 	setStatus(StatusProperty::Ok, "URDF", "URDF parsed OK");
-//	robot_->load( descr );
-//	robot_->update( TFLinkUpdater(context_->getFrameManager(),
-//								  boost::bind( linkUpdaterStatusFunction, _1, _2, _3, this ),
-//								  tf_prefix_property_->getStdString() ));
 }
 
 
