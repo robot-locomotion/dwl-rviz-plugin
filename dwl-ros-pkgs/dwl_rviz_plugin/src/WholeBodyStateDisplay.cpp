@@ -200,26 +200,7 @@ void WholeBodyStateDisplay::load()
 	// Initializing the dynamics from the URDF model
 	dynamics_.modelFromURDFModel(robot_model_);
 
-//	TiXmlDocument doc;
-//	doc.Parse(robot_model_.c_str());
-//	if (!doc.RootElement()) {
-//		clear();
-//		setStatus(StatusProperty::Error, "URDF", "URDF failed XML parse");
-//		return;
-//	}
-
-//	urdf::Model descr;
-//	if (!descr.initXml(doc.RootElement())) {
-//		clear();
-//		setStatus(StatusProperty::Error, "URDF", "URDF failed Model parse");
-//		return;
-//	}
-
 	setStatus(StatusProperty::Ok, "URDF", "URDF parsed OK");
-//	robot_->load( descr );
-//	robot_->update( TFLinkUpdater(context_->getFrameManager(),
-//								  boost::bind( linkUpdaterStatusFunction, _1, _2, _3, this ),
-//								  tf_prefix_property_->getStdString() ));
 }
 
 
@@ -381,7 +362,9 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 	}
 
 	// Computing the normalized force per contact which is uses for scaling the arrows
-	double norm_force = total_force.norm() / num_contacts;
+	double norm_force = 0;
+	if (num_contacts != 0) // Sanity check of the number of contacts
+		norm_force = total_force.norm() / num_contacts;
 
 	// Computing the center of mass position and velocity
 	dwl::rbd::Vector6d null_base_pos = dwl::rbd::Vector6d::Zero();

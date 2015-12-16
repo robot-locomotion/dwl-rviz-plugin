@@ -9,12 +9,6 @@
 namespace dwl_rviz_plugin
 {
 
-unsigned int factorial(unsigned int n)
-{
-  return (n == 1 || n == 0) ? 1 : factorial(n - 1) * n;
-}
-
-
 PolygonVisual::PolygonVisual(Ogre::SceneManager* scene_manager,
 							 Ogre::SceneNode* parent_node)
 {
@@ -44,7 +38,9 @@ void PolygonVisual::setVertexs(std::vector<Ogre::Vector3>& vertexs)
 	line_.clear();
 
 	unsigned int num_vertex = vertexs.size();
-	unsigned int num_line = factorial(num_vertex - 1);
+	unsigned int num_line = 0;
+	for (unsigned int i = 1; i < num_vertex; i++)
+		num_line += num_vertex - i;
 	line_.resize(num_line);
 
 	unsigned int counter = 0;
