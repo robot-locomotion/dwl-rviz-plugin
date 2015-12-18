@@ -85,7 +85,7 @@ void WholeBodyTrajectoryDisplay::updateStyle()
 {
 	LineStyle style = (LineStyle) style_property_->getOptionInt();
 
-	switch( style )
+	switch (style)
 	{
 	case LINES:
 	default:

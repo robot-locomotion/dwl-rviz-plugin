@@ -67,10 +67,7 @@ class WholeBodyTrajectoryDisplay: public rviz::MessageFilterDisplay<dwl_msgs::Wh
 		rviz::IntProperty* buffer_length_property_;
 		rviz::VectorProperty* offset_property_;
 
-		enum LineStyle {
-			LINES,
-			BILLBOARDS
-		};
+		enum LineStyle {LINES, BILLBOARDS};
 };
 
 } //@namespace dwl_rviz_plugin

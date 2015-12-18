@@ -6,6 +6,7 @@
 #include <rviz/frame_manager.h>
 #include <rviz/validate_floats.h>
 #include <rviz/visualization_manager.h>
+#include <rviz/properties/enum_property.h>
 #include <rviz/properties/color_property.h>
 #include <rviz/properties/float_property.h>
 #include <rviz/properties/int_property.h>
@@ -16,7 +17,7 @@ using namespace rviz;
 namespace dwl_rviz_plugin
 {
 
-WholeBodyStateDisplay::WholeBodyStateDisplay() : force_threshold_(0.)
+WholeBodyStateDisplay::WholeBodyStateDisplay() : force_threshold_(0.), com_real_(true)
 {
 	// Category Groups
 	com_category_ = new rviz::Property("Center Of Mass", QVariant(), "", this);
@@ -31,6 +32,12 @@ WholeBodyStateDisplay::WholeBodyStateDisplay() : force_threshold_(0.)
 												this, SLOT(updateRobotModel()));
 
 	// CoM position and velocity properties
+	com_style_property_ = new EnumProperty("CoM Style", "Real",
+											"The rendering operation to use to draw the CoM.",
+											com_category_, SLOT(updateCoMStyle()), this);
+	com_style_property_->addOption("Real", REAL);
+	com_style_property_->addOption("Projected", PROJECTED);
+
 	com_color_property_ =
 			new rviz::ColorProperty("Color", QColor(255, 85, 0),
 									"Color of a point",
@@ -148,7 +155,6 @@ WholeBodyStateDisplay::~WholeBodyStateDisplay()
 
 void WholeBodyStateDisplay::clear()
 {
-//	robot_->clear();
 	clearStatuses();
 	robot_model_.clear();
 }
@@ -209,6 +215,24 @@ void WholeBodyStateDisplay::updateRobotModel()
 	if (isEnabled()) {
 		load();
 		context_->queueRender();
+	}
+}
+
+
+void WholeBodyStateDisplay::updateCoMStyle()
+{
+	CoMStyle style = (CoMStyle) com_style_property_->getOptionInt();
+
+	switch (style)
+	{
+	case REAL:
+	default:
+		com_real_ = true;
+		break;
+
+	case PROJECTED:
+		com_real_ = false;
+		break;
 	}
 }
 
@@ -402,7 +426,10 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 	Ogre::Vector3 com_point;
 	com_point.x = com_pos(dwl::rbd::X);
 	com_point.y = com_pos(dwl::rbd::Y);
-	com_point.z = com_pos(dwl::rbd::Z);
+	if (com_real_)
+		com_point.z = com_pos(dwl::rbd::Z);
+	else
+		com_point.z = cop_pos(dwl::rbd::Z);
 
 	// Defining the center of mass velocity orientation
 	Eigen::Vector3d com_ref_dir = -Eigen::Vector3d::UnitZ();

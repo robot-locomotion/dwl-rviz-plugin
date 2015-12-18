@@ -20,6 +20,7 @@ class SceneNode;
 
 namespace rviz
 {
+class EnumProperty;
 class ColorProperty;
 class FloatProperty;
 class IntProperty;
@@ -58,6 +59,7 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 		// Helper function to apply color and alpha to all visuals.
 		// Set the current color and alpha values for each visual.
 		void updateRobotModel();
+		void updateCoMStyle();
 		void updateCoMColorAndAlpha();
 		void updateCoMArrowGeometry();
 		void updateCoPColorAndAlpha();
@@ -79,6 +81,7 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 
 		// Property objects for user-editable properties.
 		rviz::StringProperty* robot_model_property_;
+		rviz::EnumProperty* com_style_property_;
 		rviz::ColorProperty* com_color_property_;
         rviz::FloatProperty* com_alpha_property_;
         rviz::FloatProperty* com_radius_property_;
@@ -110,6 +113,9 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 
         dwl::model::WholeBodyDynamics dynamics_;
         double force_threshold_;
+
+		enum CoMStyle {REAL, PROJECTED};
+		bool com_real_;
 };
 
 } //@namespace dwl_rviz_plugin
