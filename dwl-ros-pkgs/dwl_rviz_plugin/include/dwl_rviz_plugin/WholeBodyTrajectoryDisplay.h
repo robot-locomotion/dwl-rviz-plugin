@@ -54,17 +54,12 @@ class WholeBodyTrajectoryDisplay: public rviz::MessageFilterDisplay<dwl_msgs::Wh
 		 */
 		void processMessage(const dwl_msgs::WholeBodyTrajectory::ConstPtr& msg);
 
-		/** @brief Destroy the object for visualization */
-		void destroyObjects();
-
 
 	private Q_SLOTS:
 		/** @brief Helper function to apply color and alpha to all visuals.
 		/* Set the current color and alpha values for each visual */
-		void updateBaseBufferLength();
 		void updateBaseStyle();
 		void updateBaseLineWidth();
-		void updateBaseOffset();
 
 
 	private:
@@ -73,16 +68,14 @@ class WholeBodyTrajectoryDisplay: public rviz::MessageFilterDisplay<dwl_msgs::Wh
 		rviz::Property* contact_category_;
 
 		/** @brief Object for visualization of the data */
-		std::vector<Ogre::ManualObject*> base_manual_objects_;
-		std::vector<rviz::BillboardLine*> base_billboard_lines_;
+		boost::shared_ptr<Ogre::ManualObject> base_manual_object_;
+		boost::shared_ptr<rviz::BillboardLine> base_billboard_line_;
 
 		/** @brief Property objects for user-editable properties */
 		rviz::EnumProperty* base_style_property_;
 		rviz::ColorProperty* base_color_property_;
 		rviz::FloatProperty* base_alpha_property_;
 		rviz::FloatProperty* base_line_width_property_;
-		rviz::IntProperty* base_buffer_length_property_;
-		rviz::VectorProperty* base_offset_property_;
 
 		enum LineStyle {LINES, BILLBOARDS};
 };

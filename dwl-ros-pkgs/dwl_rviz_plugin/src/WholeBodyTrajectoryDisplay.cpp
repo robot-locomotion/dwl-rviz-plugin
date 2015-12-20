@@ -43,14 +43,14 @@ WholeBodyTrajectoryDisplay::WholeBodyTrajectoryDisplay()
 	base_style_property_->addOption("Billboards", BILLBOARDS);
 
 	base_line_width_property_ =
-			new FloatProperty("Line Width", 0.03,
+			new FloatProperty("Line Width", 0.01,
 							  "The width, in meters, of each path line. "
 							  "Only works with the 'Billboards' style.",
 							  base_category_, SLOT(updateBaseLineWidth()), this);
 	base_line_width_property_->setMin(0.001);
 	base_line_width_property_->hide();
 
-	base_color_property_ = new ColorProperty("Color", QColor(25, 255, 0),
+	base_color_property_ = new ColorProperty("Color", QColor(0, 85, 255),
 											 "Color to draw the path.",
 											 base_category_, NULL, this);
 
@@ -58,74 +58,24 @@ WholeBodyTrajectoryDisplay::WholeBodyTrajectoryDisplay()
 			new FloatProperty("Alpha", 1.0,
 							  "Amount of transparency to apply to the path.",
 							  base_category_, NULL, this);
-
-	base_buffer_length_property_ =
-			new IntProperty("Buffer Length", 1,
-							"Number of paths to display.",
-							base_category_, SLOT(updateBaseBufferLength()), this);
-	base_buffer_length_property_->setMin(1);
-
-	base_offset_property_ =
-			new VectorProperty("Offset", Ogre::Vector3::ZERO,
-							   "Allows you to offset the path from the origin of the "
-							   "reference frame.  In meters.",
-							   base_category_, SLOT(updateBaseOffset()), this);
 }
 
 
 WholeBodyTrajectoryDisplay::~WholeBodyTrajectoryDisplay()
 {
-	destroyObjects();
+
 }
 
 
 void WholeBodyTrajectoryDisplay::onInitialize()
 {
 	MFDClass::onInitialize();
-	updateBaseBufferLength();
 }
 
 
 void WholeBodyTrajectoryDisplay::reset()
 {
 	MFDClass::reset();
-	updateBaseBufferLength();
-}
-
-
-void WholeBodyTrajectoryDisplay::updateBaseBufferLength()
-{
-	// Delete old path objects
-	destroyObjects();
-
-	// Read options
-	int buffer_length = base_buffer_length_property_->getInt();
-	LineStyle style = (LineStyle) base_style_property_->getOptionInt();
-
-	// Create new path objects
-	switch (style)
-	{
-	case LINES: // simple lines with fixed width of 1px
-		base_manual_objects_.resize(buffer_length);
-		for (size_t i = 0; i < base_manual_objects_.size(); i++) {
-			Ogre::ManualObject* manual_object = scene_manager_->createManualObject();
-			manual_object->setDynamic(true);
-			scene_node_->attachObject(manual_object);
-
-			base_manual_objects_[i] = manual_object;
-		}
-		break;
-
-	case BILLBOARDS: // billboards with configurable width
-		base_billboard_lines_.resize(buffer_length);
-		for (size_t i = 0; i < base_billboard_lines_.size(); i++) {
-			rviz::BillboardLine* billboard_line =
-					new rviz::BillboardLine(scene_manager_, scene_node_);
-
-			base_billboard_lines_[i] = billboard_line;
-		}
-		break;
-	}
 }
 
 
@@ -143,8 +93,6 @@ void WholeBodyTrajectoryDisplay::updateBaseStyle()
 		base_line_width_property_->show();
 		break;
 	}
-
-	updateBaseBufferLength();
 }
 
 
@@ -154,46 +102,15 @@ void WholeBodyTrajectoryDisplay::updateBaseLineWidth()
 	float line_width = base_line_width_property_->getFloat();
 
 	if (style == BILLBOARDS) {
-		for (size_t i = 0; i < base_billboard_lines_.size(); i++) {
-			rviz::BillboardLine* billboard_line = base_billboard_lines_[i];
-			if (billboard_line)
-				billboard_line->setLineWidth(line_width);
-		}
+		base_billboard_line_->setLineWidth(line_width);
 	}
-	context_->queueRender();
-}
-
-
-void WholeBodyTrajectoryDisplay::updateBaseOffset()
-{
-	scene_node_->setPosition(base_offset_property_->getVector());
 	context_->queueRender();
 }
 
 
 void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTrajectory::ConstPtr& msg)
 {
-	// Calculate index of oldest element in cyclic buffer
-	size_t buffer_idx = messages_received_ % base_buffer_length_property_->getInt();
-
 	LineStyle style = (LineStyle) base_style_property_->getOptionInt();
-	Ogre::ManualObject* manual_object = NULL;
-	rviz::BillboardLine* billboard_line = NULL;
-
-	// Delete oldest element
-	switch (style)
-	{
-	case LINES:
-		manual_object = base_manual_objects_[buffer_idx];
-		manual_object->clear();
-		break;
-
-	case BILLBOARDS:
-		billboard_line = base_billboard_lines_[buffer_idx];
-		billboard_line->clear();
-		break;
-	}
-
 	// Lookup transform into fixed frame
 	Ogre::Vector3 position;
 	Ogre::Quaternion orientation;
@@ -205,8 +122,6 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 	Ogre::Matrix4 transform(orientation);
 	transform.setTrans(position);
 
-//  scene_node_->setPosition( position );
-//  scene_node_->setOrientation( orientation );
 
 	Ogre::ColourValue color = base_color_property_->getOgreColor();
 	color.a = base_alpha_property_->getFloat();
@@ -217,8 +132,12 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 	switch (style)
 	{
 	case LINES:
-		manual_object->estimateVertexCount(num_points);
-		manual_object->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_STRIP);
+		base_manual_object_.reset(scene_manager_->createManualObject());
+		base_manual_object_->setDynamic(true);
+		scene_node_->attachObject(base_manual_object_.get());
+
+		base_manual_object_->estimateVertexCount(num_points);
+		base_manual_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_STRIP);
 		for (uint32_t i = 0; i < num_points; ++i) {
 			unsigned int num_base = msg->trajectory[i].base.size();
 			Eigen::Vector3d pos = Eigen::Vector3d::Zero();
@@ -234,17 +153,18 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 			Ogre::Vector3 xpos = transform * Ogre::Vector3(pos(dwl::rbd::X),
 														   pos(dwl::rbd::Y),
 														   pos(dwl::rbd::Z));
-			manual_object->position(xpos.x, xpos.y, xpos.z);
-			manual_object->colour(color);
+			base_manual_object_->position(xpos.x, xpos.y, xpos.z);
+			base_manual_object_->colour(color);
 		}
 
-		manual_object->end();
+		base_manual_object_->end();
 		break;
 
 	case BILLBOARDS:
-		billboard_line->setNumLines(1);
-		billboard_line->setMaxPointsPerLine(num_points);
-		billboard_line->setLineWidth(line_width);
+		base_billboard_line_.reset(new rviz::BillboardLine(scene_manager_, scene_node_));
+		base_billboard_line_->setNumLines(1);
+		base_billboard_line_->setMaxPointsPerLine(num_points);
+		base_billboard_line_->setLineWidth(line_width);
 
 		for (uint32_t i=0; i < num_points; ++i) {
 			unsigned int num_base = msg->trajectory[i].base.size();
@@ -261,32 +181,9 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 			Ogre::Vector3 xpos = transform * Ogre::Vector3(pos(dwl::rbd::X),
 														   pos(dwl::rbd::Y),
 														   pos(dwl::rbd::Z));
-			billboard_line->addPoint(xpos, color);
+			base_billboard_line_->addPoint(xpos, color);
 		}
 		break;
-	}
-}
-
-
-void WholeBodyTrajectoryDisplay::destroyObjects()
-{
-	// Destroy all simple lines, if any
-	for (size_t i = 0; i < base_manual_objects_.size(); i++) {
-		Ogre::ManualObject*& manual_object = base_manual_objects_[i];
-		if (manual_object) {
-			manual_object->clear();
-			scene_manager_->destroyManualObject(manual_object);
-			manual_object = NULL; // ensure it doesn't get destroyed again
-		}
-	}
-
-	// Destroy all billboards, if any
-	for (size_t i = 0; i < base_billboard_lines_.size(); i++) {
-		rviz::BillboardLine*& billboard_line = base_billboard_lines_[i];
-		if (billboard_line) {
-			delete billboard_line; // also destroys the corresponding scene node
-			billboard_line = NULL; // ensure it doesn't get destroyed again
-		}
 	}
 }
 
