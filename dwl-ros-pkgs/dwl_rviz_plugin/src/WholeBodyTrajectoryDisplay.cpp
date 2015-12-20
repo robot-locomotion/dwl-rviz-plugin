@@ -29,35 +29,47 @@ namespace dwl_rviz_plugin
 
 WholeBodyTrajectoryDisplay::WholeBodyTrajectoryDisplay()
 {
-	style_property_ = new EnumProperty("Line Style", "Lines",
-									   "The rendering operation to use to draw the grid lines.",
-									   this, SLOT(updateStyle()));
+	// Category Groups
+	base_category_ = new rviz::Property("Base", QVariant(), "", this);
+	contact_category_ = new rviz::Property("End-Effector", QVariant(), "", this);
 
-	style_property_->addOption("Lines", LINES);
-	style_property_->addOption("Billboards", BILLBOARDS);
+	// Base trajectory properties
+	base_style_property_ =
+			new EnumProperty("Line Style", "Lines",
+							 "The rendering operation to use to draw the grid lines.",
+							 base_category_, SLOT(updateBaseStyle()), this);
 
-	line_width_property_ = new FloatProperty("Line Width", 0.03,
-											 "The width, in meters, of each path line."
-											 "Only works with the 'Billboards' style.",
-											 this, SLOT(updateLineWidth()), this);
-	line_width_property_->setMin(0.001);
-	line_width_property_->hide();
+	base_style_property_->addOption("Lines", LINES);
+	base_style_property_->addOption("Billboards", BILLBOARDS);
 
-	color_property_ = new ColorProperty("Color", QColor(25, 255, 0),
-										"Color to draw the path.", this);
+	base_line_width_property_ =
+			new FloatProperty("Line Width", 0.03,
+							  "The width, in meters, of each path line. "
+							  "Only works with the 'Billboards' style.",
+							  base_category_, SLOT(updateBaseLineWidth()), this);
+	base_line_width_property_->setMin(0.001);
+	base_line_width_property_->hide();
 
-	alpha_property_ = new FloatProperty("Alpha", 1.0,
-										"Amount of transparency to apply to the path.", this);
+	base_color_property_ = new ColorProperty("Color", QColor(25, 255, 0),
+											 "Color to draw the path.",
+											 base_category_, NULL, this);
 
-	buffer_length_property_ = new IntProperty("Buffer Length", 1,
-											  "Number of paths to display.",
-											  this, SLOT(updateBufferLength()));
-	buffer_length_property_->setMin(1);
+	base_alpha_property_ =
+			new FloatProperty("Alpha", 1.0,
+							  "Amount of transparency to apply to the path.",
+							  base_category_, NULL, this);
 
-	offset_property_ = new VectorProperty("Offset", Ogre::Vector3::ZERO,
-										  "Allows you to offset the path from the origin of the "
-										  "reference frame.  In meters.",
-										   this, SLOT(updateOffset()));
+	base_buffer_length_property_ =
+			new IntProperty("Buffer Length", 1,
+							"Number of paths to display.",
+							base_category_, SLOT(updateBaseBufferLength()), this);
+	base_buffer_length_property_->setMin(1);
+
+	base_offset_property_ =
+			new VectorProperty("Offset", Ogre::Vector3::ZERO,
+							   "Allows you to offset the path from the origin of the "
+							   "reference frame.  In meters.",
+							   base_category_, SLOT(updateBaseOffset()), this);
 }
 
 
@@ -70,45 +82,80 @@ WholeBodyTrajectoryDisplay::~WholeBodyTrajectoryDisplay()
 void WholeBodyTrajectoryDisplay::onInitialize()
 {
 	MFDClass::onInitialize();
-	updateBufferLength();
+	updateBaseBufferLength();
 }
 
 
 void WholeBodyTrajectoryDisplay::reset()
 {
 	MFDClass::reset();
-	updateBufferLength();
+	updateBaseBufferLength();
 }
 
 
-void WholeBodyTrajectoryDisplay::updateStyle()
+void WholeBodyTrajectoryDisplay::updateBaseBufferLength()
 {
-	LineStyle style = (LineStyle) style_property_->getOptionInt();
+	// Delete old path objects
+	destroyObjects();
+
+	// Read options
+	int buffer_length = base_buffer_length_property_->getInt();
+	LineStyle style = (LineStyle) base_style_property_->getOptionInt();
+
+	// Create new path objects
+	switch (style)
+	{
+	case LINES: // simple lines with fixed width of 1px
+		base_manual_objects_.resize(buffer_length);
+		for (size_t i = 0; i < base_manual_objects_.size(); i++) {
+			Ogre::ManualObject* manual_object = scene_manager_->createManualObject();
+			manual_object->setDynamic(true);
+			scene_node_->attachObject(manual_object);
+
+			base_manual_objects_[i] = manual_object;
+		}
+		break;
+
+	case BILLBOARDS: // billboards with configurable width
+		base_billboard_lines_.resize(buffer_length);
+		for (size_t i = 0; i < base_billboard_lines_.size(); i++) {
+			rviz::BillboardLine* billboard_line =
+					new rviz::BillboardLine(scene_manager_, scene_node_);
+
+			base_billboard_lines_[i] = billboard_line;
+		}
+		break;
+	}
+}
+
+
+void WholeBodyTrajectoryDisplay::updateBaseStyle()
+{
+	LineStyle style = (LineStyle) base_style_property_->getOptionInt();
 
 	switch (style)
 	{
 	case LINES:
 	default:
-		line_width_property_->hide();
+		base_line_width_property_->hide();
 		break;
-
 	case BILLBOARDS:
-		line_width_property_->show();
+		base_line_width_property_->show();
 		break;
 	}
 
-	updateBufferLength();
+	updateBaseBufferLength();
 }
 
 
-void WholeBodyTrajectoryDisplay::updateLineWidth()
+void WholeBodyTrajectoryDisplay::updateBaseLineWidth()
 {
-	LineStyle style = (LineStyle) style_property_->getOptionInt();
-	float line_width = line_width_property_->getFloat();
+	LineStyle style = (LineStyle) base_style_property_->getOptionInt();
+	float line_width = base_line_width_property_->getFloat();
 
 	if (style == BILLBOARDS) {
-		for (size_t i = 0; i < billboard_lines_.size(); i++) {
-			rviz::BillboardLine* billboard_line = billboard_lines_[i];
+		for (size_t i = 0; i < base_billboard_lines_.size(); i++) {
+			rviz::BillboardLine* billboard_line = base_billboard_lines_[i];
 			if (billboard_line)
 				billboard_line->setLineWidth(line_width);
 		}
@@ -117,85 +164,19 @@ void WholeBodyTrajectoryDisplay::updateLineWidth()
 }
 
 
-void WholeBodyTrajectoryDisplay::updateOffset()
+void WholeBodyTrajectoryDisplay::updateBaseOffset()
 {
-	scene_node_->setPosition(offset_property_->getVector());
+	scene_node_->setPosition(base_offset_property_->getVector());
 	context_->queueRender();
-}
-
-
-void WholeBodyTrajectoryDisplay::destroyObjects()
-{
-	// Destroy all simple lines, if any
-	for (size_t i = 0; i < manual_objects_.size(); i++) {
-		Ogre::ManualObject*& manual_object = manual_objects_[ i ];
-		if (manual_object) {
-			manual_object->clear();
-			scene_manager_->destroyManualObject( manual_object );
-			manual_object = NULL; // ensure it doesn't get destroyed again
-		}
-	}
-
-	// Destroy all billboards, if any
-	for (size_t i = 0; i < billboard_lines_.size(); i++) {
-		rviz::BillboardLine*& billboard_line = billboard_lines_[ i ];
-		if (billboard_line) {
-			delete billboard_line; // also destroys the corresponding scene node
-			billboard_line = NULL; // ensure it doesn't get destroyed again
-		}
-	}
-}
-
-
-void WholeBodyTrajectoryDisplay::updateBufferLength()
-{
-	// Delete old path objects
-	destroyObjects();
-
-	// Read options
-	int buffer_length = buffer_length_property_->getInt();
-	LineStyle style = (LineStyle) style_property_->getOptionInt();
-
-	// Create new path objects
-	switch (style)
-	{
-	case LINES: // simple lines with fixed width of 1px
-		manual_objects_.resize(buffer_length);
-		for (size_t i = 0; i < manual_objects_.size(); i++) {
-			Ogre::ManualObject* manual_object = scene_manager_->createManualObject();
-			manual_object->setDynamic(true);
-			scene_node_->attachObject(manual_object);
-
-			manual_objects_[ i ] = manual_object;
-		}
-		break;
-
-	case BILLBOARDS: // billboards with configurable width
-		billboard_lines_.resize( buffer_length );
-		for (size_t i = 0; i < billboard_lines_.size(); i++) {
-			rviz::BillboardLine* billboard_line =
-					new rviz::BillboardLine(scene_manager_, scene_node_);
-			billboard_lines_[ i ] = billboard_line;
-		}
-		break;
-	}
-}
-
-
-bool validateFloats(const dwl_msgs::WholeBodyTrajectory& msg)
-{
-	bool valid = true;
-//	valid = valid && validateFloats(msg.poses); TODO
-	return valid;
 }
 
 
 void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTrajectory::ConstPtr& msg)
 {
 	// Calculate index of oldest element in cyclic buffer
-	size_t bufferIndex = messages_received_ % buffer_length_property_->getInt();
+	size_t buffer_idx = messages_received_ % base_buffer_length_property_->getInt();
 
-	LineStyle style = (LineStyle) style_property_->getOptionInt();
+	LineStyle style = (LineStyle) base_style_property_->getOptionInt();
 	Ogre::ManualObject* manual_object = NULL;
 	rviz::BillboardLine* billboard_line = NULL;
 
@@ -203,21 +184,14 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 	switch (style)
 	{
 	case LINES:
-		manual_object = manual_objects_[bufferIndex];
+		manual_object = base_manual_objects_[buffer_idx];
 		manual_object->clear();
 		break;
 
 	case BILLBOARDS:
-		billboard_line = billboard_lines_[bufferIndex];
+		billboard_line = base_billboard_lines_[buffer_idx];
 		billboard_line->clear();
 		break;
-	}
-
-	// Check if path contains invalid coordinate values
-	if (!validateFloats(*msg)) {
-		setStatus(StatusProperty::Error, "Topic",
-				  "Message contained invalid floating point values (nans or infs)");
-		return;
 	}
 
 	// Lookup transform into fixed frame
@@ -234,11 +208,11 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 //  scene_node_->setPosition( position );
 //  scene_node_->setOrientation( orientation );
 
-	Ogre::ColourValue color = color_property_->getOgreColor();
-	color.a = alpha_property_->getFloat();
+	Ogre::ColourValue color = base_color_property_->getOgreColor();
+	color.a = base_alpha_property_->getFloat();
 
 	uint32_t num_points = msg->trajectory.size();
-	float line_width = line_width_property_->getFloat();
+	float line_width = base_line_width_property_->getFloat();
 
 	switch (style)
 	{
@@ -290,6 +264,29 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 			billboard_line->addPoint(xpos, color);
 		}
 		break;
+	}
+}
+
+
+void WholeBodyTrajectoryDisplay::destroyObjects()
+{
+	// Destroy all simple lines, if any
+	for (size_t i = 0; i < base_manual_objects_.size(); i++) {
+		Ogre::ManualObject*& manual_object = base_manual_objects_[i];
+		if (manual_object) {
+			manual_object->clear();
+			scene_manager_->destroyManualObject(manual_object);
+			manual_object = NULL; // ensure it doesn't get destroyed again
+		}
+	}
+
+	// Destroy all billboards, if any
+	for (size_t i = 0; i < base_billboard_lines_.size(); i++) {
+		rviz::BillboardLine*& billboard_line = base_billboard_lines_[i];
+		if (billboard_line) {
+			delete billboard_line; // also destroys the corresponding scene node
+			billboard_line = NULL; // ensure it doesn't get destroyed again
+		}
 	}
 }
 
