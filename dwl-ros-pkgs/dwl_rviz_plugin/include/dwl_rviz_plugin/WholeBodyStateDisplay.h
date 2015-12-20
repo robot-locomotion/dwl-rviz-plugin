@@ -29,35 +29,43 @@ class IntProperty;
 namespace dwl_rviz_plugin
 {
 
+/**
+ * @class WholeBodyStateDisplay
+ * @brief Displays a dwl_msgs::WholeBodyState message
+ */
 class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBodyState>
 {
 	Q_OBJECT
 	public:
-		// Constructor.  pluginlib::ClassLoader creates instances by calling
-		// the default constructor, so make sure you have one.
+		/** @brief Constructor function */
 		WholeBodyStateDisplay();
-		virtual ~WholeBodyStateDisplay();
+
+		/** @brief Destructor function */
+		~WholeBodyStateDisplay();
 		void clear();
 
+		/** @brief Overrides of public virtual functions from the Display class */
+		void onInitialize();
 
-	protected:
-		// Overrides of public virtual functions from the Display class.
-		virtual void onInitialize();
-
-		// Clear the visuals by deleting their objects.
-		virtual void reset();
+		/** @brief Clear the visuals by deleting their objects */
+		void reset();
 
 		/** @brief Loads a URDF from the ros-param named by our
 		 * "Robot Description" property, iterates through the links, and
 		 * loads any necessary models. */
-		virtual void load();
+		void load();
 
-		std::string robot_model_;
+		/**
+		 * @brief Function to handle an incoming ROS message
+		 * This is our callback to handle an incoming message
+		 * @param const dwl_msgs::WholeBodyState::ConstPtr& Whole-body state msg
+		 */
+		void processMessage(const dwl_msgs::WholeBodyState::ConstPtr& msg);
 
 
 	private Q_SLOTS:
-		// Helper function to apply color and alpha to all visuals.
-		// Set the current color and alpha values for each visual.
+		/** @brief Helper function to apply color and alpha to all visuals.
+		/* Set the current color and alpha values for each visual */
 		void updateRobotModel();
 		void updateCoMStyle();
 		void updateCoMColorAndAlpha();
@@ -68,18 +76,24 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 		void updateSupportColorAndAlpha();
 
 
-	// Function to handle an incoming ROS message.
 	private:
-		// This is our callback to handle an incoming message.
-		void processMessage(const dwl_msgs::WholeBodyState::ConstPtr& msg);
+		/** @brief Robot URDF model */
+		std::string robot_model_;
 
-		// properties to show on side panel
+		/** @brief Properties to show on side panel */
 		rviz::Property* com_category_;
 		rviz::Property* cop_category_;
 		rviz::Property* grf_category_;
 		rviz::Property* support_category_;
 
-		// Property objects for user-editable properties.
+        /** @brief Object for visualization of the data */
+        boost::shared_ptr<PointVisual> com_visual_;
+        boost::shared_ptr<ArrowVisual> comd_visual_;
+        boost::shared_ptr<PointVisual> cop_visual_;
+        std::vector<boost::shared_ptr<ArrowVisual> > grf_visual_;
+        boost::shared_ptr<PolygonVisual> support_visual_;
+
+		/** @brief Property objects for user-editable properties */
 		rviz::StringProperty* robot_model_property_;
 		rviz::EnumProperty* com_style_property_;
 		rviz::ColorProperty* com_color_property_;
@@ -105,15 +119,13 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
         rviz::FloatProperty* support_alpha_property_;
         rviz::FloatProperty* support_force_threshold_property_;
 
-        boost::shared_ptr<PointVisual> com_visual_;
-        boost::shared_ptr<ArrowVisual> comd_visual_;
-        boost::shared_ptr<PointVisual> cop_visual_;
-        std::vector<boost::shared_ptr<ArrowVisual> > grf_visual_;
-        boost::shared_ptr<PolygonVisual> support_visual_;
-
+        /** @brief Whole-body dynamics */
         dwl::model::WholeBodyDynamics dynamics_;
+
+        /** @brief Force threshold for detecting active contacts */
         double force_threshold_;
 
+        /** @brief CoM style */
 		enum CoMStyle {REAL, PROJECTED};
 		bool com_real_;
 };
