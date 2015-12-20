@@ -50,14 +50,17 @@ WholeBodyTrajectoryDisplay::WholeBodyTrajectoryDisplay()
 	base_line_width_property_->setMin(0.001);
 	base_line_width_property_->hide();
 
-	base_color_property_ = new ColorProperty("Color", QColor(0, 85, 255),
-											 "Color to draw the path.",
-											 base_category_, NULL, this);
+	base_color_property_ =
+			new ColorProperty("Color", QColor(0, 85, 255),
+							  "Color to draw the path.",
+							  base_category_, NULL, this);
 
 	base_alpha_property_ =
 			new FloatProperty("Alpha", 1.0,
 							  "Amount of transparency to apply to the path.",
 							  base_category_, NULL, this);
+	base_alpha_property_->setMin(0);
+	base_alpha_property_->setMax(1);
 }
 
 
@@ -101,16 +104,15 @@ void WholeBodyTrajectoryDisplay::updateBaseLineWidth()
 	LineStyle style = (LineStyle) base_style_property_->getOptionInt();
 	float line_width = base_line_width_property_->getFloat();
 
-	if (style == BILLBOARDS) {
+	if (style == BILLBOARDS)
 		base_billboard_line_->setLineWidth(line_width);
-	}
+
 	context_->queueRender();
 }
 
 
 void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTrajectory::ConstPtr& msg)
 {
-	LineStyle style = (LineStyle) base_style_property_->getOptionInt();
 	// Lookup transform into fixed frame
 	Ogre::Vector3 position;
 	Ogre::Quaternion orientation;
@@ -118,18 +120,19 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 		ROS_DEBUG("Error transforming from frame '%s' to frame '%s'",
 				  msg->header.frame_id.c_str(), qPrintable(fixed_frame_));
 	}
-
 	Ogre::Matrix4 transform(orientation);
 	transform.setTrans(position);
 
+	// Getting the base trajectory style
+	LineStyle base_style = (LineStyle) base_style_property_->getOptionInt();
 
-	Ogre::ColourValue color = base_color_property_->getOgreColor();
-	color.a = base_alpha_property_->getFloat();
+	// Getting the base trajectory color
+	Ogre::ColourValue base_color = base_color_property_->getOgreColor();
+	base_color.a = base_alpha_property_->getFloat();
 
+	// Visualization of the base trajectory
 	uint32_t num_points = msg->trajectory.size();
-	float line_width = base_line_width_property_->getFloat();
-
-	switch (style)
+	switch (base_style)
 	{
 	case LINES:
 		base_manual_object_.reset(scene_manager_->createManualObject());
@@ -154,17 +157,19 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 														   pos(dwl::rbd::Y),
 														   pos(dwl::rbd::Z));
 			base_manual_object_->position(xpos.x, xpos.y, xpos.z);
-			base_manual_object_->colour(color);
+			base_manual_object_->colour(base_color);
 		}
 
 		base_manual_object_->end();
 		break;
 
 	case BILLBOARDS:
+		// Getting the base line width
+		float base_line_width = base_line_width_property_->getFloat();
 		base_billboard_line_.reset(new rviz::BillboardLine(scene_manager_, scene_node_));
 		base_billboard_line_->setNumLines(1);
 		base_billboard_line_->setMaxPointsPerLine(num_points);
-		base_billboard_line_->setLineWidth(line_width);
+		base_billboard_line_->setLineWidth(base_line_width);
 
 		for (uint32_t i=0; i < num_points; ++i) {
 			unsigned int num_base = msg->trajectory[i].base.size();
@@ -181,7 +186,7 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 			Ogre::Vector3 xpos = transform * Ogre::Vector3(pos(dwl::rbd::X),
 														   pos(dwl::rbd::Y),
 														   pos(dwl::rbd::Z));
-			base_billboard_line_->addPoint(xpos, color);
+			base_billboard_line_->addPoint(xpos, base_color);
 		}
 		break;
 	}
