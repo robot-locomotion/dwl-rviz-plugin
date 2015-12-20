@@ -247,6 +247,8 @@ void WholeBodyStateDisplay::updateCoMColorAndAlpha()
 	com_visual_->setColor(color.r, color.g, color.b, color.a);
 	comd_visual_->setColor(color.r, color.g, color.b, color.a);
 	com_visual_->setRadius(radius);
+
+	context_->queueRender();
 }
 
 
@@ -271,6 +273,8 @@ void WholeBodyStateDisplay::updateCoPColorAndAlpha()
 
 	cop_visual_->setColor(color.r, color.g, color.b, color.a);
 	cop_visual_->setRadius(radius);
+
+	context_->queueRender();
 }
 
 
@@ -309,6 +313,8 @@ void WholeBodyStateDisplay::updateSupportColorAndAlpha()
 	double scale = 1.;
 	support_visual_->setColor(color.r, color.g, color.b, color.a);
 	support_visual_->setScale(Ogre::Vector3(scale, scale, scale));
+
+	context_->queueRender();
 }
 
 
