@@ -42,6 +42,8 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 
 		/** @brief Destructor function */
 		~WholeBodyStateDisplay();
+
+		/** @brief Clear the robot model */
 		void clear();
 
 		/** @brief Overrides of public virtual functions from the Display class */

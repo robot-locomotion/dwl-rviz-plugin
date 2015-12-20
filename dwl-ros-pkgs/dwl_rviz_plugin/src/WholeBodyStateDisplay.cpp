@@ -19,17 +19,18 @@ namespace dwl_rviz_plugin
 
 WholeBodyStateDisplay::WholeBodyStateDisplay() : force_threshold_(0.), com_real_(true)
 {
+	// Robot properties
+	robot_model_property_ = new StringProperty("Robot Description", "robot_model",
+												"Name of the parameter to search for to load"
+												" the robot description.",
+												this, SLOT(updateRobotModel()));
+
 	// Category Groups
 	com_category_ = new rviz::Property("Center Of Mass", QVariant(), "", this);
 	cop_category_ = new rviz::Property("Center Of Pressure", QVariant(), "", this);
 	grf_category_ = new rviz::Property("Contact Forces", QVariant(), "", this);
 	support_category_ = new rviz::Property("Support Region", QVariant(), "", this);
 
-	// Robot properties
-	robot_model_property_ = new StringProperty("Robot Description", "robot_model",
-												"Name of the parameter to search for to load"
-												" the robot description.",
-												this, SLOT(updateRobotModel()));
 
 	// CoM position and velocity properties
 	com_style_property_ = new EnumProperty("CoM Style", "Real",
