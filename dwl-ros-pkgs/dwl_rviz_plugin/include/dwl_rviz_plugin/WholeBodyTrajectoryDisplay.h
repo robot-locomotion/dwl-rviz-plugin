@@ -60,6 +60,8 @@ class WholeBodyTrajectoryDisplay: public rviz::MessageFilterDisplay<dwl_msgs::Wh
 		/* Set the current color and alpha values for each visual */
 		void updateBaseStyle();
 		void updateBaseLineWidth();
+		void updateContactStyle();
+		void updateContactLineWidth();
 
 
 	private:
@@ -70,12 +72,19 @@ class WholeBodyTrajectoryDisplay: public rviz::MessageFilterDisplay<dwl_msgs::Wh
 		/** @brief Object for visualization of the data */
 		boost::shared_ptr<Ogre::ManualObject> base_manual_object_;
 		boost::shared_ptr<rviz::BillboardLine> base_billboard_line_;
+		std::vector<boost::shared_ptr<Ogre::ManualObject> > contact_manual_object_;
+		std::vector<boost::shared_ptr<rviz::BillboardLine> > contact_billboard_line_;
 
 		/** @brief Property objects for user-editable properties */
 		rviz::EnumProperty* base_style_property_;
 		rviz::ColorProperty* base_color_property_;
 		rviz::FloatProperty* base_alpha_property_;
 		rviz::FloatProperty* base_line_width_property_;
+
+		rviz::EnumProperty* contact_style_property_;
+		rviz::ColorProperty* contact_color_property_;
+		rviz::FloatProperty* contact_alpha_property_;
+		rviz::FloatProperty* contact_line_width_property_;
 
 		enum LineStyle {LINES, BILLBOARDS};
 };
