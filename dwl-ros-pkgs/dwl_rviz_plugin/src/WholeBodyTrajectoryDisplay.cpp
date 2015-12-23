@@ -354,7 +354,73 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 
 		break;}
 
-	case BILLBOARDS:
+	case BILLBOARDS: {
+		// Getting the end-effector line width
+		float contact_line_width = contact_line_width_property_->getFloat();
+		contact_billboard_line_.clear();
+		contact_billboard_line_.resize(num_traj);
+
+
+
+
+		uint32_t traj_id = 0;
+		for (uint32_t i = 0; i < num_points; ++i) {
+			uint32_t num_contacts = msg->trajectory[i].contacts.size();
+			for (uint32_t k = 0; k < num_contacts; k++) {
+				dwl_msgs::ContactState contact = msg->trajectory[i].contacts[k];
+
+				if (contact_traj_id.find(contact.name) == contact_traj_id.end()) {// a new swing trajectory
+					contact_traj_id[contact.name] = traj_id;
+					contact_vec_id[traj_id] = k;
+
+					contact_billboard_line_[traj_id].reset(new rviz::BillboardLine(scene_manager_, scene_node_));
+					contact_billboard_line_[traj_id]->setNumLines(1);
+					contact_billboard_line_[traj_id]->setMaxPointsPerLine(num_points);
+					contact_billboard_line_[traj_id]->setLineWidth(contact_line_width);
+
+					// Incrementing the counter (id) of swing trajectories
+					traj_id++;
+				} else {
+					uint32_t swing_idx = contact_traj_id.find(contact.name)->second;
+
+					if (k != contact_vec_id.find(swing_idx)->second) {// change the vector index
+						contact_vec_id[swing_idx] = k;
+					}
+				}
+			}
+
+			// Computing the actual base position
+			Ogre::Vector3 base_pos(0., 0., 0.);
+			for (uint32_t j = 0; j < num_base; j++) {
+				dwl_msgs::BaseState base = msg->trajectory[i].base[j];
+				if (base.id == dwl::rbd::LX)
+					base_pos.x = base.position;
+				else if (base.id == dwl::rbd::LY)
+					base_pos.y = base.position;
+				else if (base.id == dwl::rbd::LZ)
+					base_pos.z = base.position;
+			}
+
+			// Adding the contact points for the current swing trajectories
+			for (std::map<std::string,uint32_t>::iterator traj_it = contact_traj_id.begin();
+					traj_it != contact_traj_id.end(); traj_it++) {
+				uint32_t traj_id = traj_it->second;
+				uint32_t id = contact_vec_id.find(traj_id)->second;
+
+				if (id < num_contacts) {
+					dwl_msgs::ContactState contact = msg->trajectory[i].contacts[id];
+
+					Ogre::Vector3 xpos = base_pos + transform * Ogre::Vector3(contact.position.x,
+																			  contact.position.y,
+																			  contact.position.z);
+
+					contact_billboard_line_[traj_id]->addPoint(xpos, base_color);
+				}
+			}
+		}
+
+
+
 		/*// Getting the end-effector line width
 		float contact_line_width = contact_line_width_property_->getFloat();
 
@@ -376,7 +442,7 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 				contact_billboard_line_[j]->addPoint(xpos, base_color);
 			}
 		}*/
-		break;
+		break;}
 	}
 }
 
