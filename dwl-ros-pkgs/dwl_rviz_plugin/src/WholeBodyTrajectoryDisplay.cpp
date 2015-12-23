@@ -360,9 +360,6 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 		contact_billboard_line_.clear();
 		contact_billboard_line_.resize(num_traj);
 
-
-
-
 		uint32_t traj_id = 0;
 		for (uint32_t i = 0; i < num_points; ++i) {
 			uint32_t num_contacts = msg->trajectory[i].contacts.size();
@@ -418,30 +415,6 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 				}
 			}
 		}
-
-
-
-		/*// Getting the end-effector line width
-		float contact_line_width = contact_line_width_property_->getFloat();
-
-		contact_billboard_line_.clear();
-		contact_billboard_line_.resize(num_contact);
-		for (uint32_t j = 0; j < num_contact; j++) {
-			contact_billboard_line_[j].reset(new rviz::BillboardLine(scene_manager_, scene_node_));
-			contact_billboard_line_[j]->setNumLines(1);
-			contact_billboard_line_[j]->setMaxPointsPerLine(num_points);
-			contact_billboard_line_[j]->setLineWidth(contact_line_width);
-
-			for (uint32_t i = 0; i < num_points; ++i) {
-				dwl_msgs::ContactState contact = msg->trajectory[i].contacts[j];
-
-				Ogre::Vector3 xpos = transform * Ogre::Vector3(contact.position.x,
-															   contact.position.y,
-															   contact.position.z);
-
-				contact_billboard_line_[j]->addPoint(xpos, base_color);
-			}
-		}*/
 		break;}
 	}
 }
