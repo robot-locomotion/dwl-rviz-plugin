@@ -198,6 +198,7 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 
 	// Visualization of the base trajectory
 	uint32_t num_points = msg->trajectory.size();
+	uint32_t num_base = msg->trajectory[0].base.size();
 	switch (base_style)
 	{
 	case LINES:
@@ -208,20 +209,18 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 		base_manual_object_->estimateVertexCount(num_points);
 		base_manual_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_STRIP);
 		for (uint32_t i = 0; i < num_points; ++i) {
-			unsigned int num_base = msg->trajectory[i].base.size();
-			Eigen::Vector3d pos = Eigen::Vector3d::Zero();
-			for (unsigned int j = 0; j < num_base; j++) {
-				if (msg->trajectory[i].base[j].id == dwl::rbd::LX)
-					pos(dwl::rbd::X) = msg->trajectory[i].base[j].position;
-				else if (msg->trajectory[i].base[j].id == dwl::rbd::LY)
-					pos(dwl::rbd::Y) = msg->trajectory[i].base[j].position;
-				else if (msg->trajectory[i].base[j].id == dwl::rbd::LZ)
-					pos(dwl::rbd::Z) = msg->trajectory[i].base[j].position;
+			Ogre::Vector3 pos(0., 0., 0.);
+			for (uint32_t j = 0; j < num_base; j++) {
+				dwl_msgs::BaseState base = msg->trajectory[i].base[j];
+				if (base.id == dwl::rbd::LX)
+					pos.x = base.position;
+				else if (base.id == dwl::rbd::LY)
+					pos.y = base.position;
+				else if (base.id == dwl::rbd::LZ)
+					pos.z = base.position;
 			}
 
-			Ogre::Vector3 xpos = transform * Ogre::Vector3(pos(dwl::rbd::X),
-														   pos(dwl::rbd::Y),
-														   pos(dwl::rbd::Z));
+			Ogre::Vector3 xpos = transform * pos;
 			base_manual_object_->position(xpos.x, xpos.y, xpos.z);
 			base_manual_object_->colour(base_color);
 		}
@@ -237,21 +236,19 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 		base_billboard_line_->setMaxPointsPerLine(num_points);
 		base_billboard_line_->setLineWidth(base_line_width);
 
-		for (uint32_t i=0; i < num_points; ++i) {
-			unsigned int num_base = msg->trajectory[i].base.size();
-			Eigen::Vector3d pos = Eigen::Vector3d::Zero();
-			for (unsigned int j = 0; j < num_base; j++) {
-				if (msg->trajectory[i].base[j].id == dwl::rbd::LX)
-					pos(dwl::rbd::X) = msg->trajectory[i].base[j].position;
-				else if (msg->trajectory[i].base[j].id == dwl::rbd::LY)
-					pos(dwl::rbd::Y) = msg->trajectory[i].base[j].position;
-				else if (msg->trajectory[i].base[j].id == dwl::rbd::LZ)
-					pos(dwl::rbd::Z) = msg->trajectory[i].base[j].position;
+		for (uint32_t i = 0; i < num_points; ++i) {
+			Ogre::Vector3 pos(0., 0., 0.);
+			for (uint32_t j = 0; j < num_base; j++) {
+				dwl_msgs::BaseState base = msg->trajectory[i].base[j];
+				if (base.id == dwl::rbd::LX)
+					pos.x = base.position;
+				else if (base.id == dwl::rbd::LY)
+					pos.y = base.position;
+				else if (base.id == dwl::rbd::LZ)
+					pos.z = base.position;
 			}
 
-			Ogre::Vector3 xpos = transform * Ogre::Vector3(pos(dwl::rbd::X),
-														   pos(dwl::rbd::Y),
-														   pos(dwl::rbd::Z));
+			Ogre::Vector3 xpos = transform * pos;
 			base_billboard_line_->addPoint(xpos, base_color);
 		}
 		break;
@@ -266,14 +263,14 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 	Ogre::ColourValue contact_color = contact_color_property_->getOgreColor();
 	contact_color.a = contact_alpha_property_->getFloat();
 
-	// Visualization of the base trajectory
-	unsigned int num_contact = msg->trajectory[0].contacts.size();
+	// Visualization of the contact trajectory
+	uint32_t num_contact = msg->trajectory[0].contacts.size();
 	switch (contact_style)
 	{
 	case LINES:
 		contact_manual_object_.clear();
 		contact_manual_object_.resize(num_contact);
-		for (unsigned int j = 0; j < num_contact; j++) {
+		for (uint32_t j = 0; j < num_contact; j++) {
 			contact_manual_object_[j].reset(scene_manager_->createManualObject());
 			contact_manual_object_[j]->setDynamic(true);
 			scene_node_->attachObject(contact_manual_object_[j].get());
@@ -299,7 +296,7 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 
 		contact_billboard_line_.clear();
 		contact_billboard_line_.resize(num_contact);
-		for (unsigned int j = 0; j < num_contact; j++) {
+		for (uint32_t j = 0; j < num_contact; j++) {
 			contact_billboard_line_[j].reset(new rviz::BillboardLine(scene_manager_, scene_node_));
 			contact_billboard_line_[j]->setNumLines(1);
 			contact_billboard_line_[j]->setMaxPointsPerLine(num_points);
