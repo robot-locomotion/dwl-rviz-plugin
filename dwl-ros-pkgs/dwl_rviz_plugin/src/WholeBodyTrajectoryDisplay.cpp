@@ -263,35 +263,99 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 	Ogre::ColourValue contact_color = contact_color_property_->getOgreColor();
 	contact_color.a = contact_alpha_property_->getFloat();
 
-	// Visualization of the contact trajectory
-	uint32_t num_contact = msg->trajectory[0].contacts.size();
+	// Getting the number of contact trajectories
+	uint32_t num_traj = 0;
+	std::map<std::string, uint32_t> swing_traj_id;
+	for (uint32_t i = 0; i < num_points; ++i) {
+		uint32_t num_contacts = msg->trajectory[i].contacts.size();
+		for (uint32_t k = 0; k < num_contacts; k++) {
+			dwl_msgs::ContactState contact = msg->trajectory[i].contacts[k];
+
+			if (swing_traj_id.find(contact.name) == swing_traj_id.end()) {// a new swing trajectory
+				swing_traj_id[contact.name] = num_traj;
+
+				// Incrementing the counter (id) of swing trajectories
+				num_traj++;
+			}
+		}
+	}
+
+
+
+	std::map<std::string, uint32_t> swing_id;
+	std::map<uint32_t, uint32_t> contact_id;
 	switch (contact_style)
 	{
-	case LINES:
+	case LINES: {
 		contact_manual_object_.clear();
-		contact_manual_object_.resize(num_contact);
-		for (uint32_t j = 0; j < num_contact; j++) {
-			contact_manual_object_[j].reset(scene_manager_->createManualObject());
-			contact_manual_object_[j]->setDynamic(true);
-			scene_node_->attachObject(contact_manual_object_[j].get());
+		contact_manual_object_.resize(num_traj);
 
-			contact_manual_object_[j]->estimateVertexCount(num_points);
-			contact_manual_object_[j]->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_STRIP);
-			for (uint32_t i = 0; i < num_points; ++i) {
-				dwl_msgs::ContactState contact = msg->trajectory[i].contacts[j];
+		uint32_t traj_id = 0;
+		for (uint32_t i = 0; i < num_points; ++i) {
+			uint32_t num_contacts = msg->trajectory[i].contacts.size();
+			for (uint32_t k = 0; k < num_contacts; k++) {
+				dwl_msgs::ContactState contact = msg->trajectory[i].contacts[k];
 
-				Ogre::Vector3 xpos = transform * Ogre::Vector3(contact.position.x,
-															   contact.position.y,
-															   contact.position.z);
-				contact_manual_object_[j]->position(xpos.x, xpos.y, xpos.z);
-				contact_manual_object_[j]->colour(base_color);
+				if (swing_id.find(contact.name) == swing_id.end()) {// a new swing trajectory
+					swing_id[contact.name] = traj_id;
+					contact_id[traj_id] = k;
+
+					contact_manual_object_[traj_id].reset(scene_manager_->createManualObject());
+					contact_manual_object_[traj_id]->setDynamic(true);
+					scene_node_->attachObject(contact_manual_object_[traj_id].get());
+
+					contact_manual_object_[traj_id]->estimateVertexCount(num_points);
+					contact_manual_object_[traj_id]->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_STRIP);
+
+					// Incrementing the counter (id) of swing trajectories
+					traj_id++;
+				} else {
+					uint32_t swing_idx = swing_id.find(contact.name)->second;
+
+					if (k != contact_id.find(swing_idx)->second) {// change the trajectory index
+						contact_id[swing_idx] = k;
+					}
+				}
 			}
-			contact_manual_object_[j]->end();
+
+			// Computing the actual base position
+			Ogre::Vector3 base_pos(0., 0., 0.);
+			for (uint32_t j = 0; j < num_base; j++) {
+				dwl_msgs::BaseState base = msg->trajectory[i].base[j];
+				if (base.id == dwl::rbd::LX)
+					base_pos.x = base.position;
+				else if (base.id == dwl::rbd::LY)
+					base_pos.y = base.position;
+				else if (base.id == dwl::rbd::LZ)
+					base_pos.z = base.position;
+			}
+
+			// Adding the contact points for the current swing trajectories
+			for (std::map<std::string,uint32_t>::iterator traj_it = swing_id.begin();
+					traj_it != swing_id.end(); traj_it++) {
+				uint32_t traj_id = traj_it->second;
+				uint32_t id = contact_id.find(traj_id)->second;
+
+				if (id < num_contacts) {
+					dwl_msgs::ContactState contact = msg->trajectory[i].contacts[id];
+
+					Ogre::Vector3 xpos = base_pos + transform * Ogre::Vector3(contact.position.x,
+																			  contact.position.y,
+																			  contact.position.z);
+
+					contact_manual_object_[traj_id]->position(xpos.x, xpos.y, xpos.z);
+					contact_manual_object_[traj_id]->colour(base_color);
+				}
+			}
 		}
-		break;
+		// Ending the contact manual objects
+		for (uint32_t i = 0; i < traj_id; i++)
+			contact_manual_object_[i]->end();
+
+		break;}
 
 	case BILLBOARDS:
-		// Getting the end-effector line width
+		/*// Getting the end-effector line width
 		float contact_line_width = contact_line_width_property_->getFloat();
 
 		contact_billboard_line_.clear();
@@ -311,7 +375,7 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 
 				contact_billboard_line_[j]->addPoint(xpos, base_color);
 			}
-		}
+		}*/
 		break;
 	}
 }
