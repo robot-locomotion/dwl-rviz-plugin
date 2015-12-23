@@ -344,7 +344,7 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 																			  contact.position.z);
 
 					contact_manual_object_[traj_id]->position(xpos.x, xpos.y, xpos.z);
-					contact_manual_object_[traj_id]->colour(base_color);
+					contact_manual_object_[traj_id]->colour(contact_color);
 				}
 			}
 		}
@@ -411,7 +411,7 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 																			  contact.position.y,
 																			  contact.position.z);
 
-					contact_billboard_line_[traj_id]->addPoint(xpos, base_color);
+					contact_billboard_line_[traj_id]->addPoint(xpos, contact_color);
 				}
 			}
 		}
