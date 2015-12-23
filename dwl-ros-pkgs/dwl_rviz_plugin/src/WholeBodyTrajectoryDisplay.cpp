@@ -265,14 +265,14 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 
 	// Getting the number of contact trajectories
 	uint32_t num_traj = 0;
-	std::map<std::string, uint32_t> swing_traj_id;
+	std::map<std::string, uint32_t> contact_traj_id;
 	for (uint32_t i = 0; i < num_points; ++i) {
 		uint32_t num_contacts = msg->trajectory[i].contacts.size();
 		for (uint32_t k = 0; k < num_contacts; k++) {
 			dwl_msgs::ContactState contact = msg->trajectory[i].contacts[k];
 
-			if (swing_traj_id.find(contact.name) == swing_traj_id.end()) {// a new swing trajectory
-				swing_traj_id[contact.name] = num_traj;
+			if (contact_traj_id.find(contact.name) == contact_traj_id.end()) {// a new swing trajectory
+				contact_traj_id[contact.name] = num_traj;
 
 				// Incrementing the counter (id) of swing trajectories
 				num_traj++;
@@ -282,8 +282,8 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 
 
 
-	std::map<std::string, uint32_t> swing_id;
-	std::map<uint32_t, uint32_t> contact_id;
+	contact_traj_id.clear();
+	std::map<uint32_t, uint32_t> contact_vec_id;
 	switch (contact_style)
 	{
 	case LINES: {
@@ -296,9 +296,9 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 			for (uint32_t k = 0; k < num_contacts; k++) {
 				dwl_msgs::ContactState contact = msg->trajectory[i].contacts[k];
 
-				if (swing_id.find(contact.name) == swing_id.end()) {// a new swing trajectory
-					swing_id[contact.name] = traj_id;
-					contact_id[traj_id] = k;
+				if (contact_traj_id.find(contact.name) == contact_traj_id.end()) {// a new swing trajectory
+					contact_traj_id[contact.name] = traj_id;
+					contact_vec_id[traj_id] = k;
 
 					contact_manual_object_[traj_id].reset(scene_manager_->createManualObject());
 					contact_manual_object_[traj_id]->setDynamic(true);
@@ -310,10 +310,10 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 					// Incrementing the counter (id) of swing trajectories
 					traj_id++;
 				} else {
-					uint32_t swing_idx = swing_id.find(contact.name)->second;
+					uint32_t swing_idx = contact_traj_id.find(contact.name)->second;
 
-					if (k != contact_id.find(swing_idx)->second) {// change the trajectory index
-						contact_id[swing_idx] = k;
+					if (k != contact_vec_id.find(swing_idx)->second) {// change the vector index
+						contact_vec_id[swing_idx] = k;
 					}
 				}
 			}
@@ -331,10 +331,10 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 			}
 
 			// Adding the contact points for the current swing trajectories
-			for (std::map<std::string,uint32_t>::iterator traj_it = swing_id.begin();
-					traj_it != swing_id.end(); traj_it++) {
+			for (std::map<std::string,uint32_t>::iterator traj_it = contact_traj_id.begin();
+					traj_it != contact_traj_id.end(); traj_it++) {
 				uint32_t traj_id = traj_it->second;
-				uint32_t id = contact_id.find(traj_id)->second;
+				uint32_t id = contact_vec_id.find(traj_id)->second;
 
 				if (id < num_contacts) {
 					dwl_msgs::ContactState contact = msg->trajectory[i].contacts[id];
