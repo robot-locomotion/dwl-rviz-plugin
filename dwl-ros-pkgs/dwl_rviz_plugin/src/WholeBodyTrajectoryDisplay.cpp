@@ -283,7 +283,8 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 	std::map<uint32_t, uint32_t> contact_vec_id;
 	switch (contact_style)
 	{
-	case LINES: {
+	case LINES:
+	{
 		contact_manual_object_.clear();
 		contact_manual_object_.resize(num_traj);
 
@@ -349,9 +350,11 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 		for (uint32_t i = 0; i < traj_id; i++)
 			contact_manual_object_[i]->end();
 
-		break;}
+		break;
+	}
 
-	case BILLBOARDS: {
+	case BILLBOARDS:
+	{
 		// Getting the end-effector line width
 		float contact_line_width = contact_line_width_property_->getFloat();
 		contact_billboard_line_.clear();
@@ -412,7 +415,8 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 				}
 			}
 		}
-		break;}
+		break;
+	}
 	}
 }
 
