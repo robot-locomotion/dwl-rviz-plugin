@@ -255,7 +255,7 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 	}
 
 
-	// Visualization of the edn-effector trajectory
+	// Visualization of the end-effector trajectory
 	// Getting the end-effector trajectory style
 	LineStyle contact_style = (LineStyle) contact_style_property_->getOptionInt();
 
@@ -280,8 +280,7 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 		}
 	}
 
-
-
+	// Visualizing the different end-effector trajectories
 	contact_traj_id.clear();
 	std::map<uint32_t, uint32_t> contact_vec_id;
 	switch (contact_style)
