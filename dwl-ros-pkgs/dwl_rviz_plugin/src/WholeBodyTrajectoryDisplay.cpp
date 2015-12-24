@@ -96,9 +96,7 @@ WholeBodyTrajectoryDisplay::WholeBodyTrajectoryDisplay()
 
 WholeBodyTrajectoryDisplay::~WholeBodyTrajectoryDisplay()
 {
-	// Delete the contact line to make it disappear.
-	contact_manual_object_.clear();
-	contact_billboard_line_.clear();
+	destroyObjects();
 }
 
 
@@ -121,7 +119,6 @@ void WholeBodyTrajectoryDisplay::updateBaseStyle()
 	switch (style)
 	{
 	case LINES:
-	default:
 		base_line_width_property_->hide();
 		break;
 	case BILLBOARDS:
@@ -150,7 +147,6 @@ void WholeBodyTrajectoryDisplay::updateContactStyle()
 	switch (style)
 	{
 	case LINES:
-	default:
 		contact_line_width_property_->hide();
 		break;
 	case BILLBOARDS:
@@ -187,6 +183,8 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 	Ogre::Matrix4 transform(orientation);
 	transform.setTrans(position);
 
+	// Destroy all the old elements
+	destroyObjects();
 
 	// Visualization of the base trajectory
 	// Getting the base trajectory style
@@ -416,6 +414,15 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 		}
 		break;}
 	}
+}
+
+
+void WholeBodyTrajectoryDisplay::destroyObjects()
+{
+	base_manual_object_.reset();
+	base_billboard_line_.reset();
+	contact_manual_object_.clear();
+	contact_billboard_line_.clear();
 }
 
 } // namespace dwl_rviz_plugin
