@@ -322,12 +322,16 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 {
 	// Getting the base velocity
 	unsigned int num_base_joints = msg->base.size();
+	dwl::rbd::Vector6d base_pos = dwl::rbd::Vector6d::Zero();
 	dwl::rbd::Vector6d base_vel = dwl::rbd::Vector6d::Zero();
 	for (unsigned int i = 0; i < num_base_joints; i++) {
 		dwl_msgs::BaseState base = msg->base[i];
 
 		// Getting the base joint id
 		unsigned int id = base.id;
+
+		// Setting the base position
+		base_pos(id) = base.position;
 
 		// Setting the base velocity
 		base_vel(id) = base.velocity;
@@ -431,12 +435,19 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 
 	// Defining the center of mass as Ogre::Vector3
 	Ogre::Vector3 com_point;
-	com_point.x = com_pos(dwl::rbd::X);
-	com_point.y = com_pos(dwl::rbd::Y);
-	if (com_real_)
+	if (com_real_) {
+		com_point.x = com_pos(dwl::rbd::X);
+		com_point.y = com_pos(dwl::rbd::Y);
 		com_point.z = com_pos(dwl::rbd::Z);
-	else
+	} else {
+		Eigen::Vector3d cop_z = Eigen::Vector3d::Zero();
+		cop_z(dwl::rbd::Z) = cop_pos(dwl::rbd::Z);
+		Eigen::Vector3d rot_cop_z =
+				dwl::math::getRotationMatrix(dwl::rbd::angularPart(base_pos)).transpose() * cop_z;
+		com_point.x = com_pos(dwl::rbd::X) + rot_cop_z(dwl::rbd::X);
+		com_point.y = com_pos(dwl::rbd::Y) + rot_cop_z(dwl::rbd::Y);
 		com_point.z = cop_pos(dwl::rbd::Z);
+	}
 
 	// Defining the center of mass velocity orientation
 	Eigen::Vector3d com_ref_dir = -Eigen::Vector3d::UnitZ();

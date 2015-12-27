@@ -65,6 +65,9 @@ class WholeBodyTrajectoryDisplay: public rviz::MessageFilterDisplay<dwl_msgs::Wh
 
 
 	private:
+		/** Destroy all the objects for visualization */
+		void destroyObjects();
+
 		/** @brief Properties to show on side panel */
 		rviz::Property* base_category_;
 		rviz::Property* contact_category_;
