@@ -81,6 +81,7 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 	private:
 		/** @brief Robot URDF model */
 		std::string robot_model_;
+		bool initialized_model_;
 
 		/** @brief Properties to show on side panel */
 		rviz::Property* com_category_;
