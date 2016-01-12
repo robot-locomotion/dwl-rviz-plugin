@@ -17,7 +17,8 @@ using namespace rviz;
 namespace dwl_rviz_plugin
 {
 
-WholeBodyStateDisplay::WholeBodyStateDisplay() : force_threshold_(0.), com_real_(true)
+WholeBodyStateDisplay::WholeBodyStateDisplay() : force_threshold_(0.), com_real_(true),
+		initialized_model_(false)
 {
 	// Robot properties
 	robot_model_property_ = new StringProperty("Robot Description", "robot_model",
@@ -206,6 +207,7 @@ void WholeBodyStateDisplay::load()
 
 	// Initializing the dynamics from the URDF model
 	dynamics_.modelFromURDFModel(robot_model_);
+	initialized_model_ = true;
 
 	setStatus(StatusProperty::Ok, "URDF", "URDF parsed OK");
 }
@@ -320,6 +322,10 @@ void WholeBodyStateDisplay::updateSupportColorAndAlpha()
 
 void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::ConstPtr& msg)
 {
+	// Checking if the urdf model was initialized
+	if (!initialized_model_)
+		return;
+
 	// Getting the base velocity
 	unsigned int num_base_joints = msg->base.size();
 	dwl::rbd::Vector6d base_pos = dwl::rbd::Vector6d::Zero();
@@ -348,7 +354,7 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 		std::string name  = joint.name;
 
 		// Getting the joint id
-		unsigned int id = dynamics_.getFloatingBaseSystem().getJoints().find(name)->second;
+		unsigned int id = dynamics_.getFloatingBaseSystem().getJointId(name);
 
 		// Setting the joint position and velocity
 		joint_pos(id) = joint.position;
