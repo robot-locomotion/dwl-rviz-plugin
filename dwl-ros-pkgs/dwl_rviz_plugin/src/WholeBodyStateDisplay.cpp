@@ -299,8 +299,9 @@ void WholeBodyStateDisplay::updateGRFArrowGeometry()
 	float head_length = grf_head_length_property_->getFloat();
 	float head_radius = grf_head_radius_property_->getFloat();
 
-	for (size_t i = 0; i < grf_visual_.size(); i++ )
-		grf_visual_[i]->setProperties(shaft_length, shaft_radius, head_length, head_radius);
+	for (size_t i = 0; i < grf_visual_.size(); i++)
+		grf_visual_[i]->setProperties(shaft_length, shaft_radius,
+									  head_length, head_radius);
 
 	context_->queueRender();
 }

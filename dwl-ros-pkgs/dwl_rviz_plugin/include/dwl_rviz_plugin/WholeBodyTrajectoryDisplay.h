@@ -31,7 +31,8 @@ namespace dwl_rviz_plugin
  * @class WholeBodyTrajectoryDisplay
  * @brief Displays a dwl_msgs::WholeBodyTrajectory message
  */
-class WholeBodyTrajectoryDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBodyTrajectory>
+class WholeBodyTrajectoryDisplay :
+		public rviz::MessageFilterDisplay<dwl_msgs::WholeBodyTrajectory>
 {
 	Q_OBJECT
 	public:
