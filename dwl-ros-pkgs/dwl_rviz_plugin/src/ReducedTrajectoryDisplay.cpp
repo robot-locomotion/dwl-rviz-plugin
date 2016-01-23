@@ -96,6 +96,15 @@ void ReducedTrajectoryDisplay::onInitialize()
 	MFDClass::onInitialize();
 }
 
+void ReducedTrajectoryDisplay::reset()
+{
+	MFDClass::reset();
+
+	com_visual_.clear();
+	cop_visual_.clear();
+	pendulum_visual_.clear();
+}
+
 
 void ReducedTrajectoryDisplay::updateCoMRadiusAndAlpha()
 {
