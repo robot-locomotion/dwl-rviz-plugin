@@ -43,7 +43,7 @@ ReducedTrajectoryDisplay::ReducedTrajectoryDisplay()
 	com_alpha_property_->setMax(1);
 
 	com_radius_property_ =
-			new rviz::FloatProperty("Radius", 0.04,
+			new rviz::FloatProperty("Radius", 0.03,
 									"Radius of a point",
 									com_category_, SLOT(updateCoMRadiusAndAlpha()), this);
 
@@ -57,7 +57,7 @@ ReducedTrajectoryDisplay::ReducedTrajectoryDisplay()
 	cop_alpha_property_->setMax(1);
 
 	cop_radius_property_ =
-			new rviz::FloatProperty("Radius", 0.04,
+			new rviz::FloatProperty("Radius", 0.03,
 									"Radius of a point",
 									cop_category_, SLOT(updateCoPRadiusAndAlpha()), this);
 
@@ -174,24 +174,34 @@ void ReducedTrajectoryDisplay::processMessage(const dwl_msgs::ReducedTrajectory:
 		geometry_msgs::Vector3 cop_vec = state.center_of_pressure;
 		Ogre::Vector3 cop_pos(cop_vec.x, cop_vec.y, cop_vec.z);
 
-
 		// We are keeping a vector of visual pointers. This creates the next one and stores it
 		// in the vector
 		boost::shared_ptr<PointVisual> com_visual;
 		com_visual.reset(new PointVisual(context_->getSceneManager(), scene_node_));
+
+		// Setting the point properties
+		updateCoMRadiusAndAlpha();
+		Ogre::ColourValue color(1, 0., 0., 1.);// = com_color_property_->getOgreColor();
+		color.a = com_alpha_;
+		com_visual->setColor(color.r, color.g, color.b, color.a);
+		com_visual->setRadius(com_radius_);
+
 		com_visual->setPoint(com_pos);
 		com_visual->setFramePosition(position);
 		com_visual->setFrameOrientation(orientation);
 
-		// Setting the point properties
-		updateCoMRadiusAndAlpha();
-		Ogre::ColourValue color;// = com_color_property_->getOgreColor();
-		color.a = com_alpha_;
-		com_visual->setColor(color.r, color.g, color.b, color.a);
-
 		// And send it to the end of the vector
 		com_visual_.push_back(com_visual);
 	}
+}
+
+
+void ReducedTrajectoryDisplay::destroyObjects()
+{
+	com_visual_.clear();
+	cop_visual_.clear();
+	support_visual_.reset();
+	pendulum_visual_.clear();
 }
 
 } //@namespace dwl_rviz_plugin
