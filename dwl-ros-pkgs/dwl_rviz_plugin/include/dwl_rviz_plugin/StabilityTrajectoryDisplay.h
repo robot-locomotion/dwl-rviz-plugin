@@ -61,9 +61,6 @@ class StabilityTrajectoryDisplay :
 	private Q_SLOTS:
 		/** @brief Helper function to apply color and alpha to all visuals.
 		/* Set the current color and alpha values for each visual */
-//		void updateCoMStyle();
-//		void updatePendulumLineWidth();
-//		void updateCoPStyle();
 		void updateCoMRadiusAndAlpha();
 		void updateCoPRadiusAndAlpha();
 		void updatePendulumArrowGeometry();
