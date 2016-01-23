@@ -195,3 +195,7 @@ void ReducedTrajectoryDisplay::processMessage(const dwl_msgs::ReducedTrajectory:
 }
 
 } //@namespace dwl_rviz_plugin
+
+
+#include <pluginlib/class_list_macros.h>
+PLUGINLIB_EXPORT_CLASS(dwl_rviz_plugin::ReducedTrajectoryDisplay, rviz::Display)
