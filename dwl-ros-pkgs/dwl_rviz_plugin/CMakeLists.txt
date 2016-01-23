@@ -39,7 +39,7 @@ qt4_wrap_cpp(MOC_FILES
   include/dwl_rviz_plugin/PolygonVisual.h
   include/dwl_rviz_plugin/WholeBodyStateDisplay.h
   include/dwl_rviz_plugin/WholeBodyTrajectoryDisplay.h
-  include/dwl_rviz_plugin/StabilityTrajectoryDisplay.h
+  include/dwl_rviz_plugin/ReducedTrajectoryDisplay.h
   include/dwl_rviz_plugin/RewardMapDisplay.h
   include/dwl_rviz_plugin/ObstacleMapDisplay.h
   include/dwl_rviz_plugin/FootstepRegionDisplay.h
@@ -51,7 +51,7 @@ set(SOURCE_FILES
   src/PolygonVisual.cpp
   src/WholeBodyStateDisplay.cpp
   src/WholeBodyTrajectoryDisplay.cpp
-  src/StabilityTrajectoryDisplay.cpp
+  src/ReducedTrajectoryDisplay.cpp
   src/RewardMapDisplay.cpp
   src/ObstacleMapDisplay.cpp
   src/FootstepRegionDisplay.cpp
