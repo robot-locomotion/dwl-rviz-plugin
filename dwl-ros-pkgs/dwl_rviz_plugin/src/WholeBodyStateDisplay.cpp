@@ -157,7 +157,7 @@ WholeBodyStateDisplay::WholeBodyStateDisplay() : force_threshold_(0.), com_real_
 	support_force_threshold_property_ =
 			new FloatProperty("Force Threshold", 1.0,
 							  "Threshold for defining active contacts.",
-							  support_category_, SLOT(updateSupportColorAndAlpha()), this);
+							  support_category_, SLOT(updateSupportLineColorAndAlpha()), this);
 }
 
 
@@ -323,6 +323,7 @@ void WholeBodyStateDisplay::updateSupportLineColorAndAlpha()
 {
 	Ogre::ColourValue color = support_line_color_property_->getOgreColor();
 	color.a = support_line_alpha_property_->getFloat();
+	force_threshold_ = support_force_threshold_property_->getFloat();
 
 	double scale = 1.;
 	support_visual_->setLineColor(color.r, color.g, color.b, color.a);
