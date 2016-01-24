@@ -63,6 +63,7 @@ class ReducedTrajectoryDisplay :
 		/* Set the current color and alpha values for each visual */
 		void updateCoMRadiusAndAlpha();
 		void updateCoPRadiusAndAlpha();
+		void updateSupportAlpha();
 		void updatePendulumArrowGeometry();
 
 
@@ -103,8 +104,8 @@ class ReducedTrajectoryDisplay :
 		rviz::FloatProperty* cop_alpha_property_;
 		rviz::FloatProperty* cop_radius_property_;
 
-		rviz::ColorProperty* support_color_property_;
-		rviz::FloatProperty* support_alpha_property_;
+		rviz::FloatProperty* support_line_alpha_property_;
+		rviz::FloatProperty* support_mesh_alpha_property_;
 
 		rviz::FloatProperty* pendulum_head_radius_property_;
 		rviz::FloatProperty* pendulum_head_length_property_;
@@ -115,6 +116,8 @@ class ReducedTrajectoryDisplay :
 		float com_alpha_;
 		float cop_radius_;
 		float cop_alpha_;
+		float support_line_alpha_;
+		float support_mesh_alpha_;
 };
 
 } //@namespace dwl_rviz_plugin

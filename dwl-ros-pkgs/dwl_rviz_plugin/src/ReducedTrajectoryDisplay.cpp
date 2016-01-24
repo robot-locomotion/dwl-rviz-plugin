@@ -62,6 +62,22 @@ ReducedTrajectoryDisplay::ReducedTrajectoryDisplay()
 									cop_category_, SLOT(updateCoPRadiusAndAlpha()), this);
 
 
+	// Support polygon properties
+	support_line_alpha_property_ =
+			new rviz::FloatProperty("Line Alpha", 1.0,
+									"0 is fully transparent, 1.0 is fully opaque.",
+									support_category_, SLOT(updateSupportAlpha()), this);
+	support_line_alpha_property_->setMin(0);
+	support_line_alpha_property_->setMax(1);
+
+	support_mesh_alpha_property_ =
+			new rviz::FloatProperty("Mesh Alpha", 0.2,
+									"0 is fully transparent, 1.0 is fully opaque.",
+									support_category_, SLOT(updateSupportAlpha()), this);
+	support_mesh_alpha_property_->setMin(0);
+	support_mesh_alpha_property_->setMax(1);
+
+
 	// Pendulum properties
 	pendulum_shaft_length_property_ =
 			new FloatProperty("Shaft Length", 0.4,
@@ -122,6 +138,15 @@ void ReducedTrajectoryDisplay::updateCoPRadiusAndAlpha()
 
 	for (size_t i = 0; i < cop_visual_.size(); i++)
 		cop_visual_[i]->setRadius(cop_radius_);
+
+	context_->queueRender();
+}
+
+
+void ReducedTrajectoryDisplay::updateSupportAlpha()
+{
+	support_line_alpha_ = support_line_alpha_property_->getFloat();
+	support_mesh_alpha_ = support_mesh_alpha_property_->getFloat();
 
 	context_->queueRender();
 }
@@ -225,12 +250,12 @@ void ReducedTrajectoryDisplay::processMessage(const dwl_msgs::ReducedTrajectory:
 		// We are keeping a vector of support regions visual pointers. This
 		// creates the next one and stores it in the vector
 		boost::shared_ptr<PolygonVisual> polygon_visual;
-		color.a = 0.2;
 		polygon_visual.reset(new PolygonVisual(context_->getSceneManager(), scene_node_));
+		updateSupportAlpha();
 		polygon_visual->setVertexs(support);
-		polygon_visual->setLineColor(color.r, color.g, color.b, color.a);
+		polygon_visual->setLineColor(color.r, color.g, color.b, support_line_alpha_);
 		polygon_visual->setScale(Ogre::Vector3(1., 1., 1.));
-		polygon_visual->setMeshColor(color.r, color.g, color.b, color.a);
+		polygon_visual->setMeshColor(color.r, color.g, color.b, support_mesh_alpha_);
 		polygon_visual->setFramePosition(position);
 		polygon_visual->setFrameOrientation(orientation);
 
