@@ -273,7 +273,8 @@ void WholeBodyStateDisplay::updateCoMArrowGeometry()
 	float head_length = com_head_length_property_->getFloat();
 	float head_radius = com_head_radius_property_->getFloat();
 
-	comd_visual_->setProperties(shaft_length, shaft_radius, head_length, head_radius);
+	comd_visual_->setProperties(shaft_length, shaft_radius,
+								head_length, head_radius);
 
 	context_->queueRender();
 }
@@ -483,7 +484,8 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 	Eigen::Vector3d com_ref_dir = -Eigen::Vector3d::UnitZ();
 	Eigen::Quaterniond com_q;
 	com_q.setFromTwoVectors(com_ref_dir, com_vel);
-	Ogre::Quaternion comd_for_orientation(com_q.w(), com_q.x(), com_q.y(), com_q.z());
+	Ogre::Quaternion comd_for_orientation(com_q.w(), com_q.x(),
+										  com_q.y(), com_q.z());
 
 	// Now set or update the contents of the chosen CoM visual
 	updateCoMColorAndAlpha();
@@ -494,7 +496,8 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 	float shaft_radius = com_shaft_radius_property_->getFloat();
 	float head_length = com_head_length_property_->getFloat();
 	float head_radius = com_head_radius_property_->getFloat();
-	comd_visual_->setProperties(shaft_length, shaft_radius, head_length, head_radius);
+	comd_visual_->setProperties(shaft_length, shaft_radius,
+								head_length, head_radius);
 	comd_visual_->setArrow(com_point, comd_for_orientation);
 	comd_visual_->setFramePosition(position);
 	comd_visual_->setFrameOrientation(orientation);
@@ -520,21 +523,25 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 		std::string name = contact.name;
 
 		// Getting the contact position
-		Ogre::Vector3 contact_pos(contact.position.x, contact.position.y, contact.position.z);
+		Ogre::Vector3 contact_pos(contact.position.x,
+								  contact.position.y,
+								  contact.position.z);
 
 		// Getting the force direction
 		Eigen::Vector3d for_ref_dir = -Eigen::Vector3d::UnitZ();
-		Eigen::Vector3d for_dir;
-		for_dir << contact.wrench.force.x, contact.wrench.force.y, contact.wrench.force.z;
+		Eigen::Vector3d for_dir(contact.wrench.force.x,
+								contact.wrench.force.y,
+								contact.wrench.force.z);
 
 		// Detecting active contacts
 		if (for_dir.norm() > force_threshold_) {
 			Eigen::Quaterniond for_q;
 			for_q.setFromTwoVectors(for_ref_dir, for_dir);
-			Ogre::Quaternion contact_for_orientation(for_q.w(), for_q.x(), for_q.y(), for_q.z());
+			Ogre::Quaternion contact_for_orientation(for_q.w(), for_q.x(),
+													 for_q.y(), for_q.z());
 
-			// We are keeping a vector of visual pointers. This creates the next one and stores it
-			// in the vector
+			// We are keeping a vector of visual pointers. This creates the next
+			// one and stores it in the vector
 			boost::shared_ptr<ArrowVisual> arrow;
 			arrow.reset(new ArrowVisual(context_->getSceneManager(), scene_node_));
 			arrow->setArrow(contact_pos, contact_for_orientation);
@@ -545,11 +552,13 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 			Ogre::ColourValue color = grf_color_property_->getOgreColor();
 			color.a = grf_alpha_property_->getFloat();
 			arrow->setColor(color.r, color.g, color.b, color.a);
-			float shaft_length = grf_shaft_length_property_->getFloat() * for_dir.norm() / norm_force;
+			float shaft_length = grf_shaft_length_property_->getFloat() *
+					for_dir.norm() / norm_force;
 			float shaft_radius = grf_shaft_radius_property_->getFloat();
 			float head_length = grf_head_length_property_->getFloat();
 			float head_radius = grf_head_radius_property_->getFloat();
-			arrow->setProperties(shaft_length, shaft_radius, head_length, head_radius);
+			arrow->setProperties(shaft_length, shaft_radius,
+								 head_length, head_radius);
 
 			// And send it to the end of the vector
 			grf_visual_.push_back(arrow);
