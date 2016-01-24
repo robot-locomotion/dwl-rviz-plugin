@@ -21,35 +21,38 @@ using namespace rviz;
 namespace dwl_rviz_plugin
 {
 
-enum VoxelColorMode{ FULL_COLOR, GREY };
+enum VoxelColorMode {FULL_COLOR, GREY};
 
-RewardMapDisplay::RewardMapDisplay() : rviz::Display(), messages_received_(0), color_factor_(0.8),
-		grid_size_(std::numeric_limits<double>::max())
+RewardMapDisplay::RewardMapDisplay() : rviz::Display(), messages_received_(0),
+		color_factor_(0.8),	grid_size_(std::numeric_limits<double>::max())
 {
-	rewardmap_topic_property_ = new RosTopicProperty( "Topic",
-	                                                  "",
-	                                                  QString::fromStdString(ros::message_traits::datatype<dwl_terrain::RewardMap>()),
-	                                                  "dwl_terrain::RewardMap topic to subscribe to reward map",
-	                                                  this, SLOT( updateTopic() ));
+	rewardmap_topic_property_ =
+			new RosTopicProperty("Topic",
+								 "",
+								 QString::fromStdString(ros::message_traits::datatype<dwl_terrain::RewardMap>()),
+								 "dwl_terrain::RewardMap topic to subscribe to reward map",
+								 this, SLOT(updateTopic()));
 
-	queue_size_property_ = new IntProperty( "Queue Size",
-	                                         queue_size_,
-	                                         "Advanced: set the size of the incoming message queue. Increasing this "
-	                                         "is useful if your incoming TF data is delayed significantly from your"
-	                                         " image data, but it can greatly increase memory usage if the messages are big.",
-	                                         this, SLOT( updateQueueSize() ));
+	queue_size_property_ =
+			new IntProperty("Queue Size",
+							queue_size_,
+							"Advanced: set the size of the incoming message queue. Increasing this "
+							"is useful if your incoming TF data is delayed significantly from your"
+							" image data, but it can greatly increase memory usage if the messages are big.",
+							this, SLOT(updateQueueSize()));
 
 	queue_size_property_->setMin(1);
 
-	voxel_color_property_ = new rviz::EnumProperty("Color",
-													"Full Color",
-													"Select voxel coloring.",
-													this,
-													SLOT( updateColorMode() ) );
+	voxel_color_property_ =
+			new rviz::EnumProperty("Color",
+								   "Full Color",
+								   "Select voxel coloring.",
+								   this,
+								   SLOT(updateColorMode()));
 
 
-	voxel_color_property_->addOption( "Full Color", FULL_COLOR );
-	voxel_color_property_->addOption( "Grey", GREY );
+	voxel_color_property_->addOption("Full Color", FULL_COLOR);
+	voxel_color_property_->addOption("Grey", GREY);
 }
 
 
@@ -83,7 +86,8 @@ void RewardMapDisplay::reset()
 {
 	clear();
 	messages_received_ = 0;
-	setStatus(StatusProperty::Ok, "Messages", QString("0 reward map messages received"));
+	setStatus(StatusProperty::Ok, "Messages",
+			QString("0 reward map messages received"));
 }
 
 
@@ -134,7 +138,8 @@ void RewardMapDisplay::subscribe()
 		}
 	}
 	catch (ros::Exception& e) {
-		setStatus(StatusProperty::Error, "Topic", (std::string("Error subscribing: ") + e.what()).c_str());
+		setStatus(StatusProperty::Error, "Topic",
+				(std::string("Error subscribing: ") + e.what()).c_str());
 	}
 }
 
@@ -148,7 +153,8 @@ void RewardMapDisplay::unsubscribe()
 		sub_.reset();
 	}
 	catch (ros::Exception& e) {
-		setStatus(StatusProperty::Error, "Topic", (std::string("Error unsubscribing: ") + e.what()).c_str());
+		setStatus(StatusProperty::Error, "Topic",
+				(std::string("Error unsubscribing: ") + e.what()).c_str());
 	}
 }
 
@@ -156,12 +162,15 @@ void RewardMapDisplay::unsubscribe()
 void RewardMapDisplay::incomingMessageCallback(const dwl_terrain::RewardMapConstPtr& msg)
 {
 	++messages_received_;
-	setStatus(StatusProperty::Ok, "Messages", QString::number(messages_received_) + " reward map messages received");
+	setStatus(StatusProperty::Ok, "Messages",
+			QString::number(messages_received_) + " reward map messages received");
 
 	// Getting tf transform
 	Ogre::Vector3 position;
 	Ogre::Quaternion orientation;
-	if (!context_->getFrameManager()->getTransform(msg->header, position, orientation)) {
+	if (!context_->getFrameManager()->getTransform(msg->header,
+												   position,
+												   orientation)) {
 		std::stringstream ss;
 		ss << "Failed to transform from frame [" << msg->header.frame_id << "] to frame ["
 		   << context_->getFrameManager()->getFixedFrame() << "]";
@@ -175,7 +184,8 @@ void RewardMapDisplay::incomingMessageCallback(const dwl_terrain::RewardMapConst
 	// Clearing the old data of the buffers
 	point_buf_.clear();
 
-	// Computing the maximum and minimum reward of the map, and minimum key of the height
+	// Computing the maximum and minimum reward of the map, and minimum key
+	// of the height
 	double min_reward = -1;
 	double max_reward = 0;
 	unsigned int min_key_z = std::numeric_limits<unsigned int>::max();
@@ -211,7 +221,9 @@ void RewardMapDisplay::incomingMessageCallback(const dwl_terrain::RewardMapConst
 			new_point.position = position;
 
 			// Setting the color of the cell acording the reward value
-			setColor(msg->cell[i].reward, min_reward, max_reward, color_factor_, new_point);
+			setColor(msg->cell[i].reward,
+					 min_reward, max_reward,
+					 color_factor_, new_point);
 			key_z -= 1;
 
 			point_buf_.push_back(new_point);
@@ -228,57 +240,63 @@ void RewardMapDisplay::incomingMessageCallback(const dwl_terrain::RewardMapConst
 }
 
 
-void RewardMapDisplay::setColor(double reward_value, double min_reward, double max_reward, double color_factor, rviz::PointCloud::Point& point)
+void RewardMapDisplay::setColor(double value,
+								double min,
+								double max,
+								double factor,
+								rviz::PointCloud::Point& point)
 {
-	VoxelColorMode color_mode = static_cast<VoxelColorMode>(voxel_color_property_->getOptionInt());
+	VoxelColorMode color_mode =
+			static_cast<VoxelColorMode>(voxel_color_property_->getOptionInt());
 
 	switch (color_mode)
 	{
-		case FULL_COLOR:
+	case FULL_COLOR:
+	{
+		int i;
+		double m, n, f;
+
+		double s = 1.0;
+		double v = 1.0;
+
+		double h = (1.0 -
+				std::min(std::max((value - min) / (max - min), 0.0), 1.0)) * factor;
+
+		h -= floor(h);
+		h *= 4;
+		i = floor(h);
+		f = h - i;
+		if (!(i & 1))
+			f = 1 - f; // if i is even
+		m = v * (1 - s);
+		n = v * (1 - s * f);
+
+		switch (i)
 		{
-			int i;
-			double m, n, f;
-
-			double s = 1.0;
-			double v = 1.0;
-
-			double h = (1.0 - std::min(std::max((reward_value - min_reward) / (max_reward - min_reward), 0.0), 1.0)) * color_factor;
-
-			h -= floor(h);
-			h *= 4;
-			i = floor(h);
-			f = h - i;
-			if (!(i & 1))
-				f = 1 - f; // if i is even
-			m = v * (1 - s);
-			n = v * (1 - s * f);
-
-			switch (i)
-			{
-				case 0:
-					point.setColor(m, n, v);
-					break;
-				case 1:
-					point.setColor(m, v, 1-n);
-					break;
-				case 2:
-					point.setColor(n, v, m);
-					break;
-				case 3:
-					point.setColor(v, 1-n, m);
-					break;
-				default:
-					point.setColor(1, 0.5, 0.5);
-					break;
-			}
+		case 0:
+			point.setColor(m, n, v);
 			break;
-		} case GREY:
-		{
-			double v = (reward_value - min_reward) / (max_reward - min_reward);
-			point.setColor(v, v, v);
+		case 1:
+			point.setColor(m, v, 1-n);
 			break;
-		} default:
+		case 2:
+			point.setColor(n, v, m);
 			break;
+		case 3:
+			point.setColor(v, 1-n, m);
+			break;
+		default:
+			point.setColor(1, 0.5, 0.5);
+			break;
+		}
+		break;
+	} case GREY:
+	{
+		double v = (value - min) / (max - min);
+		point.setColor(v, v, v);
+		break;
+	} default:
+		break;
 	}
 }
 
