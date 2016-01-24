@@ -75,7 +75,8 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 		void updateCoPColorAndAlpha();
 		void updateGRFColorAndAlpha();
 		void updateGRFArrowGeometry();
-		void updateSupportColorAndAlpha();
+		void updateSupportLineColorAndAlpha();
+		void updateSupportMeshColorAndAlpha();
 
 
 	private:
@@ -118,8 +119,10 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
         rviz::FloatProperty* grf_shaft_radius_property_;
         rviz::FloatProperty* grf_shaft_length_property_;
 
-		rviz::ColorProperty* support_color_property_;
-        rviz::FloatProperty* support_alpha_property_;
+		rviz::ColorProperty* support_line_color_property_;
+        rviz::FloatProperty* support_line_alpha_property_;
+		rviz::ColorProperty* support_mesh_color_property_;
+        rviz::FloatProperty* support_mesh_alpha_property_;
         rviz::FloatProperty* support_force_threshold_property_;
 
         /** @brief Whole-body dynamics */

@@ -14,30 +14,36 @@ PolygonVisual::PolygonVisual(Ogre::SceneManager* scene_manager,
 {
 	scene_manager_ = scene_manager;
 
-	// Ogre::SceneNode s form a tree, with each node storing the transform (position and
-	// orientation) of itself relative to its parent. Ogre does the math of combining those
-	// transforms when it is time to render.
-	// Here we create a node to store the pose of the Point's header frame relative to the RViz
-	// fixed frame.
+	// Ogre::SceneNode s form a tree, with each node storing the transform
+	// (position and orientation) of itself relative to its parent. Ogre does
+	// the math of combining those transforms when it is time to render. Here
+	// we create a node to store the pose of the Point's header frame relative
+	// to the RViz fixed frame.
 	frame_node_ = parent_node->createChildSceneNode();
+
+	// Initialization of the mesh
+	mesh_.reset(new rviz::MeshShape(scene_manager, parent_node));
 }
 
 
 PolygonVisual::~PolygonVisual()
 {
-	// Delete the line to make it disappear.
+	// Delete the line and mesh to make it disappear.
 	line_.clear();
+	mesh_->clear();
 
 	// Destroy the frame node since we don't need it anymore.
 	scene_manager_->destroySceneNode(frame_node_);
 }
 
 
-void PolygonVisual::setVertexs(std::vector<Ogre::Vector3>& vertexs)
+void PolygonVisual::setVertexs(std::vector<Ogre::Vector3>& vertices)
 {
-	line_.clear();
+	// Getting the number of vertices
+	unsigned int num_vertex = vertices.size();
 
-	unsigned int num_vertex = vertexs.size();
+	// Visualization of the lines
+	line_.clear();
 	unsigned int num_line = 0;
 	for (unsigned int i = 1; i < num_vertex; i++)
 		num_line += num_vertex - i;
@@ -48,16 +54,38 @@ void PolygonVisual::setVertexs(std::vector<Ogre::Vector3>& vertexs)
 	while (tree > 1) {
 		unsigned int current_it = num_vertex - tree;
 		for (unsigned int i = current_it; i < num_vertex - 1; i++) {
-			// We create the line object within the frame node so that we can set its position and
-			// direction relative to its header frame.
+			// We create the line object within the frame node so that we can
+			// set its position and direction relative to its header frame.
 			line_[counter].reset(new rviz::Line(scene_manager_, frame_node_));
 
-			line_[counter]->setPoints(vertexs[current_it], vertexs[i+1]);
+			line_[counter]->setPoints(vertices[current_it], vertices[i+1]);
 
 			counter++;
 		}
 		tree--;
 	}
+
+	// Visualization of the mesh
+	if (num_vertex >= 3) {
+		mesh_->clear();
+		mesh_->estimateVertexCount(num_vertex);
+		mesh_->beginTriangles();
+
+		Ogre::ColourValue color(1., 1., 0., 1.);
+		// Adding the vertices
+		Ogre::Vector3 normal(0., 0., 1.);
+		for (unsigned int i = 0 ; i < num_vertex; ++i)
+			mesh_->addVertex(vertices[i], normal);
+
+		// Adding the actual triangle
+		for (unsigned int i = 0; i < num_vertex; i++) {
+			mesh_->addTriangle(i % num_vertex,
+							  (i + 1) % num_vertex,
+							  (i + 2) % num_vertex);
+		}
+		mesh_->endTriangles();
+	}
+
 }
 
 
@@ -73,12 +101,18 @@ void PolygonVisual::setFrameOrientation(const Ogre::Quaternion& orientation)
 }
 
 
-void PolygonVisual::setColor(float r, float g, float b, float a)
+void PolygonVisual::setLineColor(float r, float g, float b, float a)
 {
 	unsigned int num_line = line_.size();
 	for (unsigned int i = 0; i < num_line; i++) {
 		line_[i]->setColor(r, g, b, a);
 	}
+}
+
+
+void PolygonVisual::setMeshColor(float r, float g, float b, float a)
+{
+	mesh_->setColor(r, g , b, a);
 }
 
 
