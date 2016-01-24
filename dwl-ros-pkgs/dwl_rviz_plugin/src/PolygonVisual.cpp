@@ -92,12 +92,14 @@ void PolygonVisual::setVertexs(std::vector<Ogre::Vector3>& vertices)
 void PolygonVisual::setFramePosition(const Ogre::Vector3& position)
 {
 	frame_node_->setPosition(position);
+	mesh_->setPosition(position);
 }
 
 
 void PolygonVisual::setFrameOrientation(const Ogre::Quaternion& orientation)
 {
 	frame_node_->setOrientation(orientation);
+	mesh_->setOrientation(orientation);
 }
 
 
