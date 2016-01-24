@@ -99,10 +99,7 @@ void ReducedTrajectoryDisplay::onInitialize()
 void ReducedTrajectoryDisplay::reset()
 {
 	MFDClass::reset();
-
-	com_visual_.clear();
-	cop_visual_.clear();
-	pendulum_visual_.clear();
+	destroyObjects();
 }
 
 
@@ -161,8 +158,14 @@ void ReducedTrajectoryDisplay::processMessage(const dwl_msgs::ReducedTrajectory:
 	}
 
 
+	// Compute the set of colors
+	std::vector<Ogre::ColourValue> colors;
+	generateSetOfColors(colors, msg->trajectory.size());
+
 	com_visual_.clear();
 	cop_visual_.clear();
+	support_visual_.clear();
+	pendulum_visual_.clear();
 	for (unsigned int k = 0; k < msg->trajectory.size(); k++) {
 		dwl_msgs::ReducedState state = msg->trajectory[k];
 
@@ -170,8 +173,8 @@ void ReducedTrajectoryDisplay::processMessage(const dwl_msgs::ReducedTrajectory:
 		geometry_msgs::Vector3 com_vec = state.center_of_mass;
 		Ogre::Vector3 com_pos(com_vec.x, com_vec.y, com_vec.z);
 
-		// Computed the phase color
-		Ogre::ColourValue color(1, 0., 0., 1.);// = com_color_property_->getOgreColor();
+		// Getting the actual color
+		Ogre::ColourValue color = colors[k];//(1, 0., 0., 1.);// = com_color_property_->getOgreColor();
 
 		// We are keeping a vector of CoM visual pointers. This creates the next
 		// one and stores it in the vector
@@ -207,6 +210,32 @@ void ReducedTrajectoryDisplay::processMessage(const dwl_msgs::ReducedTrajectory:
 
 		// And send it to the end of the vector
 		cop_visual_.push_back(cop_visual);
+
+
+		// Getting the support region
+		std::vector<Ogre::Vector3> support;
+		support.resize(state.support_region.size());
+		for (unsigned int v = 0; v < state.support_region.size(); v++) {
+			support[v].x = state.support_region[v].x;
+			support[v].y = state.support_region[v].y;
+			support[v].z = state.support_region[v].z;
+		}
+
+		// Now set or update the contents of the chosen suppor visual
+		// We are keeping a vector of support regions visual pointers. This
+		// creates the next one and stores it in the vector
+		boost::shared_ptr<PolygonVisual> polygon_visual;
+		color.a = 0.2;
+		polygon_visual.reset(new PolygonVisual(context_->getSceneManager(), scene_node_));
+		polygon_visual->setVertexs(support);
+		polygon_visual->setLineColor(color.r, color.g, color.b, color.a);
+		polygon_visual->setScale(Ogre::Vector3(1., 1., 1.));
+		polygon_visual->setMeshColor(color.r, color.g, color.b, color.a);
+		polygon_visual->setFramePosition(position);
+		polygon_visual->setFrameOrientation(orientation);
+
+		// And send it to the end of the vector
+		support_visual_.push_back(polygon_visual);
 	}
 }
 
@@ -215,8 +244,22 @@ void ReducedTrajectoryDisplay::destroyObjects()
 {
 	com_visual_.clear();
 	cop_visual_.clear();
-	support_visual_.reset();
+	support_visual_.clear();
 	pendulum_visual_.clear();
+}
+
+
+void ReducedTrajectoryDisplay::generateSetOfColors(std::vector<Ogre::ColourValue>& colors,
+												   unsigned int num_points)
+{
+	colors.resize(num_points);
+	for (int i = 0; i < num_points; i++) {
+		float hue = (float) i / (float) num_points;
+		float saturation = (float) (90 + rand() % 10) / 100;
+		float brightness = (float) (50 + rand() % 10) / 100;
+
+		colors[i].setHSB(hue, saturation, brightness);
+	}
 }
 
 } //@namespace dwl_rviz_plugin

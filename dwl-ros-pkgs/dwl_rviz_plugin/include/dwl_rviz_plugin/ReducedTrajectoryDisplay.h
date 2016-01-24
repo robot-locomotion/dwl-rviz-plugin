@@ -71,6 +71,14 @@ class ReducedTrajectoryDisplay :
 		/** Destroy all the objects for visualization */
 		void destroyObjects();
 
+		/**
+		 * @brief Generate a set of colors given a number of points
+		 * @param std::vector<Ogre::ColourValue>& Set of colors
+		 * @param unsigned int Number of points
+		 */
+		void generateSetOfColors(std::vector<Ogre::ColourValue>& colors,
+								 unsigned int num_points);
+
 		/** @brief Properties to show on side panel */
 		rviz::Property* com_category_;
 		rviz::Property* cop_category_;
@@ -81,7 +89,7 @@ class ReducedTrajectoryDisplay :
 		/** @brief Object for visualization of the data */
 		std::vector<boost::shared_ptr<PointVisual> > com_visual_;
 		std::vector<boost::shared_ptr<PointVisual> > cop_visual_;
-		boost::shared_ptr<PolygonVisual> support_visual_;
+		std::vector<boost::shared_ptr<PolygonVisual> > support_visual_;
 		std::vector<boost::shared_ptr<ArrowVisual> > pendulum_visual_;
 
 
