@@ -170,28 +170,43 @@ void ReducedTrajectoryDisplay::processMessage(const dwl_msgs::ReducedTrajectory:
 		geometry_msgs::Vector3 com_vec = state.center_of_mass;
 		Ogre::Vector3 com_pos(com_vec.x, com_vec.y, com_vec.z);
 
-		// Getting the center of pressure position
-		geometry_msgs::Vector3 cop_vec = state.center_of_pressure;
-		Ogre::Vector3 cop_pos(cop_vec.x, cop_vec.y, cop_vec.z);
+		// Computed the phase color
+		Ogre::ColourValue color(1, 0., 0., 1.);// = com_color_property_->getOgreColor();
 
-		// We are keeping a vector of visual pointers. This creates the next one and stores it
-		// in the vector
+		// We are keeping a vector of CoM visual pointers. This creates the next
+		// one and stores it in the vector
 		boost::shared_ptr<PointVisual> com_visual;
 		com_visual.reset(new PointVisual(context_->getSceneManager(), scene_node_));
-
-		// Setting the point properties
 		updateCoMRadiusAndAlpha();
-		Ogre::ColourValue color(1, 0., 0., 1.);// = com_color_property_->getOgreColor();
 		color.a = com_alpha_;
 		com_visual->setColor(color.r, color.g, color.b, color.a);
 		com_visual->setRadius(com_radius_);
-
 		com_visual->setPoint(com_pos);
 		com_visual->setFramePosition(position);
 		com_visual->setFrameOrientation(orientation);
 
 		// And send it to the end of the vector
 		com_visual_.push_back(com_visual);
+
+
+		// Getting the center of pressure position
+		geometry_msgs::Vector3 cop_vec = state.center_of_pressure;
+		Ogre::Vector3 cop_pos(cop_vec.x, cop_vec.y, cop_vec.z);
+
+		// We are keeping a vector of CoP visual pointers. This creates the next
+		// one and stores it in the vector
+		boost::shared_ptr<PointVisual> cop_visual;
+		cop_visual.reset(new PointVisual(context_->getSceneManager(), scene_node_));
+		updateCoPRadiusAndAlpha();
+		color.a = cop_alpha_;
+		cop_visual->setColor(color.r, color.g, color.b, color.a);
+		cop_visual->setRadius(cop_radius_);
+		cop_visual->setPoint(cop_pos);
+		cop_visual->setFramePosition(position);
+		cop_visual->setFrameOrientation(orientation);
+
+		// And send it to the end of the vector
+		cop_visual_.push_back(cop_visual);
 	}
 }
 
