@@ -79,24 +79,16 @@ ReducedTrajectoryDisplay::ReducedTrajectoryDisplay()
 
 
 	// Pendulum properties
-	pendulum_shaft_length_property_ =
-			new FloatProperty("Shaft Length", 0.4,
-							  "Length of the arrow's shaft, in meters.",
-							  pendulum_category_, SLOT(updatePendulumArrowGeometry()), this);
+	pendulum_alpha_property_ =
+			new rviz::FloatProperty("Alpha", 0.2,
+									"0 is fully transparent, 1.0 is fully opaque.",
+									pendulum_category_, SLOT(updatePendulumArrowGeometry()), this);
+	pendulum_alpha_property_->setMin(0);
+	pendulum_alpha_property_->setMax(1);
 
-	pendulum_shaft_radius_property_ =
-			new FloatProperty("Shaft Radius", 0.02,
-							  "Radius of the arrow's shaft, in meters.",
-							  pendulum_category_, SLOT(updatePendulumArrowGeometry()), this);
-
-	pendulum_head_length_property_ =
-			new FloatProperty("Head Length", 0.08,
-							  "Length of the arrow's head, in meters.",
-							  pendulum_category_, SLOT(updatePendulumArrowGeometry()), this);
-
-	pendulum_head_radius_property_ =
-			new FloatProperty("Head Radius", 0.04,
-							  "Radius of the arrow's head, in meters.",
+	pendulum_line_radius_property_ =
+			new FloatProperty("Line Radius", 0.02,
+							  "Radius of the line, in meters.",
 							  pendulum_category_, SLOT(updatePendulumArrowGeometry()), this);
 }
 
@@ -154,14 +146,8 @@ void ReducedTrajectoryDisplay::updateSupportAlpha()
 
 void ReducedTrajectoryDisplay::updatePendulumArrowGeometry()
 {
-	float shaft_length = pendulum_shaft_length_property_->getFloat();
-	float shaft_radius = pendulum_shaft_radius_property_->getFloat();
-	float head_length = pendulum_head_length_property_->getFloat();
-	float head_radius = pendulum_head_radius_property_->getFloat();
-
-	for (size_t i = 0; i < pendulum_visual_.size(); i++)
-		pendulum_visual_[i]->setProperties(shaft_length, shaft_radius,
-										   head_length, head_radius);
+	float line_radius = pendulum_line_radius_property_->getFloat();
+	pendulum_alpha_ = pendulum_alpha_property_->getFloat();
 
 	context_->queueRender();
 }
@@ -182,11 +168,12 @@ void ReducedTrajectoryDisplay::processMessage(const dwl_msgs::ReducedTrajectory:
 		return;
 	}
 
-
 	// Compute the set of colors
 	std::vector<Ogre::ColourValue> colors;
 	generateSetOfColors(colors, msg->trajectory.size());
 
+
+	// Visualization of the reduced trajectory
 	com_visual_.clear();
 	cop_visual_.clear();
 	support_visual_.clear();
@@ -199,7 +186,7 @@ void ReducedTrajectoryDisplay::processMessage(const dwl_msgs::ReducedTrajectory:
 		Ogre::Vector3 com_pos(com_vec.x, com_vec.y, com_vec.z);
 
 		// Getting the actual color
-		Ogre::ColourValue color = colors[k];//(1, 0., 0., 1.);// = com_color_property_->getOgreColor();
+		Ogre::ColourValue color = colors[k];
 
 		// We are keeping a vector of CoM visual pointers. This creates the next
 		// one and stores it in the vector
@@ -261,6 +248,38 @@ void ReducedTrajectoryDisplay::processMessage(const dwl_msgs::ReducedTrajectory:
 
 		// And send it to the end of the vector
 		support_visual_.push_back(polygon_visual);
+
+
+		// Getting the pendulum direction
+		Eigen::Vector3d ref_dir = -Eigen::Vector3d::UnitZ();
+		Eigen::Vector3d pendulum_dir(com_pos.x - cop_pos.x,
+									 com_pos.y - cop_pos.y,
+									 com_pos.z - cop_pos.z);
+
+		Eigen::Quaterniond pendulum_q;
+		pendulum_q.setFromTwoVectors(ref_dir, pendulum_dir);
+		Ogre::Quaternion pendulum_orientation(pendulum_q.w(),
+											  pendulum_q.x(),
+											  pendulum_q.y(),
+											  pendulum_q.z());
+
+		// We are keeping a vector of visual pointers. This creates the next
+		// one and stores it in the vector
+		boost::shared_ptr<ArrowVisual> arrow;
+		arrow.reset(new ArrowVisual(context_->getSceneManager(), scene_node_));
+		arrow->setArrow(cop_pos, pendulum_orientation);
+		arrow->setFramePosition(position);
+		arrow->setFrameOrientation(orientation);
+
+		// Setting the arrow color and properties
+		updatePendulumArrowGeometry();
+		arrow->setColor(color.r, color.g, color.b, pendulum_alpha_);
+		float line_length = pendulum_dir.norm();
+		float line_radius = pendulum_line_radius_property_->getFloat();
+		arrow->setProperties(line_length, line_radius, 0., 0.);
+
+		// And send it to the end of the vector
+		pendulum_visual_.push_back(arrow);
 	}
 }
 

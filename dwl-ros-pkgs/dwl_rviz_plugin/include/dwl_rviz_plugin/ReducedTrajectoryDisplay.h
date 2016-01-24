@@ -6,6 +6,7 @@
 #include <dwl_rviz_plugin/ArrowVisual.h>
 #include <dwl_rviz_plugin/PolygonVisual.h>
 #include <dwl_msgs/ReducedTrajectory.h>
+#include <Eigen/Dense>
 
 
 namespace Ogre
@@ -95,22 +96,17 @@ class ReducedTrajectoryDisplay :
 
 
 		/** @brief Property objects for user-editable properties */
-		//		rviz::EnumProperty* com_style_property_;
-		//		rviz::ColorProperty* com_color_property_;
 		rviz::FloatProperty* com_alpha_property_;
 		rviz::FloatProperty* com_radius_property_;
 
-		//		rviz::ColorProperty* cop_color_property_;
 		rviz::FloatProperty* cop_alpha_property_;
 		rviz::FloatProperty* cop_radius_property_;
 
 		rviz::FloatProperty* support_line_alpha_property_;
 		rviz::FloatProperty* support_mesh_alpha_property_;
 
-		rviz::FloatProperty* pendulum_head_radius_property_;
-		rviz::FloatProperty* pendulum_head_length_property_;
-		rviz::FloatProperty* pendulum_shaft_radius_property_;
-		rviz::FloatProperty* pendulum_shaft_length_property_;
+		rviz::FloatProperty* pendulum_alpha_property_;
+		rviz::FloatProperty* pendulum_line_radius_property_;
 
 		float com_radius_;
 		float com_alpha_;
@@ -118,6 +114,7 @@ class ReducedTrajectoryDisplay :
 		float cop_alpha_;
 		float support_line_alpha_;
 		float support_mesh_alpha_;
+		float pendulum_alpha_;
 };
 
 } //@namespace dwl_rviz_plugin
