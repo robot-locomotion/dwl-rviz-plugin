@@ -148,7 +148,7 @@ WholeBodyStateDisplay::WholeBodyStateDisplay() : force_threshold_(0.), com_real_
 							  support_category_, SLOT(updateSupportMeshColorAndAlpha()), this);
 
 	support_mesh_alpha_property_ =
-			new FloatProperty("Alpha", 1.0,
+			new FloatProperty("Mesh Alpha", 1.0,
 							  "Amount of transparency to apply to the mesh.",
 							  support_category_, SLOT(updateSupportMeshColorAndAlpha()), this);
 	support_mesh_alpha_property_->setMin(0);
