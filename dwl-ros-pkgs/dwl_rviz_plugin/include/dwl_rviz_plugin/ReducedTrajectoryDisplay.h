@@ -91,7 +91,7 @@ class ReducedTrajectoryDisplay :
 		/** @brief Object for visualization of the data */
 		std::vector<boost::shared_ptr<PointVisual> > com_visual_;
 		std::vector<boost::shared_ptr<PointVisual> > cop_visual_;
-		std::vector<boost::shared_ptr<PolygonVisual> > support_visual_;
+		std::vector<PolygonVisual*> support_visual_;
 		std::vector<boost::shared_ptr<ArrowVisual> > pendulum_visual_;
 
 

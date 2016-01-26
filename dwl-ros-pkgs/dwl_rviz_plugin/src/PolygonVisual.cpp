@@ -71,7 +71,6 @@ void PolygonVisual::setVertexs(std::vector<Ogre::Vector3>& vertices)
 		mesh_->estimateVertexCount(num_vertex);
 		mesh_->beginTriangles();
 
-		Ogre::ColourValue color(1., 1., 0., 1.);
 		// Adding the vertices
 		Ogre::Vector3 normal(0., 0., 1.);
 		for (unsigned int i = 0 ; i < num_vertex; ++i)

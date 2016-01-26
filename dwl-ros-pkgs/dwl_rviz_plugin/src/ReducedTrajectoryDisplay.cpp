@@ -178,10 +178,7 @@ void ReducedTrajectoryDisplay::processMessage(const dwl_msgs::ReducedTrajectory:
 
 
 	// Visualization of the reduced trajectory
-	com_visual_.clear();
-	cop_visual_.clear();
-	support_visual_.clear();
-	pendulum_visual_.clear();
+	destroyObjects();
 	for (unsigned int k = 0; k < msg->trajectory.size(); k++) {
 		dwl_msgs::ReducedState state = msg->trajectory[k];
 
@@ -237,11 +234,10 @@ void ReducedTrajectoryDisplay::processMessage(const dwl_msgs::ReducedTrajectory:
 			support[v].z = actual_com.z + state.support_region[v].z;
 		}
 
-		// Now set or update the contents of the chosen suppor visual
+		// Now set or update the contents of the chosen support visual
 		// We are keeping a vector of support regions visual pointers. This
 		// creates the next one and stores it in the vector
-		boost::shared_ptr<PolygonVisual> polygon_visual;
-		polygon_visual.reset(new PolygonVisual(context_->getSceneManager(), scene_node_));
+		PolygonVisual* polygon_visual = new PolygonVisual(context_->getSceneManager(), scene_node_);;
 		updateSupportAlpha();
 		polygon_visual->setVertexs(support);
 		polygon_visual->setLineColor(color.r, color.g, color.b, support_line_alpha_);
@@ -292,6 +288,9 @@ void ReducedTrajectoryDisplay::destroyObjects()
 {
 	com_visual_.clear();
 	cop_visual_.clear();
+	for (std::vector<PolygonVisual*>::iterator it = support_visual_.begin();
+			it != support_visual_.end(); ++it)
+		delete (*it);
 	support_visual_.clear();
 	pendulum_visual_.clear();
 }
