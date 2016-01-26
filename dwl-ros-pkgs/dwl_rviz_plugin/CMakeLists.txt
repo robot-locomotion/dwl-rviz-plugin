@@ -35,6 +35,7 @@ link_directories(${catkin_LIBRARY_DIRS}
                  
 qt4_wrap_cpp(MOC_FILES
   include/dwl_rviz_plugin/PointVisual.h
+  include/dwl_rviz_plugin/LineVisual.h
   include/dwl_rviz_plugin/ArrowVisual.h
   include/dwl_rviz_plugin/PolygonVisual.h
   include/dwl_rviz_plugin/WholeBodyStateDisplay.h
@@ -47,6 +48,7 @@ qt4_wrap_cpp(MOC_FILES
 
 set(SOURCE_FILES
   src/PointVisual.cpp
+  src/LineVisual.cpp
   src/ArrowVisual.cpp
   src/PolygonVisual.cpp
   src/WholeBodyStateDisplay.cpp
