@@ -121,6 +121,7 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 
 		rviz::ColorProperty* support_line_color_property_;
         rviz::FloatProperty* support_line_alpha_property_;
+        rviz::FloatProperty* support_line_radius_property_;
 		rviz::ColorProperty* support_mesh_color_property_;
         rviz::FloatProperty* support_mesh_alpha_property_;
         rviz::FloatProperty* support_force_threshold_property_;

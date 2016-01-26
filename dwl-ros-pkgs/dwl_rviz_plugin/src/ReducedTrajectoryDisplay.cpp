@@ -70,6 +70,11 @@ ReducedTrajectoryDisplay::ReducedTrajectoryDisplay()
 	support_line_alpha_property_->setMin(0);
 	support_line_alpha_property_->setMax(1);
 
+	support_line_radius_property_ =
+			new FloatProperty("Line Radius", 0.005,
+							  "Radius of the line in m.",
+							  support_category_, SLOT(updateSupportAlpha()), this);
+
 	support_mesh_alpha_property_ =
 			new rviz::FloatProperty("Mesh Alpha", 0.2,
 									"0 is fully transparent, 1.0 is fully opaque.",
@@ -139,6 +144,11 @@ void ReducedTrajectoryDisplay::updateSupportAlpha()
 {
 	support_line_alpha_ = support_line_alpha_property_->getFloat();
 	support_mesh_alpha_ = support_mesh_alpha_property_->getFloat();
+
+	float radius = support_line_radius_property_->getFloat();
+	for (unsigned int i = 0; i < support_visual_.size(); i++) {
+		support_visual_[i]->setLineRadius(radius);
+	}
 
 	context_->queueRender();
 }
@@ -241,7 +251,7 @@ void ReducedTrajectoryDisplay::processMessage(const dwl_msgs::ReducedTrajectory:
 		updateSupportAlpha();
 		polygon_visual->setVertexs(support);
 		polygon_visual->setLineColor(color.r, color.g, color.b, support_line_alpha_);
-		polygon_visual->setScale(Ogre::Vector3(1., 1., 1.));
+		polygon_visual->setLineRadius(support_line_radius_property_->getFloat());
 		polygon_visual->setMeshColor(color.r, color.g, color.b, support_mesh_alpha_);
 		polygon_visual->setFramePosition(position);
 		polygon_visual->setFrameOrientation(orientation);

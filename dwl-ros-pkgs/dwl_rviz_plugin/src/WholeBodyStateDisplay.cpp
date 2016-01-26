@@ -142,13 +142,18 @@ WholeBodyStateDisplay::WholeBodyStateDisplay() : force_threshold_(0.), com_real_
 	support_line_alpha_property_->setMin(0);
 	support_line_alpha_property_->setMax(1);
 
+	support_line_radius_property_ =
+			new FloatProperty("Line Radius", 0.005,
+							  "Radius of the line in m.",
+							  support_category_, SLOT(updateSupportLineColorAndAlpha()), this);
+
 	support_mesh_color_property_ =
 			new ColorProperty("Mesh Color", QColor(85, 0, 255),
 							  "Color to draw the mesh.",
 							  support_category_, SLOT(updateSupportMeshColorAndAlpha()), this);
 
 	support_mesh_alpha_property_ =
-			new FloatProperty("Mesh Alpha", 1.0,
+			new FloatProperty("Mesh Alpha", 0.2,
 							  "Amount of transparency to apply to the mesh.",
 							  support_category_, SLOT(updateSupportMeshColorAndAlpha()), this);
 	support_mesh_alpha_property_->setMin(0);
@@ -326,9 +331,9 @@ void WholeBodyStateDisplay::updateSupportLineColorAndAlpha()
 	color.a = support_line_alpha_property_->getFloat();
 	force_threshold_ = support_force_threshold_property_->getFloat();
 
-	double scale = 1.;
+	float radius = support_line_radius_property_->getFloat();
 	support_visual_->setLineColor(color.r, color.g, color.b, color.a);
-	support_visual_->setScale(Ogre::Vector3(scale, scale, scale));
+	support_visual_->setLineRadius(radius);
 
 	context_->queueRender();
 }

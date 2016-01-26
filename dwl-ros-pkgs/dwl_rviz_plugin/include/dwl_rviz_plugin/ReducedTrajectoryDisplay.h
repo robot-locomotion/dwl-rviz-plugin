@@ -103,6 +103,7 @@ class ReducedTrajectoryDisplay :
 		rviz::FloatProperty* cop_radius_property_;
 
 		rviz::FloatProperty* support_line_alpha_property_;
+		rviz::FloatProperty* support_line_radius_property_;
 		rviz::FloatProperty* support_mesh_alpha_property_;
 
 		rviz::FloatProperty* pendulum_alpha_property_;
