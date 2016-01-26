@@ -56,9 +56,9 @@ void PolygonVisual::setVertexs(std::vector<Ogre::Vector3>& vertices)
 		for (unsigned int i = current_it; i < num_vertex - 1; i++) {
 			// We create the line object within the frame node so that we can
 			// set its position and direction relative to its header frame.
-			line_[counter].reset(new rviz::Line(scene_manager_, frame_node_));
+			line_[counter].reset(new dwl_rviz_plugin::LineVisual(scene_manager_, frame_node_));
 
-			line_[counter]->setPoints(vertices[current_it], vertices[i+1]);
+			line_[counter]->setArrow(vertices[current_it], vertices[i+1]);
 
 			counter++;
 		}
@@ -117,11 +117,11 @@ void PolygonVisual::setMeshColor(float r, float g, float b, float a)
 }
 
 
-void PolygonVisual::setScale(const Ogre::Vector3& scale)
+void PolygonVisual::setLineRadius(float radius)
 {
 	unsigned int num_line = line_.size();
 	for (unsigned int i = 0; i < num_line; i++) {
-		line_[i]->setScale(scale);
+		line_[i]->setProperties(radius);
 	}
 }
 

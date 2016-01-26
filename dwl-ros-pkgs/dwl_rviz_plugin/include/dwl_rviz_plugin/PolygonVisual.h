@@ -3,17 +3,13 @@
 
 #include <rviz/properties/quaternion_property.h>
 #include <rviz/ogre_helpers/mesh_shape.h>
+#include <dwl_rviz_plugin/LineVisual.h>
 
 
 namespace Ogre
 {
 class Vector3;
 class Quaternion;
-}
-
-namespace rviz
-{
-class Line;
 }
 
 namespace dwl_rviz_plugin
@@ -87,10 +83,10 @@ class PolygonVisual
 		void setMeshColor(float r, float g, float b, float a);
 
 		/**
-		 * @brief Set the scale of the line
-		 * @param const Ogre::Vector3d& Line scale
+		 * @brief Set the radius of the line
+		 * @param float Line radius
 		 */
-		void setScale(const Ogre::Vector3& scale);
+		void setLineRadius(float scale);
 
 
 	private:
@@ -98,7 +94,7 @@ class PolygonVisual
 		boost::shared_ptr<rviz::MeshShape> mesh_;
 
 		/** @brief The object implementing the lines */
-        std::vector<boost::shared_ptr<rviz::Line> > line_;
+        std::vector<boost::shared_ptr<dwl_rviz_plugin::LineVisual> > line_;
 
         /** @brief A SceneNode whose pose is set to match the coordinate frame */
 		Ogre::SceneNode* frame_node_;
