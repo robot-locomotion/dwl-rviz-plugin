@@ -183,10 +183,6 @@ void ReducedTrajectoryDisplay::processMessage(const dwl_msgs::ReducedTrajectory:
 	generateSetOfColors(colors, msg->trajectory.size());
 
 
-	// Getting the actual state
-	geometry_msgs::Vector3 actual_com = msg->trajectory[0].center_of_mass;
-
-
 	// Visualization of the reduced trajectory
 	destroyObjects();
 	for (unsigned int k = 0; k < msg->trajectory.size(); k++) {
@@ -239,9 +235,9 @@ void ReducedTrajectoryDisplay::processMessage(const dwl_msgs::ReducedTrajectory:
 		std::vector<Ogre::Vector3> support;
 		support.resize(state.support_region.size());
 		for (unsigned int v = 0; v < state.support_region.size(); v++) {
-			support[v].x = actual_com.x + state.support_region[v].x;
-			support[v].y = actual_com.y + state.support_region[v].y;
-			support[v].z = actual_com.z + state.support_region[v].z;
+			support[v].x = state.support_region[v].x;
+			support[v].y = state.support_region[v].y;
+			support[v].z = state.support_region[v].z;
 		}
 
 		// Now set or update the contents of the chosen support visual
