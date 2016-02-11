@@ -48,6 +48,8 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 
 		/** @brief Overrides of public virtual functions from the Display class */
 		void onInitialize();
+		void onEnable();
+		void onDisable();
 
 		/** @brief Clear the visuals by deleting their objects */
 		void reset();

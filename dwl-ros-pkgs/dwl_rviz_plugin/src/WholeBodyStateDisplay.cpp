@@ -176,14 +176,28 @@ void WholeBodyStateDisplay::clear()
 {
 	clearStatuses();
 	robot_model_.clear();
+	initialized_model_ = false;
 }
 
 
 void WholeBodyStateDisplay::onInitialize()
 {
 	MFDClass::onInitialize();
-
 	updateGRFColorAndAlpha();
+}
+
+
+void WholeBodyStateDisplay::onEnable()
+{
+	MFDClass::onEnable();
+	load();
+}
+
+
+void WholeBodyStateDisplay::onDisable()
+{
+	MFDClass::onDisable();
+	clear();
 }
 
 
