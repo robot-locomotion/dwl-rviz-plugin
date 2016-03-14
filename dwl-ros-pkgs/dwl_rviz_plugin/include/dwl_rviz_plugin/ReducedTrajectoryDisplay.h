@@ -30,6 +30,8 @@ class VectorProperty;
 namespace dwl_rviz_plugin
 {
 
+enum ModeDisplay {REALTIME, FULL};
+
 /**
  * @class ReducedTrajectoryDisplay
  * @brief Displays a dwl_msgs::ReducedTrajectory message
@@ -57,11 +59,14 @@ class ReducedTrajectoryDisplay :
 		 * @param const dwl_msgs::ReducedTrajectory::ConstPtr& Reduced trajectory msg
 		 */
 		void processMessage(const dwl_msgs::ReducedTrajectory::ConstPtr& msg);
+		
+		void update(float wall_dt, float ros_dt);
 
 
 	private Q_SLOTS:
 		/** @brief Helper function to apply color and alpha to all visuals.
 		/* Set the current color and alpha values for each visual */
+		void updateModeDisplay();
 		void updateCoMRadiusAndAlpha();
 		void updateCoPRadiusAndAlpha();
 		void updateSupportAlpha();
@@ -72,6 +77,12 @@ class ReducedTrajectoryDisplay :
 	private:
 		/** Destroy all the objects for visualization */
 		void destroyObjects();
+		
+		dwl_msgs::ReducedTrajectory::ConstPtr msg_;
+		float msg_time_;
+		bool received_msg_;
+		int idx_;
+		bool next_;
 
 		/**
 		 * @brief Generate a set of colors given a number of points
@@ -82,6 +93,7 @@ class ReducedTrajectoryDisplay :
 								 unsigned int num_points);
 
 		/** @brief Properties to show on side panel */
+		rviz::EnumProperty* mode_display_property_;
 		rviz::Property* com_category_;
 		rviz::Property* cop_category_;
 		rviz::Property* support_category_;
@@ -109,6 +121,7 @@ class ReducedTrajectoryDisplay :
 		rviz::FloatProperty* pendulum_alpha_property_;
 		rviz::FloatProperty* pendulum_line_radius_property_;
 
+		ModeDisplay mode_display_;
 		float com_radius_;
 		float com_alpha_;
 		float cop_radius_;
