@@ -25,7 +25,8 @@ using namespace rviz;
 namespace dwl_rviz_plugin
 {
 
-ReducedTrajectoryDisplay::ReducedTrajectoryDisplay() : received_msg_(false), idx_(0), next_(false)
+ReducedTrajectoryDisplay::ReducedTrajectoryDisplay() : received_msg_(false),
+		idx_(0), next_(false), mode_display_(REALTIME)
 {
 	// Category Groups
 	com_category_ = new rviz::Property("Center of Mass", QVariant(), "", this);
@@ -40,6 +41,7 @@ ReducedTrajectoryDisplay::ReducedTrajectoryDisplay() : received_msg_(false), idx
 								   this, SLOT(updateModeDisplay()), this);
 	mode_display_property_->addOption("Realtime", REALTIME);
 	mode_display_property_->addOption("Full", FULL);
+	mode_display_property_->addOption("Loop", LOOP);
 	
 
 	// CoM properties
@@ -183,6 +185,7 @@ void ReducedTrajectoryDisplay::processMessage(const dwl_msgs::ReducedTrajectory:
 	received_msg_ = true;
 	std::cout << "#############" << std::endl;
 	msg_time_ = 0.;
+	idx_ = 0;
 	destroyObjects();
 }
 
@@ -191,7 +194,6 @@ void ReducedTrajectoryDisplay::update(float wall_dt, float ros_dt)
 {
 	if (received_msg_) {
 		msg_time_ += wall_dt;
-		std::cout << "testing " << msg_time_ << std::endl;
 	
 		// Here we call the rviz::FrameManager to get the transform from the
 		// fixed frame to the frame in the header of this Point message.  If
@@ -205,17 +207,14 @@ void ReducedTrajectoryDisplay::update(float wall_dt, float ros_dt)
 					msg_->header.frame_id.c_str(), qPrintable(fixed_frame_));
 			return;
 		}
-	
-	
-	
+
 		// Compute the set of colors
 		std::vector<Ogre::ColourValue> colors;
 		generateSetOfColors(colors, msg_->trajectory.size());
 
-		
-		dwl_msgs::ReducedState state = msg_->trajectory[idx_];
 
 		// Visualization of the reduced trajectory
+		dwl_msgs::ReducedState state = msg_->trajectory[idx_];
 		if (next_) {
 			destroyObjects();
 			
@@ -318,29 +317,39 @@ void ReducedTrajectoryDisplay::update(float wall_dt, float ros_dt)
 			// And send it to the end of the vector
 			pendulum_visual_.push_back(arrow);
 		}
-				
-//		if (mode_display_ == REALTIME) {
-//			context_->queueRender();
-//			context_->queueRender();
-//			context_->queueRender();
-//			context_->queueRender();
-//			std::cout << k << " " << state.time << std::endl;
-//			wait(1.);//(state.time);
-//		}
-	//}
+
 		
-		
-		
-		if (msg_time_ >= state.time) {
+		// Visualization according to the defined mode
+		if (mode_display_ == REALTIME) {
+			if (msg_time_ >= state.time) {
+				next_ = true;
+				idx_++;
+			
+				if (idx_ > msg_->trajectory.size() - 1) {
+					idx_ = msg_->trajectory.size() - 1;
+					received_msg_ = false;
+				}
+			} else
+				next_ = false;
+		} else if (mode_display_ == FULL) {
 			next_ = true;
 			idx_++;
 			
-			if (idx_ > msg_->trajectory.size()-1) {
-				idx_ = msg_->trajectory.size()-1;
+			if (idx_ > msg_->trajectory.size() - 1) {
+				idx_ = msg_->trajectory.size() - 1;
 				received_msg_ = false;
 			}
-		} else {
-			next_ = false;
+		} else { // loop mode
+			if (msg_time_ >= state.time) {
+				next_ = true;
+				idx_++;
+			
+				if (idx_ > msg_->trajectory.size() - 1) {
+					idx_ = 0;
+					received_msg_ = false;
+				}
+			} else
+				next_ = false;
 		}
 	}
 }

@@ -30,7 +30,7 @@ class VectorProperty;
 namespace dwl_rviz_plugin
 {
 
-enum ModeDisplay {REALTIME, FULL};
+enum ModeDisplay {REALTIME, FULL, LOOP};
 
 /**
  * @class ReducedTrajectoryDisplay
