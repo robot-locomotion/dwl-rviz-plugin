@@ -26,7 +26,8 @@ namespace dwl_rviz_plugin
 {
 
 ReducedTrajectoryDisplay::ReducedTrajectoryDisplay() : received_msg_(false),
-		new_msg_(false), display_idx_(0), next_(false), mode_display_(REALTIME)
+		new_msg_(false), display_idx_(0), next_(false), mode_display_(REALTIME),
+		rt_factor_(1.)
 {
 	// Mode display properties
 	mode_display_property_ =
@@ -36,6 +37,14 @@ ReducedTrajectoryDisplay::ReducedTrajectoryDisplay() : received_msg_(false),
 	mode_display_property_->addOption("Realtime", REALTIME);
 	mode_display_property_->addOption("Full", FULL);
 	mode_display_property_->addOption("Loop", LOOP);
+
+	// Real-time factor properties
+	rt_factor_property_ =
+			new rviz::FloatProperty("RT Factor", 1.0,
+									"0.01 is 1% of speed, 1.0 is real-time speed.",
+									this, SLOT(updateModeDisplay()), this);
+	rt_factor_property_->setMin(0.01);
+	rt_factor_property_->setMax(1);
 
 	// Category Groups
 	com_category_ = new rviz::Property("Center of Mass", QVariant(), "", this);
@@ -128,6 +137,12 @@ void ReducedTrajectoryDisplay::reset()
 void ReducedTrajectoryDisplay::updateModeDisplay()
 {
 	mode_display_ = (ModeDisplay) mode_display_property_->getOptionInt();
+
+	if (mode_display_ == LOOP) {
+		rt_factor_property_->show();
+		rt_factor_ = rt_factor_property_->getFloat();
+	} else
+		rt_factor_property_->hide();
 
 	// Updating the display if there is old information
 	if (received_msg_) {
@@ -278,7 +293,7 @@ void ReducedTrajectoryDisplay::updateDisplay()
 			} else
 				next_ = false;
 		} else { // loop mode
-			if (msg_time_ >= state.time) {
+			if (msg_time_ >= state.time / rt_factor_) {
 				next_ = true;
 				display_idx_++;
 

@@ -109,7 +109,6 @@ class ReducedTrajectoryDisplay :
 								 unsigned int num_points);
 
 		/** @brief Properties to show on side panel */
-		rviz::EnumProperty* mode_display_property_;
 		rviz::Property* com_category_;
 		rviz::Property* cop_category_;
 		rviz::Property* support_category_;
@@ -124,6 +123,9 @@ class ReducedTrajectoryDisplay :
 
 
 		/** @brief Property objects for user-editable properties */
+		rviz::EnumProperty* mode_display_property_;
+		rviz::FloatProperty* rt_factor_property_;
+
 		rviz::FloatProperty* com_alpha_property_;
 		rviz::FloatProperty* com_radius_property_;
 
@@ -138,6 +140,7 @@ class ReducedTrajectoryDisplay :
 		rviz::FloatProperty* pendulum_line_radius_property_;
 
 		ModeDisplay mode_display_;
+		float rt_factor_;
 		float com_radius_;
 		float com_alpha_;
 		float cop_radius_;
