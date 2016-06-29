@@ -181,6 +181,9 @@ void RewardMapDisplay::incomingMessageCallback(const dwl_terrain::RewardMapConst
 	scene_node_->setOrientation(orientation);
 	scene_node_->setPosition(position);
 
+	// Getting the number of cells
+	unsigned int num_cells = msg->cell.size();
+
 	// Clearing the old data of the buffers
 	point_buf_.clear();
 
@@ -189,7 +192,7 @@ void RewardMapDisplay::incomingMessageCallback(const dwl_terrain::RewardMapConst
 	double min_reward = -1;
 	double max_reward = 0;
 	unsigned int min_key_z = std::numeric_limits<unsigned int>::max();
-	for (int i = 0; i < msg->cell.size(); i++) {
+	for (unsigned int i = 0; i < num_cells; i++) {
 		if (min_reward > msg->cell[i].reward)
 			min_reward = msg->cell[i].reward;
 
@@ -204,11 +207,10 @@ void RewardMapDisplay::incomingMessageCallback(const dwl_terrain::RewardMapConst
 
 
 	// Getting reward values and size of the pixel
-	double cell_size = 0;
 	dwl::environment::SpaceDiscretization space_discretization(grid_size_);
 	space_discretization.setEnvironmentResolution(height_size_, false);
-	for (int i = 0; i < msg->cell.size(); i++) {
-		// Getting cartesian information of the reward map
+	for (unsigned int i = 0; i < num_cells; i++) {
+		// Getting the Cartesian information of the reward map
 		PointCloud::Point new_point;
 		double x, y, z;
 		space_discretization.keyToCoord(x, msg->cell[i].key_x, true);
@@ -220,7 +222,7 @@ void RewardMapDisplay::incomingMessageCallback(const dwl_terrain::RewardMapConst
 			Ogre::Vector3 position(x, y, z);
 			new_point.position = position;
 
-			// Setting the color of the cell acording the reward value
+			// Setting the color of the cell according the reward value
 			setColor(msg->cell[i].reward,
 					 min_reward, max_reward,
 					 color_factor_, new_point);
@@ -234,7 +236,6 @@ void RewardMapDisplay::incomingMessageCallback(const dwl_terrain::RewardMapConst
 	boost::mutex::scoped_lock lock(mutex_);
 
 	new_points_.swap(point_buf_);
-	//box_size_ = box_size_buf_;
 
 	new_points_received_ = true;
 }
