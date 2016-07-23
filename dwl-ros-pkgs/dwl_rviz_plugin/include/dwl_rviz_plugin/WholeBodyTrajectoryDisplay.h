@@ -60,14 +60,24 @@ class WholeBodyTrajectoryDisplay :
 		/** @brief Helper function to apply color and alpha to all visuals.
 		/* Set the current color and alpha values for each visual */
 		void updateBaseStyle();
-		void updateBaseLineWidth();
+		void updateBaseLineProperties();
 		void updateContactStyle();
-		void updateContactLineWidth();
+		void updateContactLineProperties();
 
 
 	private:
+		/** @brief Process the trajectories */
+		void processBaseTrajectory();
+		void processContactTrajectory();
+
 		/** Destroy all the objects for visualization */
 		void destroyObjects();
+
+		/** @brief Whole-body trajectory message */
+		dwl_msgs::WholeBodyTrajectory::ConstPtr msg_;
+
+		/** @brief Indicates if it's been received a message */
+		bool is_info_;
 
 		/** @brief Properties to show on side panel */
 		rviz::Property* base_category_;
