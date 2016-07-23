@@ -35,20 +35,22 @@ WholeBodyTrajectoryDisplay::WholeBodyTrajectoryDisplay()
 
 	// Base trajectory properties
 	base_style_property_ =
-			new EnumProperty("Line Style", "Lines",
+			new EnumProperty("Style", "Points",
 							 "The rendering operation to use to draw the grid lines.",
 							 base_category_, SLOT(updateBaseStyle()), this);
 
-	base_style_property_->addOption("Lines", LINES);
+	base_style_property_->addOption("Points", POINTS);
 	base_style_property_->addOption("Billboards", BILLBOARDS);
+	base_style_property_->addOption("Lines", LINES);
+
 
 	base_line_width_property_ =
-			new FloatProperty("Line Width", 0.01,
+			new FloatProperty("Width", 0.01,
 							  "The width, in meters, of each path line. "
-							  "Only works with the 'Billboards' style.",
+							  "Only works with the 'Billboards' and 'Points' style.",
 							  base_category_, SLOT(updateBaseLineProperties()), this);
 	base_line_width_property_->setMin(0.001);
-	base_line_width_property_->hide();
+	base_line_width_property_->show();
 
 	base_color_property_ =
 			new ColorProperty("Color", QColor(0, 85, 255),
@@ -65,20 +67,22 @@ WholeBodyTrajectoryDisplay::WholeBodyTrajectoryDisplay()
 
 	// End-effector trajectory properties
 	contact_style_property_ =
-			new EnumProperty("Line Style", "Lines",
+			new EnumProperty("Style", "Points",
 							 "The rendering operation to use to draw the grid lines.",
 							 contact_category_, SLOT(updateContactStyle()), this);
 
-	contact_style_property_->addOption("Lines", LINES);
+	contact_style_property_->addOption("Points", POINTS);
 	contact_style_property_->addOption("Billboards", BILLBOARDS);
+	contact_style_property_->addOption("Lines", LINES);
+
 
 	contact_line_width_property_ =
-			new FloatProperty("Line Width", 0.01,
+			new FloatProperty("Width", 0.01,
 							  "The width, in meters, of each path line. "
-							  "Only works with the 'Billboards' style.",
+							  "Only works with the 'Billboards' and 'Points' style.",
 							  contact_category_, SLOT(updateContactLineProperties()), this);
 	contact_line_width_property_->setMin(0.001);
-	contact_line_width_property_->hide();
+	contact_line_width_property_->show();
 
 	contact_color_property_ =
 			new ColorProperty("Color", QColor(0, 85, 255),
@@ -121,10 +125,17 @@ void WholeBodyTrajectoryDisplay::updateBaseStyle()
 	case LINES:
 		base_line_width_property_->hide();
 		base_billboard_line_.reset();
+		base_points_.clear();
 		break;
 	case BILLBOARDS:
 		base_line_width_property_->show();
 		base_manual_object_.reset();
+		base_points_.clear();
+		break;
+	case POINTS:
+		base_line_width_property_->show();
+		base_manual_object_.reset();
+		base_billboard_line_.reset();
 		break;
 	}
 
@@ -140,13 +151,20 @@ void WholeBodyTrajectoryDisplay::updateBaseLineProperties()
 	Ogre::ColourValue color = base_color_property_->getOgreColor();
 	color.a = base_alpha_property_->getFloat();
 
+
 	if (style == BILLBOARDS) {
 		base_billboard_line_->setLineWidth(line_width);
 		base_billboard_line_->setColor(color.r, color.g, color.b, color.a);
-	} else {
+	} else if (style == LINES) {
 		// we have to process again the base trajectory
 		if (is_info_)
 			processBaseTrajectory();
+	} else {
+		uint32_t num_points = base_points_.size();
+		for (uint32_t i = 0; i < num_points; i++) {
+			base_points_[i]->setColor(color.r, color.g, color.b, color.a);
+			base_points_[i]->setRadius(line_width);
+		}
 	}
 
 	context_->queueRender();
@@ -156,22 +174,39 @@ void WholeBodyTrajectoryDisplay::updateBaseLineProperties()
 void WholeBodyTrajectoryDisplay::updateContactStyle()
 {
 	LineStyle style = (LineStyle) contact_style_property_->getOptionInt();
-	unsigned int num_contact = contact_billboard_line_.size();
+	uint32_t num_contact = contact_billboard_line_.size();
+	uint32_t num_points = contact_points_.size();
 
 	switch (style)
 	{
 	case LINES:
 		contact_line_width_property_->hide();
-		for (unsigned int i = 0; i < num_contact; i++) {
+		for (uint32_t i = 0; i < num_contact; i++) {
 			contact_billboard_line_[i].reset();
+		}
+		for (uint32_t i = 0; i < num_points; i++) {
+			uint32_t num_contacts = contact_points_[i].size();
+			for (uint32_t j = 0; j < num_contact; j++)
+				contact_points_[i][j].reset();
 		}
 		break;
 	case BILLBOARDS:
 		contact_line_width_property_->show();
-		for (unsigned int i = 0; i < num_contact; i++) {
+		for (uint32_t i = 0; i < num_contact; i++) {
 			contact_manual_object_[i].reset();
 		}
+		for (uint32_t i = 0; i < num_points; i++) {
+			uint32_t num_elem = contact_points_[i].size();
+			for (uint32_t j = 0; j < num_elem; j++)
+				contact_points_[i][j].reset();
+		}
 		break;
+	case POINTS:
+		contact_line_width_property_->show();
+		for (uint32_t i = 0; i < num_contact; i++) {
+			contact_manual_object_[i].reset();
+			contact_billboard_line_[i].reset();
+		}
 	}
 
 	if (is_info_)
@@ -187,15 +222,24 @@ void WholeBodyTrajectoryDisplay::updateContactLineProperties()
 	color.a = contact_alpha_property_->getFloat();
 
 	if (style == BILLBOARDS) {
-		unsigned int num_contact = contact_billboard_line_.size();
-		for (unsigned int i = 0; i < num_contact; i++) {
+		uint32_t num_contact = contact_billboard_line_.size();
+		for (uint32_t i = 0; i < num_contact; i++) {
 			contact_billboard_line_[i]->setLineWidth(line_width);
 			contact_billboard_line_[i]->setColor(color.r, color.g, color.b, color.a);
 		}
-	} else {
+	} else if (style == LINES){
 		// we have to process again the contact trajectory
 		if (is_info_)
 			processContactTrajectory();
+	} else {
+		uint32_t num_points = contact_points_.size();
+		for (uint32_t i = 0; i < num_points; i++) {
+			uint32_t num_contacts = contact_points_[i].size();
+			for (uint32_t j = 0; j < num_contacts; j++) {
+				contact_points_[i][j]->setColor(color.r, color.g, color.b, color.a);
+				contact_points_[i][j]->setRadius(line_width);
+			}
+		}
 	}
 
 	context_->queueRender();
@@ -245,7 +289,7 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 	uint32_t num_base = msg_->trajectory[0].base.size();
 	switch (base_style)
 	{
-	case LINES:
+	case LINES: {
 		base_manual_object_.reset(scene_manager_->createManualObject());
 		base_manual_object_->setDynamic(true);
 		scene_node_->attachObject(base_manual_object_.get());
@@ -271,8 +315,9 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 
 		base_manual_object_->end();
 		break;
+	}
 
-	case BILLBOARDS:
+	case BILLBOARDS: {
 		// Getting the base line width
 		float base_line_width = base_line_width_property_->getFloat();
 		base_billboard_line_.reset(new rviz::BillboardLine(scene_manager_, scene_node_));
@@ -296,6 +341,41 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 			base_billboard_line_->addPoint(xpos, base_color);
 		}
 		break;
+	}
+
+	case POINTS: {
+		// Getting the base line width
+		float base_line_width = base_line_width_property_->getFloat();
+		for (uint32_t i = 0; i < num_points; ++i) {
+			Ogre::Vector3 pos(0., 0., 0.);
+			for (uint32_t j = 0; j < num_base; j++) {
+				dwl_msgs::BaseState base = msg_->trajectory[i].base[j];
+				if (base.id == dwl::rbd::LX)
+					pos.x = base.position;
+				else if (base.id == dwl::rbd::LY)
+					pos.y = base.position;
+				else if (base.id == dwl::rbd::LZ)
+					pos.z = base.position;
+			}
+
+			Ogre::Vector3 xpos = transform * pos;
+
+			// We are keeping a vector of CoM visual pointers. This creates the next
+			// one and stores it in the vector
+			boost::shared_ptr<PointVisual> point_visual;
+			point_visual.reset(new PointVisual(context_->getSceneManager(), scene_node_));
+			point_visual->setColor(base_color.r, base_color.g, base_color.b, base_color.a);
+			point_visual->setRadius(base_line_width);
+			point_visual->setPoint(pos);
+			point_visual->setFramePosition(position);
+			point_visual->setFrameOrientation(orientation);
+
+			// And send it to the end of the vector
+			base_points_.push_back(point_visual);
+		}
+
+		break;
+	}
 	}
 }
 
@@ -344,8 +424,7 @@ void WholeBodyTrajectoryDisplay::processContactTrajectory()
 	std::map<uint32_t, uint32_t> contact_vec_id;
 	switch (contact_style)
 	{
-	case LINES:
-	{
+	case LINES:	{
 		contact_manual_object_.clear();
 		contact_manual_object_.resize(num_traj);
 
@@ -414,8 +493,7 @@ void WholeBodyTrajectoryDisplay::processContactTrajectory()
 		break;
 	}
 
-	case BILLBOARDS:
-	{
+	case BILLBOARDS: {
 		// Getting the end-effector line width
 		float contact_line_width = contact_line_width_property_->getFloat();
 		contact_billboard_line_.clear();
@@ -478,6 +556,80 @@ void WholeBodyTrajectoryDisplay::processContactTrajectory()
 		}
 		break;
 	}
+
+	case POINTS: {
+		// Getting the end-effector line width
+		float contact_line_width = contact_line_width_property_->getFloat();
+		contact_points_.clear();
+		contact_points_.resize(num_points);
+
+		uint32_t traj_id = 0;
+		for (uint32_t i = 0; i < num_points; ++i) {
+			uint32_t num_contacts = msg_->trajectory[i].contacts.size();
+			for (uint32_t k = 0; k < num_contacts; k++) {
+				dwl_msgs::ContactState contact = msg_->trajectory[i].contacts[k];
+				if (contact_traj_id.find(contact.name) == contact_traj_id.end()) {// a new swing trajectory
+					contact_traj_id[contact.name] = traj_id;
+					contact_vec_id[traj_id] = k;
+
+					// Incrementing the counter (id) of swing trajectories
+					traj_id++;
+				} else {
+					uint32_t swing_idx = contact_traj_id.find(contact.name)->second;
+
+					if (k != contact_vec_id.find(swing_idx)->second) {// change the vector index
+						contact_vec_id[swing_idx] = k;
+					}
+				}
+			}
+
+			// Updating the size
+			contact_points_[i].clear();
+			contact_points_[i].resize(num_contacts);
+
+			// Computing the actual base position
+			Ogre::Vector3 base_pos(0., 0., 0.);
+			for (uint32_t j = 0; j < num_base; j++) {
+				dwl_msgs::BaseState base = msg_->trajectory[i].base[j];
+				if (base.id == dwl::rbd::LX)
+					base_pos.x = base.position;
+				else if (base.id == dwl::rbd::LY)
+					base_pos.y = base.position;
+				else if (base.id == dwl::rbd::LZ)
+					base_pos.z = base.position;
+			}
+
+			// Adding the contact points for the current swing trajectories
+			uint32_t contact_idx = 0;
+			for (std::map<std::string,uint32_t>::iterator traj_it = contact_traj_id.begin();
+					traj_it != contact_traj_id.end(); traj_it++) {
+				uint32_t traj_id = traj_it->second;
+				uint32_t id = contact_vec_id.find(traj_id)->second;
+
+				if (id < num_contacts) {
+					dwl_msgs::ContactState contact = msg_->trajectory[i].contacts[id];
+
+					Ogre::Vector3 xpos = base_pos + transform * Ogre::Vector3(contact.position.x,
+																			  contact.position.y,
+																			  contact.position.z);
+
+					contact_points_[i][contact_idx].reset(new PointVisual(context_->getSceneManager(),
+																  scene_node_));
+					contact_points_[i][contact_idx]->setColor(contact_color.r,
+													  contact_color.g,
+													  contact_color.b,
+													  contact_color.a);
+					contact_points_[i][contact_idx]->setRadius(contact_line_width);
+					contact_points_[i][contact_idx]->setPoint(xpos);
+					contact_points_[i][contact_idx]->setFramePosition(position);
+					contact_points_[i][contact_idx]->setFrameOrientation(orientation);
+
+					++contact_idx;
+				}
+			}
+		}
+		break;
+	}
 	}
 }
 
@@ -486,8 +638,12 @@ void WholeBodyTrajectoryDisplay::destroyObjects()
 {
 	base_manual_object_.reset();
 	base_billboard_line_.reset();
+	base_points_.clear();
 	contact_manual_object_.clear();
 	contact_billboard_line_.clear();
+	for (uint32_t i = 0; i < contact_points_.size(); i++)
+		contact_points_[i].clear();
+	contact_points_.clear();
 }
 
 } // namespace dwl_rviz_plugin
