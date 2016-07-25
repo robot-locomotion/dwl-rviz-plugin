@@ -21,6 +21,7 @@ class IntProperty;
 class EnumProperty;
 class BillboardLine;
 class VectorProperty;
+class Axes;
 
 } //@namespace rviz
 
@@ -88,6 +89,7 @@ class WholeBodyTrajectoryDisplay :
 		boost::shared_ptr<Ogre::ManualObject> base_manual_object_;
 		boost::shared_ptr<rviz::BillboardLine> base_billboard_line_;
 		std::vector<boost::shared_ptr<PointVisual> > base_points_;
+		std::vector<boost::shared_ptr<rviz::Axes> > base_axes_;
 		std::vector<boost::shared_ptr<Ogre::ManualObject> > contact_manual_object_;
 		std::vector<boost::shared_ptr<rviz::BillboardLine> > contact_billboard_line_;
 		std::vector<std::vector<boost::shared_ptr<PointVisual> > > contact_points_;
@@ -97,11 +99,14 @@ class WholeBodyTrajectoryDisplay :
 		rviz::ColorProperty* base_color_property_;
 		rviz::FloatProperty* base_alpha_property_;
 		rviz::FloatProperty* base_line_width_property_;
+		rviz::FloatProperty* base_scale_property_;
 
 		rviz::EnumProperty* contact_style_property_;
 		rviz::ColorProperty* contact_color_property_;
 		rviz::FloatProperty* contact_alpha_property_;
 		rviz::FloatProperty* contact_line_width_property_;
+
+		Ogre::Vector3 last_point_position_;
 
 		enum LineStyle {LINES, BILLBOARDS, POINTS};
 };

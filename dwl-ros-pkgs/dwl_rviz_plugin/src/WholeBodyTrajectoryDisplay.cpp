@@ -20,6 +20,7 @@
 #include <rviz/validate_floats.h>
 
 #include <rviz/ogre_helpers/billboard_line.h>
+#include <rviz/ogre_helpers/axes.h>
 
 
 using namespace rviz;
@@ -55,6 +56,11 @@ WholeBodyTrajectoryDisplay::WholeBodyTrajectoryDisplay()
 	base_color_property_ =
 			new ColorProperty("Color", QColor(0, 85, 255),
 							  "Color to draw the path.",
+							  base_category_, SLOT(updateBaseLineProperties()), this);
+
+	base_scale_property_ =
+			new FloatProperty("Axes Scale", 1.0,
+							  "The scale of the axes that describe the orientation.",
 							  base_category_, SLOT(updateBaseLineProperties()), this);
 
 	base_alpha_property_ =
@@ -148,6 +154,7 @@ void WholeBodyTrajectoryDisplay::updateBaseLineProperties()
 {
 	LineStyle style = (LineStyle) base_style_property_->getOptionInt();
 	float line_width = base_line_width_property_->getFloat();
+	float scale = base_scale_property_->getFloat();
 	Ogre::ColourValue color = base_color_property_->getOgreColor();
 	color.a = base_alpha_property_->getFloat();
 
@@ -155,6 +162,20 @@ void WholeBodyTrajectoryDisplay::updateBaseLineProperties()
 	if (style == BILLBOARDS) {
 		base_billboard_line_->setLineWidth(line_width);
 		base_billboard_line_->setColor(color.r, color.g, color.b, color.a);
+		uint32_t num_axes = base_axes_.size();
+		for (uint32_t i = 0; i < num_axes; i++) {
+			Ogre::ColourValue x_color = base_axes_[i]->getDefaultXColor();
+			Ogre::ColourValue y_color = base_axes_[i]->getDefaultYColor();
+			Ogre::ColourValue z_color = base_axes_[i]->getDefaultZColor();
+			x_color.a = base_alpha_property_->getFloat();
+			y_color.a = base_alpha_property_->getFloat();
+			z_color.a = base_alpha_property_->getFloat();
+			base_axes_[i]->setXColor(x_color);
+			base_axes_[i]->setYColor(y_color);
+			base_axes_[i]->setZColor(z_color);
+			base_axes_[i]->getSceneNode()->setVisible(true);
+			base_axes_[i]->setScale(Ogre::Vector3(scale, scale, scale));
+		}
 	} else if (style == LINES) {
 		// we have to process again the base trajectory
 		if (is_info_)
@@ -164,6 +185,21 @@ void WholeBodyTrajectoryDisplay::updateBaseLineProperties()
 		for (uint32_t i = 0; i < num_points; i++) {
 			base_points_[i]->setColor(color.r, color.g, color.b, color.a);
 			base_points_[i]->setRadius(line_width);
+		}
+
+		uint32_t num_axes = base_axes_.size();
+		for (uint32_t i = 0; i < num_axes; i++) {
+			Ogre::ColourValue x_color = base_axes_[i]->getDefaultXColor();
+			Ogre::ColourValue y_color = base_axes_[i]->getDefaultYColor();
+			Ogre::ColourValue z_color = base_axes_[i]->getDefaultZColor();
+			x_color.a = base_alpha_property_->getFloat();
+			y_color.a = base_alpha_property_->getFloat();
+			z_color.a = base_alpha_property_->getFloat();
+			base_axes_[i]->setXColor(x_color);
+			base_axes_[i]->setYColor(y_color);
+			base_axes_[i]->setZColor(z_color);
+			base_axes_[i]->getSceneNode()->setVisible(true);
+			base_axes_[i]->setScale(Ogre::Vector3(scale, scale, scale));
 		}
 	}
 
@@ -255,7 +291,6 @@ void WholeBodyTrajectoryDisplay::processMessage(const dwl_msgs::WholeBodyTraject
 	// Destroy all the old elements
 	destroyObjects();
 
-
 	// Visualization of the base trajectory
 	processBaseTrajectory();
 
@@ -287,6 +322,7 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 	// Visualization of the base trajectory
 	uint32_t num_points = msg_->trajectory.size();
 	uint32_t num_base = msg_->trajectory[0].base.size();
+
 	switch (base_style)
 	{
 	case LINES: {
@@ -298,6 +334,8 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 		base_manual_object_->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_STRIP);
 		for (uint32_t i = 0; i < num_points; ++i) {
 			Ogre::Vector3 pos(0., 0., 0.);
+			Ogre::Quaternion quat;
+			Eigen::Vector3d rpy(0., 0., 0.);
 			for (uint32_t j = 0; j < num_base; j++) {
 				dwl_msgs::BaseState base = msg_->trajectory[i].base[j];
 				if (base.id == dwl::rbd::LX)
@@ -306,11 +344,80 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 					pos.y = base.position;
 				else if (base.id == dwl::rbd::LZ)
 					pos.z = base.position;
+				else if (base.id == dwl::rbd::AX)
+					rpy(0) = base.position;
+				else if (base.id == dwl::rbd::AY)
+					rpy(1) = base.position;
+				else
+					rpy(2) = base.position;
 			}
 
 			Ogre::Vector3 xpos = transform * pos;
 			base_manual_object_->position(xpos.x, xpos.y, xpos.z);
 			base_manual_object_->colour(base_color);
+
+
+			// We are keeping a vector of CoM frame pointers. This creates the next
+			// one and stores it in the vector
+			float scale = base_scale_property_->getFloat();
+			if (i == 0 || i == num_points - 1) {
+				last_point_position_ = pos;
+
+				// Adding the initial frame
+				Eigen::Quaterniond q = dwl::math::getQuaternion(rpy);
+				quat.w = q.w();
+				quat.x = q.x();
+				quat.y = q.y();
+				quat.z = q.z();
+
+				boost::shared_ptr<rviz::Axes> axes;
+				axes.reset(new Axes(scene_manager_, scene_node_, 0.04, 0.008));
+				axes->setPosition(pos);
+				axes->setOrientation(quat);
+				Ogre::ColourValue x_color = axes->getDefaultXColor();
+				Ogre::ColourValue y_color = axes->getDefaultYColor();
+				Ogre::ColourValue z_color = axes->getDefaultZColor();
+				x_color.a = base_alpha_property_->getFloat();
+				y_color.a = base_alpha_property_->getFloat();
+				z_color.a = base_alpha_property_->getFloat();
+				axes->setXColor(x_color);
+				axes->setYColor(y_color);
+				axes->setZColor(z_color);
+				axes->getSceneNode()->setVisible(true);
+				axes->setScale(Ogre::Vector3(scale, scale, scale));
+				base_axes_.push_back(axes);
+			} else {
+				// Adding the frame with a distant from the last one
+				float sq_distant = pos.squaredDistance(last_point_position_);
+				if (sq_distant >= scale * scale * 0.0032) {
+					Eigen::Quaterniond q = dwl::math::getQuaternion(rpy);
+					quat.w = q.w();
+					quat.x = q.x();
+					quat.y = q.y();
+					quat.z = q.z();
+
+					boost::shared_ptr<rviz::Axes> axes;
+					axes.reset(new Axes(scene_manager_, scene_node_, 0.04, 0.008));
+					axes->setPosition(pos);
+					axes->setOrientation(quat);
+					axes->setPosition(pos);
+					axes->setOrientation(quat);
+					Ogre::ColourValue x_color = axes->getDefaultXColor();
+					Ogre::ColourValue y_color = axes->getDefaultYColor();
+					Ogre::ColourValue z_color = axes->getDefaultZColor();
+					x_color.a = base_alpha_property_->getFloat();
+					y_color.a = base_alpha_property_->getFloat();
+					z_color.a = base_alpha_property_->getFloat();
+					axes->setXColor(x_color);
+					axes->setYColor(y_color);
+					axes->setZColor(z_color);
+					axes->getSceneNode()->setVisible(true);
+					axes->setScale(Ogre::Vector3(scale, scale, scale));
+					base_axes_.push_back(axes);
+
+					last_point_position_ = pos;
+				}
+			}
 		}
 
 		base_manual_object_->end();
@@ -327,6 +434,8 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 
 		for (uint32_t i = 0; i < num_points; ++i) {
 			Ogre::Vector3 pos(0., 0., 0.);
+			Ogre::Quaternion quat;
+			Eigen::Vector3d rpy(0., 0., 0.);
 			for (uint32_t j = 0; j < num_base; j++) {
 				dwl_msgs::BaseState base = msg_->trajectory[i].base[j];
 				if (base.id == dwl::rbd::LX)
@@ -335,10 +444,81 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 					pos.y = base.position;
 				else if (base.id == dwl::rbd::LZ)
 					pos.z = base.position;
+				else if (base.id == dwl::rbd::AX)
+					rpy(0) = base.position;
+				else if (base.id == dwl::rbd::AY)
+					rpy(1) = base.position;
+				else
+					rpy(2) = base.position;
 			}
 
 			Ogre::Vector3 xpos = transform * pos;
 			base_billboard_line_->addPoint(xpos, base_color);
+
+
+			// We are keeping a vector of CoM frame pointers. This creates the next
+			// one and stores it in the vector
+			float scale = base_scale_property_->getFloat();
+			if (i == 0 || i == num_points - 1) {
+				last_point_position_ = pos;
+
+				// Adding the initial frame
+				Eigen::Quaterniond q = dwl::math::getQuaternion(rpy);
+				quat.w = q.w();
+				quat.x = q.x();
+				quat.y = q.y();
+				quat.z = q.z();
+
+				boost::shared_ptr<rviz::Axes> axes;
+				axes.reset(new Axes(scene_manager_, scene_node_, 0.04, 0.008));
+				axes->setPosition(pos);
+				axes->setOrientation(quat);
+				axes->setPosition(pos);
+				axes->setOrientation(quat);
+				Ogre::ColourValue x_color = axes->getDefaultXColor();
+				Ogre::ColourValue y_color = axes->getDefaultYColor();
+				Ogre::ColourValue z_color = axes->getDefaultZColor();
+				x_color.a = base_alpha_property_->getFloat();
+				y_color.a = base_alpha_property_->getFloat();
+				z_color.a = base_alpha_property_->getFloat();
+				axes->setXColor(x_color);
+				axes->setYColor(y_color);
+				axes->setZColor(z_color);
+				axes->getSceneNode()->setVisible(true);
+				axes->setScale(Ogre::Vector3(scale, scale, scale));
+				base_axes_.push_back(axes);
+			} else {
+				// Adding the frame with a distant from the last one
+				float sq_distant = pos.squaredDistance(last_point_position_);
+				if (sq_distant >= scale * scale * 0.0032) {
+					Eigen::Quaterniond q = dwl::math::getQuaternion(rpy);
+					quat.w = q.w();
+					quat.x = q.x();
+					quat.y = q.y();
+					quat.z = q.z();
+
+					boost::shared_ptr<rviz::Axes> axes;
+					axes.reset(new Axes(scene_manager_, scene_node_, 0.04, 0.008));
+					axes->setPosition(pos);
+					axes->setOrientation(quat);
+					axes->setPosition(pos);
+					axes->setOrientation(quat);
+					Ogre::ColourValue x_color = axes->getDefaultXColor();
+					Ogre::ColourValue y_color = axes->getDefaultYColor();
+					Ogre::ColourValue z_color = axes->getDefaultZColor();
+					x_color.a = base_alpha_property_->getFloat();
+					y_color.a = base_alpha_property_->getFloat();
+					z_color.a = base_alpha_property_->getFloat();
+					axes->setXColor(x_color);
+					axes->setYColor(y_color);
+					axes->setZColor(z_color);
+					axes->getSceneNode()->setVisible(true);
+					axes->setScale(Ogre::Vector3(scale, scale, scale));
+					base_axes_.push_back(axes);
+
+					last_point_position_ = pos;
+				}
+			}
 		}
 		break;
 	}
@@ -348,6 +528,8 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 		float base_line_width = base_line_width_property_->getFloat();
 		for (uint32_t i = 0; i < num_points; ++i) {
 			Ogre::Vector3 pos(0., 0., 0.);
+			Ogre::Quaternion quat;
+			Eigen::Vector3d rpy(0., 0., 0.);
 			for (uint32_t j = 0; j < num_base; j++) {
 				dwl_msgs::BaseState base = msg_->trajectory[i].base[j];
 				if (base.id == dwl::rbd::LX)
@@ -356,6 +538,12 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 					pos.y = base.position;
 				else if (base.id == dwl::rbd::LZ)
 					pos.z = base.position;
+				else if (base.id == dwl::rbd::AX)
+					rpy(0) = base.position;
+				else if (base.id == dwl::rbd::AY)
+					rpy(1) = base.position;
+				else
+					rpy(2) = base.position;
 			}
 
 			Ogre::Vector3 xpos = transform * pos;
@@ -372,6 +560,71 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 
 			// And send it to the end of the vector
 			base_points_.push_back(point_visual);
+
+
+			// We are keeping a vector of CoM frame pointers. This creates the next
+			// one and stores it in the vector
+			float scale = base_scale_property_->getFloat();
+			if (i == 0 || i == num_points - 1) {
+				last_point_position_ = pos;
+
+				// Adding the initial frame
+				Eigen::Quaterniond q = dwl::math::getQuaternion(rpy);
+				quat.w = q.w();
+				quat.x = q.x();
+				quat.y = q.y();
+				quat.z = q.z();
+
+				boost::shared_ptr<rviz::Axes> axes;
+				axes.reset(new Axes(scene_manager_, scene_node_, 0.04, 0.008));
+				axes->setPosition(pos);
+				axes->setOrientation(quat);
+				axes->setPosition(pos);
+				axes->setOrientation(quat);
+				Ogre::ColourValue x_color = axes->getDefaultXColor();
+				Ogre::ColourValue y_color = axes->getDefaultYColor();
+				Ogre::ColourValue z_color = axes->getDefaultZColor();
+				x_color.a = base_alpha_property_->getFloat();
+				y_color.a = base_alpha_property_->getFloat();
+				z_color.a = base_alpha_property_->getFloat();
+				axes->setXColor(x_color);
+				axes->setYColor(y_color);
+				axes->setZColor(z_color);
+				axes->getSceneNode()->setVisible(true);
+				axes->setScale(Ogre::Vector3(scale, scale, scale));
+				base_axes_.push_back(axes);
+			} else {
+				// Adding the frame with a distant from the last one
+				float sq_distant = pos.squaredDistance(last_point_position_);
+				if (sq_distant >= scale * scale * 0.0032) {
+					Eigen::Quaterniond q = dwl::math::getQuaternion(rpy);
+					quat.w = q.w();
+					quat.x = q.x();
+					quat.y = q.y();
+					quat.z = q.z();
+
+					boost::shared_ptr<rviz::Axes> axes;
+					axes.reset(new Axes(scene_manager_, scene_node_, 0.04, 0.008));
+					axes->setPosition(pos);
+					axes->setOrientation(quat);
+					axes->setPosition(pos);
+					axes->setOrientation(quat);
+					Ogre::ColourValue x_color = axes->getDefaultXColor();
+					Ogre::ColourValue y_color = axes->getDefaultYColor();
+					Ogre::ColourValue z_color = axes->getDefaultZColor();
+					x_color.a = base_alpha_property_->getFloat();
+					y_color.a = base_alpha_property_->getFloat();
+					z_color.a = base_alpha_property_->getFloat();
+					axes->setXColor(x_color);
+					axes->setYColor(y_color);
+					axes->setZColor(z_color);
+					axes->getSceneNode()->setVisible(true);
+					axes->setScale(Ogre::Vector3(scale, scale, scale));
+					base_axes_.push_back(axes);
+
+					last_point_position_ = pos;
+				}
+			}
 		}
 
 		break;
@@ -639,6 +892,7 @@ void WholeBodyTrajectoryDisplay::destroyObjects()
 	base_manual_object_.reset();
 	base_billboard_line_.reset();
 	base_points_.clear();
+	base_axes_.clear();
 	contact_manual_object_.clear();
 	contact_billboard_line_.clear();
 	for (uint32_t i = 0; i < contact_points_.size(); i++)
