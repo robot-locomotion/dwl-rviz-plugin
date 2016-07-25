@@ -28,7 +28,7 @@ using namespace rviz;
 namespace dwl_rviz_plugin
 {
 
-WholeBodyTrajectoryDisplay::WholeBodyTrajectoryDisplay()
+WholeBodyTrajectoryDisplay::WholeBodyTrajectoryDisplay() : is_info_(false)
 {
 	// Category Groups
 	base_category_ = new rviz::Property("Base", QVariant(), "", this);
