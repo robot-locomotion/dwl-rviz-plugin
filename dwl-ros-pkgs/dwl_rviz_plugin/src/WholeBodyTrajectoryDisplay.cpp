@@ -36,7 +36,7 @@ WholeBodyTrajectoryDisplay::WholeBodyTrajectoryDisplay() : is_info_(false)
 
 	// Base trajectory properties
 	base_style_property_ =
-			new EnumProperty("Style", "Points",
+			new EnumProperty("Line Style", "Points",
 							 "The rendering operation to use to draw the grid lines.",
 							 base_category_, SLOT(updateBaseStyle()), this);
 
@@ -46,7 +46,7 @@ WholeBodyTrajectoryDisplay::WholeBodyTrajectoryDisplay() : is_info_(false)
 
 
 	base_line_width_property_ =
-			new FloatProperty("Width", 0.01,
+			new FloatProperty("Line Width", 0.01,
 							  "The width, in meters, of each path line. "
 							  "Only works with the 'Billboards' and 'Points' style.",
 							  base_category_, SLOT(updateBaseLineProperties()), this);
@@ -54,7 +54,7 @@ WholeBodyTrajectoryDisplay::WholeBodyTrajectoryDisplay() : is_info_(false)
 	base_line_width_property_->show();
 
 	base_color_property_ =
-			new ColorProperty("Color", QColor(0, 85, 255),
+			new ColorProperty("Line Color", QColor(0, 85, 255),
 							  "Color to draw the path.",
 							  base_category_, SLOT(updateBaseLineProperties()), this);
 
@@ -65,7 +65,7 @@ WholeBodyTrajectoryDisplay::WholeBodyTrajectoryDisplay() : is_info_(false)
 
 	base_alpha_property_ =
 			new FloatProperty("Alpha", 1.0,
-							  "Amount of transparency to apply to the path.",
+							  "Amount of transparency to apply to the trajectory.",
 							  base_category_, SLOT(updateBaseLineProperties()), this);
 	base_alpha_property_->setMin(0);
 	base_alpha_property_->setMax(1);
@@ -73,7 +73,7 @@ WholeBodyTrajectoryDisplay::WholeBodyTrajectoryDisplay() : is_info_(false)
 
 	// End-effector trajectory properties
 	contact_style_property_ =
-			new EnumProperty("Style", "Points",
+			new EnumProperty("Line Style", "Points",
 							 "The rendering operation to use to draw the grid lines.",
 							 contact_category_, SLOT(updateContactStyle()), this);
 
@@ -83,21 +83,21 @@ WholeBodyTrajectoryDisplay::WholeBodyTrajectoryDisplay() : is_info_(false)
 
 
 	contact_line_width_property_ =
-			new FloatProperty("Width", 0.01,
-							  "The width, in meters, of each path line. "
+			new FloatProperty("Line Width", 0.01,
+							  "The width, in meters, of each trajectory line. "
 							  "Only works with the 'Billboards' and 'Points' style.",
 							  contact_category_, SLOT(updateContactLineProperties()), this);
 	contact_line_width_property_->setMin(0.001);
 	contact_line_width_property_->show();
 
 	contact_color_property_ =
-			new ColorProperty("Color", QColor(0, 85, 255),
-							  "Color to draw the path.",
+			new ColorProperty("Line Color", QColor(0, 85, 255),
+							  "Color to draw the trajectory.",
 							  contact_category_, SLOT(updateContactLineProperties()), this);
 
 	contact_alpha_property_ =
 			new FloatProperty("Alpha", 1.0,
-							  "Amount of transparency to apply to the path.",
+							  "Amount of transparency to apply to the trajectory.",
 							  contact_category_, SLOT(updateContactLineProperties()), this);
 	contact_alpha_property_->setMin(0);
 	contact_alpha_property_->setMax(1);
