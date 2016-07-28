@@ -698,7 +698,8 @@ void WholeBodyTrajectoryDisplay::processContactTrajectory()
 					scene_node_->attachObject(contact_manual_object_[traj_id].get());
 
 					contact_manual_object_[traj_id]->estimateVertexCount(num_points);
-					contact_manual_object_[traj_id]->begin("BaseWhiteNoLighting", Ogre::RenderOperation::OT_LINE_STRIP);
+					contact_manual_object_[traj_id]->begin("BaseWhiteNoLighting",
+															Ogre::RenderOperation::OT_LINE_STRIP);
 
 					// Incrementing the counter (id) of swing trajectories
 					traj_id++;
@@ -713,6 +714,7 @@ void WholeBodyTrajectoryDisplay::processContactTrajectory()
 
 			// Computing the actual base position
 			Ogre::Vector3 base_pos(0., 0., 0.);
+			Eigen::Vector3d base_rpy;
 			for (uint32_t j = 0; j < num_base; j++) {
 				dwl_msgs::BaseState base = msg_->trajectory[i].base[j];
 				if (base.id == dwl::rbd::LX)
@@ -721,7 +723,18 @@ void WholeBodyTrajectoryDisplay::processContactTrajectory()
 					base_pos.y = base.position;
 				else if (base.id == dwl::rbd::LZ)
 					base_pos.z = base.position;
+				else if (base.id == dwl::rbd::AX)
+					base_rpy(0) = base.position;
+				else if (base.id == dwl::rbd::AY)
+					base_rpy(1) = base.position;
+				else
+					base_rpy(2) = base.position;
 			}
+
+			// Computing the base to world transform
+			Eigen::Quaterniond quat = dwl::math::getQuaternion(base_rpy);
+			Ogre::Quaternion ogre_quat(quat.w(), quat.x(), quat.y(), quat.z());
+			Ogre::Matrix4 base_to_world_tf(ogre_quat);
 
 			// Adding the contact points for the current swing trajectories
 			for (std::map<std::string,uint32_t>::iterator traj_it = contact_traj_id.begin();
@@ -732,9 +745,10 @@ void WholeBodyTrajectoryDisplay::processContactTrajectory()
 				if (id < num_contacts) {
 					dwl_msgs::ContactState contact = msg_->trajectory[i].contacts[id];
 
-					Ogre::Vector3 xpos = base_pos + transform * Ogre::Vector3(contact.position.x,
-																			  contact.position.y,
-																			  contact.position.z);
+					Ogre::Vector3 xpos = base_pos +
+							base_to_world_tf * Ogre::Vector3(contact.position.x,
+															 contact.position.y,
+															 contact.position.z);
 
 					contact_manual_object_[traj_id]->position(xpos.x, xpos.y, xpos.z);
 					contact_manual_object_[traj_id]->colour(contact_color);
@@ -782,6 +796,7 @@ void WholeBodyTrajectoryDisplay::processContactTrajectory()
 
 			// Computing the actual base position
 			Ogre::Vector3 base_pos(0., 0., 0.);
+			Eigen::Vector3d base_rpy;
 			for (uint32_t j = 0; j < num_base; j++) {
 				dwl_msgs::BaseState base = msg_->trajectory[i].base[j];
 				if (base.id == dwl::rbd::LX)
@@ -790,7 +805,18 @@ void WholeBodyTrajectoryDisplay::processContactTrajectory()
 					base_pos.y = base.position;
 				else if (base.id == dwl::rbd::LZ)
 					base_pos.z = base.position;
+				else if (base.id == dwl::rbd::AX)
+					base_rpy(0) = base.position;
+				else if (base.id == dwl::rbd::AY)
+					base_rpy(1) = base.position;
+				else
+					base_rpy(2) = base.position;
 			}
+
+			// Computing the base to world transform
+			Eigen::Quaterniond quat = dwl::math::getQuaternion(base_rpy);
+			Ogre::Quaternion ogre_quat(quat.w(), quat.x(), quat.y(), quat.z());
+			Ogre::Matrix4 base_to_world_tf(ogre_quat);
 
 			// Adding the contact points for the current swing trajectories
 			for (std::map<std::string,uint32_t>::iterator traj_it = contact_traj_id.begin();
@@ -801,9 +827,10 @@ void WholeBodyTrajectoryDisplay::processContactTrajectory()
 				if (id < num_contacts) {
 					dwl_msgs::ContactState contact = msg_->trajectory[i].contacts[id];
 
-					Ogre::Vector3 xpos = base_pos + transform * Ogre::Vector3(contact.position.x,
-																			  contact.position.y,
-																			  contact.position.z);
+					Ogre::Vector3 xpos = base_pos +
+							base_to_world_tf * Ogre::Vector3(contact.position.x,
+															 contact.position.y,
+															 contact.position.z);
 
 					contact_billboard_line_[traj_id]->addPoint(xpos, contact_color);
 				}
@@ -844,6 +871,7 @@ void WholeBodyTrajectoryDisplay::processContactTrajectory()
 
 			// Computing the actual base position
 			Ogre::Vector3 base_pos(0., 0., 0.);
+			Eigen::Vector3d base_rpy;
 			for (uint32_t j = 0; j < num_base; j++) {
 				dwl_msgs::BaseState base = msg_->trajectory[i].base[j];
 				if (base.id == dwl::rbd::LX)
@@ -852,7 +880,18 @@ void WholeBodyTrajectoryDisplay::processContactTrajectory()
 					base_pos.y = base.position;
 				else if (base.id == dwl::rbd::LZ)
 					base_pos.z = base.position;
+				else if (base.id == dwl::rbd::AX)
+					base_rpy(0) = base.position;
+				else if (base.id == dwl::rbd::AY)
+					base_rpy(1) = base.position;
+				else
+					base_rpy(2) = base.position;
 			}
+
+			// Computing the base to world transform
+			Eigen::Quaterniond quat = dwl::math::getQuaternion(base_rpy);
+			Ogre::Quaternion ogre_quat(quat.w(), quat.x(), quat.y(), quat.z());
+			Ogre::Matrix4 base_to_world_tf(ogre_quat);
 
 			// Adding the contact points for the current swing trajectories
 			uint32_t contact_idx = 0;
@@ -864,9 +903,10 @@ void WholeBodyTrajectoryDisplay::processContactTrajectory()
 				if (id < num_contacts) {
 					dwl_msgs::ContactState contact = msg_->trajectory[i].contacts[id];
 
-					Ogre::Vector3 xpos = base_pos + transform * Ogre::Vector3(contact.position.x,
-																			  contact.position.y,
-																			  contact.position.z);
+					Ogre::Vector3 xpos = base_pos +
+							base_to_world_tf * Ogre::Vector3(contact.position.x,
+															 contact.position.y,
+															 contact.position.z);
 
 					contact_points_[i][contact_idx].reset(new PointVisual(context_->getSceneManager(),
 																  scene_node_));
