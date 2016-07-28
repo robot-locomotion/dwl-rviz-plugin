@@ -221,9 +221,10 @@ void WholeBodyTrajectoryDisplay::updateContactStyle()
 			contact_billboard_line_[i].reset();
 		}
 		for (uint32_t i = 0; i < num_points; i++) {
-			uint32_t num_contacts = contact_points_[i].size();
-			for (uint32_t j = 0; j < num_contact; j++)
+			uint32_t num_elem = contact_points_[i].size();
+			for (uint32_t j = 0; j < num_elem; j++)
 				contact_points_[i][j].reset();
+			contact_points_[i].clear();
 		}
 		break;
 	case BILLBOARDS:
@@ -235,6 +236,7 @@ void WholeBodyTrajectoryDisplay::updateContactStyle()
 			uint32_t num_elem = contact_points_[i].size();
 			for (uint32_t j = 0; j < num_elem; j++)
 				contact_points_[i][j].reset();
+			contact_points_[i].clear();
 		}
 		break;
 	case POINTS:
