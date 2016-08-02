@@ -50,6 +50,7 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 		void onInitialize();
 		void onEnable();
 		void onDisable();
+		void fixedFrameChanged();
 
 		/** @brief Clear the visuals by deleting their objects */
 		void reset();
@@ -82,6 +83,12 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 
 
 	private:
+		void processWholeBodyState();
+
+		/** @brief Whole-body state message */
+		dwl_msgs::WholeBodyState::ConstPtr msg_;
+		bool is_info_;
+
 		/** @brief Robot URDF model */
 		std::string robot_model_;
 		bool initialized_model_;
