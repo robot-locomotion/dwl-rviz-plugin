@@ -17,8 +17,8 @@ using namespace rviz;
 namespace dwl_rviz_plugin
 {
 
-WholeBodyStateDisplay::WholeBodyStateDisplay() : force_threshold_(0.), com_real_(true),
-		initialized_model_(false)
+WholeBodyStateDisplay::WholeBodyStateDisplay() : is_info_(false),
+		initialized_model_(false), force_threshold_(0.), com_real_(true)
 {
 	// Robot properties
 	robot_model_property_ = new StringProperty("Robot Description", "robot_model",
@@ -201,6 +201,13 @@ void WholeBodyStateDisplay::onDisable()
 }
 
 
+void WholeBodyStateDisplay::fixedFrameChanged()
+{
+	if (is_info_)
+		processWholeBodyState();
+}
+
+
 void WholeBodyStateDisplay::reset()
 {
 	MFDClass::reset();
@@ -366,16 +373,25 @@ void WholeBodyStateDisplay::updateSupportMeshColorAndAlpha()
 
 void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::ConstPtr& msg)
 {
+	msg_ = msg;
+	is_info_ = true;
+
+	processWholeBodyState();
+}
+
+
+void WholeBodyStateDisplay::processWholeBodyState()
+{
 	// Checking if the urdf model was initialized
 	if (!initialized_model_)
 		return;
 
 	// Getting the base velocity
-	unsigned int num_base_joints = msg->base.size();
+	unsigned int num_base_joints = msg_->base.size();
 	dwl::rbd::Vector6d base_pos = dwl::rbd::Vector6d::Zero();
 	dwl::rbd::Vector6d base_vel = dwl::rbd::Vector6d::Zero();
 	for (unsigned int i = 0; i < num_base_joints; i++) {
-		dwl_msgs::BaseState base = msg->base[i];
+		dwl_msgs::BaseState base = msg_->base[i];
 
 		// Getting the base joint id
 		unsigned int id = base.id;
@@ -388,11 +404,11 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 	}
 
 	// Getting the joint position and velocity
-	unsigned int num_joints = msg->joints.size();
+	unsigned int num_joints = msg_->joints.size();
 	Eigen::VectorXd joint_pos = Eigen::VectorXd::Zero(num_joints);
 	Eigen::VectorXd joint_vel = Eigen::VectorXd::Zero(num_joints);
 	for (unsigned int i = 0; i < num_joints; i++) {
-		dwl_msgs::JointState joint = msg->joints[i];
+		dwl_msgs::JointState joint = msg_->joints[i];
 
 		// Getting the joint name
 		std::string name  = joint.name;
@@ -411,9 +427,9 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 	dwl::rbd::BodyVector contact_pos;
 	dwl::rbd::BodyWrench contact_for;
 	std::vector<Ogre::Vector3> support;
-	unsigned int num_contacts = msg->contacts.size();
+	unsigned int num_contacts = msg_->contacts.size();
 	for (unsigned int i = 0; i < num_contacts; i++) {
-		dwl_msgs::ContactState contact = msg->contacts[i];
+		dwl_msgs::ContactState contact = msg_->contacts[i];
 
 		// Getting the name
 		std::string name = contact.name;
@@ -469,11 +485,11 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 	// it fails, we can't do anything else so we return.
 	Ogre::Quaternion orientation;
 	Ogre::Vector3 position;
-	if (!context_->getFrameManager()->getTransform(msg->header.frame_id,
-												   msg->header.stamp,
+	if (!context_->getFrameManager()->getTransform(msg_->header.frame_id,
+												   msg_->header.stamp,
 												   position, orientation)) {
 		ROS_DEBUG("Error transforming from frame '%s' to frame '%s'",
-				  msg->header.frame_id.c_str(), qPrintable(fixed_frame_));
+				  msg_->header.frame_id.c_str(), qPrintable(fixed_frame_));
 		return;
 	}
 
@@ -536,7 +552,7 @@ void WholeBodyStateDisplay::processMessage(const dwl_msgs::WholeBodyState::Const
 	// Now set or update the contents of the chosen GRF visual
 	grf_visual_.clear();
 	for (unsigned int i = 0; i < num_contacts; i++) {
-		dwl_msgs::ContactState contact = msg->contacts[i];
+		dwl_msgs::ContactState contact = msg_->contacts[i];
 
 		// Getting the name
 		std::string name = contact.name;
