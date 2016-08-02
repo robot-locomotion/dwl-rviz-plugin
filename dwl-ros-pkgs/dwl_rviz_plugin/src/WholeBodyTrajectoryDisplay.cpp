@@ -548,8 +548,6 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 					rpy(2) = base.position;
 			}
 
-			Ogre::Vector3 xpos = transform * pos;
-
 			// We are keeping a vector of CoM visual pointers. This creates the next
 			// one and stores it in the vector
 			boost::shared_ptr<PointVisual> point_visual;
