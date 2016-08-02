@@ -337,6 +337,7 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 	uint32_t num_points = msg_->trajectory.size();
 	uint32_t num_base = msg_->trajectory[0].base.size();
 
+	base_axes_.clear();
 	switch (base_style)
 	{
 	case LINES: {
@@ -532,6 +533,8 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 	}
 
 	case POINTS: {
+		base_points_.clear();
+
 		// Getting the base line width
 		float base_line_width = base_line_width_property_->getFloat();
 		for (uint32_t i = 0; i < num_points; ++i) {
