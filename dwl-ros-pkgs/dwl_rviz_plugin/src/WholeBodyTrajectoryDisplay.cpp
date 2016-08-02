@@ -116,6 +116,18 @@ void WholeBodyTrajectoryDisplay::onInitialize()
 }
 
 
+void WholeBodyTrajectoryDisplay::fixedFrameChanged()
+{
+	if (is_info_) {
+		// Visualization of the base trajectory
+		processBaseTrajectory();
+
+		// Visualization of the end-effector trajectory
+		processContactTrajectory();
+	}
+}
+
+
 void WholeBodyTrajectoryDisplay::reset()
 {
 	MFDClass::reset();
