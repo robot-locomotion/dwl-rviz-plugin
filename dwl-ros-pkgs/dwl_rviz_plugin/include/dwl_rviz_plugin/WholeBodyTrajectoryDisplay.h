@@ -50,6 +50,9 @@ class WholeBodyTrajectoryDisplay :
 		/** @brief Overridden from Display. */
 		void onInitialize();
 
+		/** @brief Called when the fixed frame changed */
+		void fixedFrameChanged();
+
 		/**
 		 * @brief Function to handle an incoming ROS message
 		 * This is our callback to handle an incoming message

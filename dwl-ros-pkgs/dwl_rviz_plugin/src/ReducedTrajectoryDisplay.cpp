@@ -127,6 +127,26 @@ void ReducedTrajectoryDisplay::onInitialize()
 	MFDClass::onInitialize();
 }
 
+
+void ReducedTrajectoryDisplay::fixedFrameChanged()
+{
+	if (received_msg_) {
+		// Setting up the message
+		new_msg_ = true;
+
+		// Resetting the values for the new message display
+		msg_time_ = msg_->trajectory[0].time;
+		display_idx_ = 0;
+
+		// Destroying the old displays
+		destroyObjects();
+
+		// Compute the set of colors
+		generateSetOfColors(colours_, msg_->trajectory.size());
+	}
+}
+
+
 void ReducedTrajectoryDisplay::reset()
 {
 	MFDClass::reset();

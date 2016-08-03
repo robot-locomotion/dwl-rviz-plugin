@@ -116,6 +116,18 @@ void WholeBodyTrajectoryDisplay::onInitialize()
 }
 
 
+void WholeBodyTrajectoryDisplay::fixedFrameChanged()
+{
+	if (is_info_) {
+		// Visualization of the base trajectory
+		processBaseTrajectory();
+
+		// Visualization of the end-effector trajectory
+		processContactTrajectory();
+	}
+}
+
+
 void WholeBodyTrajectoryDisplay::reset()
 {
 	MFDClass::reset();
@@ -325,6 +337,7 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 	uint32_t num_points = msg_->trajectory.size();
 	uint32_t num_base = msg_->trajectory[0].base.size();
 
+	base_axes_.clear();
 	switch (base_style)
 	{
 	case LINES: {
@@ -363,7 +376,7 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 			// one and stores it in the vector
 			float scale = base_scale_property_->getFloat();
 			if (i == 0 || i == num_points - 1) {
-				last_point_position_ = pos;
+				last_point_position_ = xpos;
 
 				// Adding the initial frame
 				Eigen::Quaterniond q = dwl::math::getQuaternion(rpy);
@@ -374,8 +387,8 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 
 				boost::shared_ptr<rviz::Axes> axes;
 				axes.reset(new Axes(scene_manager_, scene_node_, 0.04, 0.008));
-				axes->setPosition(pos);
-				axes->setOrientation(quat);
+				axes->setPosition(xpos);
+				axes->setOrientation(quat * orientation); // combination of rotations
 				Ogre::ColourValue x_color = axes->getDefaultXColor();
 				Ogre::ColourValue y_color = axes->getDefaultYColor();
 				Ogre::ColourValue z_color = axes->getDefaultZColor();
@@ -390,7 +403,7 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 				base_axes_.push_back(axes);
 			} else {
 				// Adding the frame with a distant from the last one
-				float sq_distant = pos.squaredDistance(last_point_position_);
+				float sq_distant = xpos.squaredDistance(last_point_position_);
 				if (sq_distant >= scale * scale * 0.0032) {
 					Eigen::Quaterniond q = dwl::math::getQuaternion(rpy);
 					quat.w = q.w();
@@ -400,10 +413,8 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 
 					boost::shared_ptr<rviz::Axes> axes;
 					axes.reset(new Axes(scene_manager_, scene_node_, 0.04, 0.008));
-					axes->setPosition(pos);
-					axes->setOrientation(quat);
-					axes->setPosition(pos);
-					axes->setOrientation(quat);
+					axes->setPosition(xpos);
+					axes->setOrientation(quat * orientation); // combination of rotations
 					Ogre::ColourValue x_color = axes->getDefaultXColor();
 					Ogre::ColourValue y_color = axes->getDefaultYColor();
 					Ogre::ColourValue z_color = axes->getDefaultZColor();
@@ -417,7 +428,7 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 					axes->setScale(Ogre::Vector3(scale, scale, scale));
 					base_axes_.push_back(axes);
 
-					last_point_position_ = pos;
+					last_point_position_ = xpos;
 				}
 			}
 		}
@@ -462,7 +473,7 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 			// one and stores it in the vector
 			float scale = base_scale_property_->getFloat();
 			if (i == 0 || i == num_points - 1) {
-				last_point_position_ = pos;
+				last_point_position_ = xpos;
 
 				// Adding the initial frame
 				Eigen::Quaterniond q = dwl::math::getQuaternion(rpy);
@@ -473,10 +484,8 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 
 				boost::shared_ptr<rviz::Axes> axes;
 				axes.reset(new Axes(scene_manager_, scene_node_, 0.04, 0.008));
-				axes->setPosition(pos);
-				axes->setOrientation(quat);
-				axes->setPosition(pos);
-				axes->setOrientation(quat);
+				axes->setPosition(xpos);
+				axes->setOrientation(quat * orientation); // combination of rotations
 				Ogre::ColourValue x_color = axes->getDefaultXColor();
 				Ogre::ColourValue y_color = axes->getDefaultYColor();
 				Ogre::ColourValue z_color = axes->getDefaultZColor();
@@ -491,7 +500,7 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 				base_axes_.push_back(axes);
 			} else {
 				// Adding the frame with a distant from the last one
-				float sq_distant = pos.squaredDistance(last_point_position_);
+				float sq_distant = xpos.squaredDistance(last_point_position_);
 				if (sq_distant >= scale * scale * 0.0032) {
 					Eigen::Quaterniond q = dwl::math::getQuaternion(rpy);
 					quat.w = q.w();
@@ -501,10 +510,8 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 
 					boost::shared_ptr<rviz::Axes> axes;
 					axes.reset(new Axes(scene_manager_, scene_node_, 0.04, 0.008));
-					axes->setPosition(pos);
-					axes->setOrientation(quat);
-					axes->setPosition(pos);
-					axes->setOrientation(quat);
+					axes->setPosition(xpos);
+					axes->setOrientation(quat * orientation); // combination of rotations
 					Ogre::ColourValue x_color = axes->getDefaultXColor();
 					Ogre::ColourValue y_color = axes->getDefaultYColor();
 					Ogre::ColourValue z_color = axes->getDefaultZColor();
@@ -518,7 +525,7 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 					axes->setScale(Ogre::Vector3(scale, scale, scale));
 					base_axes_.push_back(axes);
 
-					last_point_position_ = pos;
+					last_point_position_ = xpos;
 				}
 			}
 		}
@@ -526,6 +533,8 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 	}
 
 	case POINTS: {
+		base_points_.clear();
+
 		// Getting the base line width
 		float base_line_width = base_line_width_property_->getFloat();
 		for (uint32_t i = 0; i < num_points; ++i) {
@@ -548,8 +557,6 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 					rpy(2) = base.position;
 			}
 
-			Ogre::Vector3 xpos = transform * pos;
-
 			// We are keeping a vector of CoM visual pointers. This creates the next
 			// one and stores it in the vector
 			boost::shared_ptr<PointVisual> point_visual;
@@ -566,9 +573,10 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 
 			// We are keeping a vector of CoM frame pointers. This creates the next
 			// one and stores it in the vector
+			Ogre::Vector3 xpos = transform * pos;
 			float scale = base_scale_property_->getFloat();
 			if (i == 0 || i == num_points - 1) {
-				last_point_position_ = pos;
+				last_point_position_ = xpos;
 
 				// Adding the initial frame
 				Eigen::Quaterniond q = dwl::math::getQuaternion(rpy);
@@ -579,10 +587,8 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 
 				boost::shared_ptr<rviz::Axes> axes;
 				axes.reset(new Axes(scene_manager_, scene_node_, 0.04, 0.008));
-				axes->setPosition(pos);
-				axes->setOrientation(quat);
-				axes->setPosition(pos);
-				axes->setOrientation(quat);
+				axes->setPosition(xpos);
+				axes->setOrientation(quat * orientation); // combination of rotations
 				Ogre::ColourValue x_color = axes->getDefaultXColor();
 				Ogre::ColourValue y_color = axes->getDefaultYColor();
 				Ogre::ColourValue z_color = axes->getDefaultZColor();
@@ -597,7 +603,7 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 				base_axes_.push_back(axes);
 			} else {
 				// Adding the frame with a distant from the last one
-				float sq_distant = pos.squaredDistance(last_point_position_);
+				float sq_distant = xpos.squaredDistance(last_point_position_);
 				if (sq_distant >= scale * scale * 0.0032) {
 					Eigen::Quaterniond q = dwl::math::getQuaternion(rpy);
 					quat.w = q.w();
@@ -607,10 +613,8 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 
 					boost::shared_ptr<rviz::Axes> axes;
 					axes.reset(new Axes(scene_manager_, scene_node_, 0.04, 0.008));
-					axes->setPosition(pos);
-					axes->setOrientation(quat);
-					axes->setPosition(pos);
-					axes->setOrientation(quat);
+					axes->setPosition(xpos);
+					axes->setOrientation(quat * orientation); // combination of rotations
 					Ogre::ColourValue x_color = axes->getDefaultXColor();
 					Ogre::ColourValue y_color = axes->getDefaultYColor();
 					Ogre::ColourValue z_color = axes->getDefaultZColor();
@@ -624,7 +628,7 @@ void WholeBodyTrajectoryDisplay::processBaseTrajectory()
 					axes->setScale(Ogre::Vector3(scale, scale, scale));
 					base_axes_.push_back(axes);
 
-					last_point_position_ = pos;
+					last_point_position_ = xpos;
 				}
 			}
 		}
