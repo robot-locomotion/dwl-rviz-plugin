@@ -424,8 +424,8 @@ void WholeBodyStateDisplay::processWholeBodyState()
 	// Getting the contact wrenches and positions
 	Eigen::Vector3d total_force = Eigen::Vector3d::Zero();
 	dwl::rbd::BodySelector contact_names;
-	dwl::rbd::BodyVector contact_pos;
-	dwl::rbd::BodyWrench contact_for;
+	dwl::rbd::BodyVectorXd contact_pos;
+	dwl::rbd::BodyVector6d contact_for;
 	std::vector<Ogre::Vector3> support;
 	unsigned int num_contacts = msg_->contacts.size();
 	for (unsigned int i = 0; i < num_contacts; i++) {
