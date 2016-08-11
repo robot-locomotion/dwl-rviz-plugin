@@ -228,7 +228,7 @@ void ReducedTrajectoryDisplay::updatePendulumArrowGeometry()
 }
 
 
-void ReducedTrajectoryDisplay::processMessage(const dwl_msgs::ReducedTrajectory::ConstPtr& msg)
+void ReducedTrajectoryDisplay::processMessage(const dwl_msgs::ReducedBodyTrajectory::ConstPtr& msg)
 {
 	// Setting up the message
 	msg_ = msg;
@@ -236,14 +236,14 @@ void ReducedTrajectoryDisplay::processMessage(const dwl_msgs::ReducedTrajectory:
 	new_msg_ = true;
 
 	// Resetting the values for the new message display
-	msg_time_ = msg_->trajectory[0].time;
+	msg_time_ = msg_->actual.time;
 	display_idx_ = 0;
 
 	// Destroying the old displays
 	destroyObjects();
 
 	// Compute the set of colors
-	generateSetOfColors(colours_, msg_->trajectory.size());
+	generateSetOfColors(colours_, msg_->trajectory.size() + 1);
 }
 
 
@@ -275,14 +275,17 @@ void ReducedTrajectoryDisplay::destroyObjects()
 void ReducedTrajectoryDisplay::updateDisplay()
 {
 	// Visualization of the reduced trajectory
-	dwl_msgs::ReducedState state;
+	dwl_msgs::ReducedBodyState state;
 	if (mode_display_ == FULL) {
-		for (unsigned int k = 0; k < msg_->trajectory.size(); k++) {
+		for (unsigned int k = 0; k < msg_->trajectory.size() + 1; k++) {
 			// Setting up the actual display index
-			display_idx_ = k;
+			display_idx_ = k - 1;
 
 			// Getting the actual state to display
-			state = msg_->trajectory[k];
+			if (k == 0)
+				state = msg_->actual;
+			else
+				state = msg_->trajectory[display_idx_];
 
 			// Display the state
 			displayState(state);
@@ -292,7 +295,11 @@ void ReducedTrajectoryDisplay::updateDisplay()
 		new_msg_ = false;
 	} else { // realtime or loop
 		// Getting the actual state to display
-		state = msg_->trajectory[display_idx_];
+		if (display_idx_ == -1)
+			state = msg_->actual;
+		else
+			state = msg_->trajectory[display_idx_];
+
 		if (next_) {
 			// Destroy all the visual information
 			destroyObjects();
@@ -318,7 +325,7 @@ void ReducedTrajectoryDisplay::updateDisplay()
 				display_idx_++;
 
 				if (display_idx_ > msg_->trajectory.size() - 1) {
-					display_idx_ = 0;
+					display_idx_ = -1;
 					msg_time_ = 0.;
 				}
 			} else
@@ -328,7 +335,7 @@ void ReducedTrajectoryDisplay::updateDisplay()
 }
 
 
-void ReducedTrajectoryDisplay::displayState(dwl_msgs::ReducedState& state)
+void ReducedTrajectoryDisplay::displayState(dwl_msgs::ReducedBodyState& state)
 {
 	// Here we call the rviz::FrameManager to get the transform from the
 	// fixed frame to the frame in the header of this Point message.  If
@@ -348,7 +355,7 @@ void ReducedTrajectoryDisplay::displayState(dwl_msgs::ReducedState& state)
 	Ogre::Vector3 com_pos(com_vec.x, com_vec.y, com_vec.z);
 
 	// Getting the actual color
-	Ogre::ColourValue colour = colours_[display_idx_];
+	Ogre::ColourValue colour = colours_[display_idx_ + 1];
 
 	// We are keeping a vector of CoM visual pointers. This creates the next
 	// one and stores it in the vector

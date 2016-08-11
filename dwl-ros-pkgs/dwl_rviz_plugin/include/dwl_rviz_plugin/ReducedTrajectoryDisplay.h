@@ -5,7 +5,7 @@
 #include <dwl_rviz_plugin/PointVisual.h>
 #include <dwl_rviz_plugin/ArrowVisual.h>
 #include <dwl_rviz_plugin/PolygonVisual.h>
-#include <dwl_msgs/ReducedTrajectory.h>
+#include <dwl_msgs/ReducedBodyTrajectory.h>
 #include <Eigen/Dense>
 
 
@@ -37,7 +37,7 @@ enum ModeDisplay {REALTIME, FULL, LOOP};
  * @brief Displays a dwl_msgs::ReducedTrajectory message
  */
 class ReducedTrajectoryDisplay :
-		public rviz::MessageFilterDisplay<dwl_msgs::ReducedTrajectory>
+		public rviz::MessageFilterDisplay<dwl_msgs::ReducedBodyTrajectory>
 {
 	Q_OBJECT
 	public:
@@ -61,7 +61,7 @@ class ReducedTrajectoryDisplay :
 		 * This is our callback to handle an incoming message
 		 * @param const dwl_msgs::ReducedTrajectory::ConstPtr& Reduced trajectory msg
 		 */
-		void processMessage(const dwl_msgs::ReducedTrajectory::ConstPtr& msg);
+		void processMessage(const dwl_msgs::ReducedBodyTrajectory::ConstPtr& msg);
 		
 		void update(float wall_dt, float ros_dt);
 
@@ -85,10 +85,10 @@ class ReducedTrajectoryDisplay :
 		void updateDisplay();
 
 		/** @brief Display the state */
-		void displayState(dwl_msgs::ReducedState& state);
+		void displayState(dwl_msgs::ReducedBodyState& state);
 		
 		/** @brief Message pointer */
-		dwl_msgs::ReducedTrajectory::ConstPtr msg_;
+		dwl_msgs::ReducedBodyTrajectory::ConstPtr msg_;
 
 		/** @brief Message time uses to display at the right moment */
 		float msg_time_;
