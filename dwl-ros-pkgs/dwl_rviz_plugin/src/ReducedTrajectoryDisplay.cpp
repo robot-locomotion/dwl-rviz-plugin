@@ -135,8 +135,8 @@ void ReducedTrajectoryDisplay::fixedFrameChanged()
 		new_msg_ = true;
 
 		// Resetting the values for the new message display
-		msg_time_ = msg_->trajectory[0].time;
-		display_idx_ = 0;
+		msg_time_ = msg_->actual.time;
+		display_idx_ = -1;
 
 		// Destroying the old displays
 		destroyObjects();
@@ -167,8 +167,8 @@ void ReducedTrajectoryDisplay::updateModeDisplay()
 	// Updating the display if there is old information
 	if (received_msg_) {
 		// Resetting the values for the new message display
-		msg_time_ = msg_->trajectory[0].time;
-		display_idx_ = 0;
+		msg_time_ = msg_->actual.time;
+		display_idx_ = -1;
 		next_ = true;
 		new_msg_ = true;
 
@@ -237,7 +237,7 @@ void ReducedTrajectoryDisplay::processMessage(const dwl_msgs::ReducedBodyTraject
 
 	// Resetting the values for the new message display
 	msg_time_ = msg_->actual.time;
-	display_idx_ = 0;
+	display_idx_ = -1;
 
 	// Destroying the old displays
 	destroyObjects();
@@ -325,8 +325,8 @@ void ReducedTrajectoryDisplay::updateDisplay()
 				display_idx_++;
 
 				if (display_idx_ > msg_->trajectory.size() - 1) {
+					msg_time_ = msg_->actual.time;
 					display_idx_ = -1;
-					msg_time_ = 0.;
 				}
 			} else
 				next_ = false;
