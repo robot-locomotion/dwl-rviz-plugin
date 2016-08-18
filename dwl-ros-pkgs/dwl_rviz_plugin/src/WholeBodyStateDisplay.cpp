@@ -244,7 +244,8 @@ void WholeBodyStateDisplay::load()
 	robot_model_ = content;
 
 	// Initializing the dynamics from the URDF model
-	dynamics_.modelFromURDFModel(robot_model_);
+	wdyn_.modelFromURDFModel(robot_model_);
+	fbs_ = wdyn_.getFloatingBaseSystem();
 	initialized_model_ = true;
 
 	setStatus(StatusProperty::Ok, "URDF", "URDF parsed OK");
@@ -414,7 +415,7 @@ void WholeBodyStateDisplay::processWholeBodyState()
 		std::string name  = joint.name;
 
 		// Getting the joint id
-		unsigned int id = dynamics_.getFloatingBaseSystem().getJointId(name);
+		unsigned int id = fbs_.getJointId(name);
 
 		// Setting the joint position and velocity
 		joint_pos(id) = joint.position;
@@ -469,15 +470,15 @@ void WholeBodyStateDisplay::processWholeBodyState()
 
 	// Computing the center of mass position and velocity
 	dwl::rbd::Vector6d null_base_pos = dwl::rbd::Vector6d::Zero();
-	Eigen::Vector3d com_pos = dynamics_.getFloatingBaseSystem().getSystemCoM(null_base_pos,
+	Eigen::Vector3d com_pos = fbs_.getSystemCoM(null_base_pos,
 																			 joint_pos);
-	Eigen::Vector3d com_vel = dynamics_.getFloatingBaseSystem().getSystemCoMRate(null_base_pos,
+	Eigen::Vector3d com_vel = fbs_.getSystemCoMRate(null_base_pos,
 																				 joint_pos,
 																				 base_vel,
 																				 joint_vel);
 	// Computing the center of pressure position
 	Eigen::Vector3d cop_pos;
-	dynamics_.computeCenterOfPressure(cop_pos, contact_for, contact_pos, contact_names);
+	wdyn_.computeCenterOfPressure(cop_pos, contact_for, contact_pos, contact_names);
 
 
 	// Here we call the rviz::FrameManager to get the transform from the
