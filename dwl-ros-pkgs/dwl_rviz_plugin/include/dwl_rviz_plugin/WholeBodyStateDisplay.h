@@ -136,7 +136,8 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
         rviz::FloatProperty* support_force_threshold_property_;
 
         /** @brief Whole-body dynamics */
-        dwl::model::WholeBodyDynamics dynamics_;
+        dwl::model::WholeBodyDynamics wdyn_;
+        dwl::model::FloatingBaseSystem fbs_;
 
         /** @brief Force threshold for detecting active contacts */
         double force_threshold_;
