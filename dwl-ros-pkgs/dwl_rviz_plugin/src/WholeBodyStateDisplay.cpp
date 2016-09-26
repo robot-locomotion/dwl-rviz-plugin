@@ -356,8 +356,10 @@ void WholeBodyStateDisplay::updateSupportLineColorAndAlpha()
 	force_threshold_ = support_force_threshold_property_->getFloat();
 
 	float radius = support_line_radius_property_->getFloat();
-	support_visual_->setLineColor(color.r, color.g, color.b, color.a);
-	support_visual_->setLineRadius(radius);
+	if (is_info_) {
+		support_visual_->setLineColor(color.r, color.g, color.b, color.a);
+		support_visual_->setLineRadius(radius);
+	}
 
 	context_->queueRender();
 }
