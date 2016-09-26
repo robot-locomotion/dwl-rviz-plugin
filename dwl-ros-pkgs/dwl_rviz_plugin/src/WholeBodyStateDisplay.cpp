@@ -467,12 +467,10 @@ void WholeBodyStateDisplay::processWholeBodyState()
 
 	// Computing the center of mass position and velocity
 	dwl::rbd::Vector6d null_base_pos = dwl::rbd::Vector6d::Zero();
-	Eigen::Vector3d com_pos = fbs_.getSystemCoM(null_base_pos,
-																			 joint_pos);
-	Eigen::Vector3d com_vel = fbs_.getSystemCoMRate(null_base_pos,
-																				 joint_pos,
-																				 base_vel,
-																				 joint_vel);
+	Eigen::Vector3d com_pos = fbs_.getSystemCoM(null_base_pos, joint_pos);
+	Eigen::Vector3d com_vel = fbs_.getSystemCoMRate(null_base_pos, joint_pos,
+													base_vel, joint_vel);
+
 	// Computing the center of pressure position
 	Eigen::Vector3d cop_pos;
 	wdyn_.computeCenterOfPressure(cop_pos, contact_for, contact_pos, contact_names);
