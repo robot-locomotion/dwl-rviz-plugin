@@ -142,6 +142,9 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
         /** @brief Force threshold for detecting active contacts */
         double force_threshold_;
 
+        /** @brief Weight of the robot */
+        double weight_;
+
         /** @brief CoM style */
 		enum CoMStyle {REAL, PROJECTED};
 		bool com_real_;
