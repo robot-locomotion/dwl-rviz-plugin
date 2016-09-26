@@ -111,7 +111,7 @@ WholeBodyStateDisplay::WholeBodyStateDisplay() : is_info_(false),
 	grf_alpha_property_->setMax(1);
 
 	grf_shaft_length_property_ =
-			new FloatProperty("Shaft Length", 0.4,
+			new FloatProperty("Shaft Length", 0.8,
 							  "Length of the arrow's shaft, in meters.",
 							  grf_category_, SLOT(updateGRFArrowGeometry()), this);
 
