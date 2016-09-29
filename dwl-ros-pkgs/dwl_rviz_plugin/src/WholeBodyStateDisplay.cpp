@@ -18,7 +18,8 @@ namespace dwl_rviz_plugin
 {
 
 WholeBodyStateDisplay::WholeBodyStateDisplay() : is_info_(false),
-		initialized_model_(false), force_threshold_(0.), com_real_(true)
+		initialized_model_(false), force_threshold_(0.), weight_(0.),
+		com_real_(true)
 {
 	// Robot properties
 	robot_model_property_ = new StringProperty("Robot Description", "robot_model",
@@ -110,7 +111,7 @@ WholeBodyStateDisplay::WholeBodyStateDisplay() : is_info_(false),
 	grf_alpha_property_->setMax(1);
 
 	grf_shaft_length_property_ =
-			new FloatProperty("Shaft Length", 0.4,
+			new FloatProperty("Shaft Length", 0.8,
 							  "Length of the arrow's shaft, in meters.",
 							  grf_category_, SLOT(updateGRFArrowGeometry()), this);
 
@@ -246,6 +247,7 @@ void WholeBodyStateDisplay::load()
 	// Initializing the dynamics from the URDF model
 	wdyn_.modelFromURDFModel(robot_model_);
 	fbs_ = wdyn_.getFloatingBaseSystem();
+	weight_ = fbs_.getTotalMass() * fabs(fbs_.getGravityAcceleration());
 	initialized_model_ = true;
 
 	setStatus(StatusProperty::Ok, "URDF", "URDF parsed OK");
@@ -354,8 +356,10 @@ void WholeBodyStateDisplay::updateSupportLineColorAndAlpha()
 	force_threshold_ = support_force_threshold_property_->getFloat();
 
 	float radius = support_line_radius_property_->getFloat();
-	support_visual_->setLineColor(color.r, color.g, color.b, color.a);
-	support_visual_->setLineRadius(radius);
+	if (is_info_) {
+		support_visual_->setLineColor(color.r, color.g, color.b, color.a);
+		support_visual_->setLineRadius(radius);
+	}
 
 	context_->queueRender();
 }
@@ -463,19 +467,12 @@ void WholeBodyStateDisplay::processWholeBodyState()
 		}
 	}
 
-	// Computing the normalized force per contact which is uses for scaling the arrows
-	double norm_force = 0;
-	if (num_contacts != 0) // Sanity check of the number of contacts
-		norm_force = total_force.norm() / num_contacts;
-
 	// Computing the center of mass position and velocity
 	dwl::rbd::Vector6d null_base_pos = dwl::rbd::Vector6d::Zero();
-	Eigen::Vector3d com_pos = fbs_.getSystemCoM(null_base_pos,
-																			 joint_pos);
-	Eigen::Vector3d com_vel = fbs_.getSystemCoMRate(null_base_pos,
-																				 joint_pos,
-																				 base_vel,
-																				 joint_vel);
+	Eigen::Vector3d com_pos = fbs_.getSystemCoM(null_base_pos, joint_pos);
+	Eigen::Vector3d com_vel = fbs_.getSystemCoMRate(null_base_pos, joint_pos,
+													base_vel, joint_vel);
+
 	// Computing the center of pressure position
 	Eigen::Vector3d cop_pos;
 	wdyn_.computeCenterOfPressure(cop_pos, contact_for, contact_pos, contact_names);
@@ -589,7 +586,7 @@ void WholeBodyStateDisplay::processWholeBodyState()
 			color.a = grf_alpha_property_->getFloat();
 			arrow->setColor(color.r, color.g, color.b, color.a);
 			float shaft_length = grf_shaft_length_property_->getFloat() *
-					for_dir.norm() / norm_force;
+					for_dir.norm() / weight_;
 			float shaft_radius = grf_shaft_radius_property_->getFloat();
 			float head_length = grf_head_length_property_->getFloat();
 			float head_radius = grf_head_radius_property_->getFloat();
