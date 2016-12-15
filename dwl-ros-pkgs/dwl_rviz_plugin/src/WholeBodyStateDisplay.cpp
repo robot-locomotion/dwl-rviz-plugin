@@ -543,11 +543,11 @@ void WholeBodyStateDisplay::processWholeBodyState()
 
 	// Computing the centroidal moment pivot position
 	Eigen::Vector3d cmp_pos;
-	wdyn_.computeCentroidalMomentPivot(com_pos, cop_pos, cmp_pos, contact_for, contact_pos, contact_names);
+	wdyn_.computeCentroidalMomentPivot(cmp_pos, com_pos, cop_pos, contact_for, contact_pos, contact_names);
 
 	// Computing the instantaneous capture point position
-	Eigen::Vector3d inst_cp_pos;
-	wdyn_.computeInstantaneousCapturePoint(com_pos, com_vel, cop_pos, inst_cp_pos);
+	Eigen::Vector3d icp_pos;
+	wdyn_.computeInstantaneousCapturePoint(icp_pos, com_pos, com_vel, cop_pos);
 
 
 	// Here we call the rviz::FrameManager to get the transform from the
@@ -623,9 +623,9 @@ void WholeBodyStateDisplay::processWholeBodyState()
 
 	// Defining the Instantaneous Capture Point as Ogre::Vector3
 	Ogre::Vector3 inst_cp_point;
-	inst_cp_point.x = inst_cp_pos(dwl::rbd::X);
-	inst_cp_point.y = inst_cp_pos(dwl::rbd::Y);
-	inst_cp_point.z = inst_cp_pos(dwl::rbd::Z);
+	inst_cp_point.x = icp_pos(dwl::rbd::X);
+	inst_cp_point.y = icp_pos(dwl::rbd::Y);
+	inst_cp_point.z = icp_pos(dwl::rbd::Z);
 
 	// Now set or update the contents of the chosen CoP visual
 	updateCoPColorAndAlpha();
