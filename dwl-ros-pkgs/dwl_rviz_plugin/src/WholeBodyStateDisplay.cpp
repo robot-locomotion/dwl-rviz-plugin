@@ -31,6 +31,7 @@ WholeBodyStateDisplay::WholeBodyStateDisplay() : is_info_(false),
 	com_category_ = new rviz::Property("Center Of Mass", QVariant(), "", this);
 	cop_category_ = new rviz::Property("Center Of Pressure", QVariant(), "", this);
 	cmp_category_ = new rviz::Property("Centroidal Momentum Pivot", QVariant(), "", this);
+	inst_cp_category_ = new rviz::Property("Instantaneous Capture Point", QVariant(), "", this);
 	grf_category_ = new rviz::Property("Contact Forces", QVariant(), "", this);
 	support_category_ = new rviz::Property("Support Region", QVariant(), "", this);
 
@@ -115,6 +116,25 @@ WholeBodyStateDisplay::WholeBodyStateDisplay() : is_info_(false),
 			new rviz::FloatProperty("Radius", 0.04,
 									"Radius of a point",
 									cmp_category_, SLOT(updateCoPColorAndAlpha()), this);
+
+	// Instantaneous Capture Point properties
+	inst_cp_color_property_ =
+			new rviz::ColorProperty("Color", QColor(10, 41, 10),
+									"Color of a point",
+									inst_cp_category_, SLOT(updateCoPColorAndAlpha()), this);
+
+	inst_cp_alpha_property_ =
+			new rviz::FloatProperty("Alpha", 1.0,
+									"0 is fully transparent, 1.0 is fully opaque.",
+									inst_cp_category_, SLOT(updateCoPColorAndAlpha()), this);
+	inst_cp_alpha_property_->setMin(0);
+	inst_cp_alpha_property_->setMax(1);
+
+	inst_cp_radius_property_ =
+			new rviz::FloatProperty("Radius", 0.04,
+									"Radius of a point",
+									inst_cp_category_, SLOT(updateCoPColorAndAlpha()), this);
+
 
 	// GRF properties
 	grf_color_property_ =
@@ -352,6 +372,18 @@ void WholeBodyStateDisplay::updateCMPColorAndAlpha()
 	context_->queueRender();
 }
 
+void WholeBodyStateDisplay::updateInstCPColorAndAlpha()
+{
+	float radius = inst_cp_radius_property_->getFloat();
+	Ogre::ColourValue color = inst_cp_color_property_->getOgreColor();
+	color.a = inst_cp_alpha_property_->getFloat();
+
+	inst_cp_visual_->setColor(color.r, color.g, color.b, color.a);
+	inst_cp_visual_->setRadius(radius);
+
+	context_->queueRender();
+}
+
 
 
 void WholeBodyStateDisplay::updateGRFColorAndAlpha()
@@ -513,6 +545,10 @@ void WholeBodyStateDisplay::processWholeBodyState()
 	Eigen::Vector3d cmp_pos;
 	wdyn_.computeCentroidalMomentPivot(com_pos, cmp_pos, contact_for, contact_pos, contact_names);
 
+	// Computing the instantaneous capture point position
+	Eigen::Vector3d inst_cp_pos;
+	inst_cp_pos = cmp_pos;
+
 
 	// Here we call the rviz::FrameManager to get the transform from the
 	// fixed frame to the frame in the header of this Point message.  If
@@ -532,6 +568,7 @@ void WholeBodyStateDisplay::processWholeBodyState()
 	comd_visual_.reset(new ArrowVisual(context_->getSceneManager(), scene_node_));
 	cop_visual_.reset(new PointVisual(context_->getSceneManager(), scene_node_));
 	cmp_visual_.reset(new PointVisual(context_->getSceneManager(), scene_node_));
+	inst_cp_visual_.reset(new PointVisual(context_->getSceneManager(), scene_node_));
 	support_visual_.reset(new PolygonVisual(context_->getSceneManager(), scene_node_));
 
 	// Defining the center of mass as Ogre::Vector3
@@ -584,6 +621,12 @@ void WholeBodyStateDisplay::processWholeBodyState()
 	cmp_point.y = cmp_pos(dwl::rbd::Y);
 	cmp_point.z = cmp_pos(dwl::rbd::Z);
 
+	// Defining the Instantaneous Capture Point as Ogre::Vector3
+	Ogre::Vector3 inst_cp_point;
+	inst_cp_point.x = inst_cp_pos(dwl::rbd::X);
+	inst_cp_point.y = inst_cp_pos(dwl::rbd::Y);
+	inst_cp_point.z = inst_cp_pos(dwl::rbd::Z);
+
 	// Now set or update the contents of the chosen CoP visual
 	updateCoPColorAndAlpha();
 	cop_visual_->setPoint(cop_point);
@@ -595,6 +638,12 @@ void WholeBodyStateDisplay::processWholeBodyState()
 	cmp_visual_->setPoint(cmp_point);
 	cmp_visual_->setFramePosition(position);
 	cmp_visual_->setFrameOrientation(orientation);
+
+	// Now set or update the contents of the chosen Inst CP visual
+	updateInstCPColorAndAlpha();
+	inst_cp_visual_->setPoint(inst_cp_point);
+	inst_cp_visual_->setFramePosition(position);
+	inst_cp_visual_->setFrameOrientation(orientation);
 
 	// Now set or update the contents of the chosen GRF visual
 	grf_visual_.clear();

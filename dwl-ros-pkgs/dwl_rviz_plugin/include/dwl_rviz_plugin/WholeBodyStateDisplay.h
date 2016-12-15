@@ -77,6 +77,7 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 		void updateCoMArrowGeometry();
 		void updateCoPColorAndAlpha();
 		void updateCMPColorAndAlpha();
+		void updateInstCPColorAndAlpha();
 		void updateGRFColorAndAlpha();
 		void updateGRFArrowGeometry();
 		void updateSupportLineColorAndAlpha();
@@ -98,6 +99,7 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 		rviz::Property* com_category_;
 		rviz::Property* cop_category_;
 		rviz::Property* cmp_category_;
+		rviz::Property* inst_cp_category_;
 		rviz::Property* grf_category_;
 		rviz::Property* support_category_;
 
@@ -106,6 +108,7 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
         boost::shared_ptr<ArrowVisual> comd_visual_;
         boost::shared_ptr<PointVisual> cop_visual_;
         boost::shared_ptr<PointVisual> cmp_visual_;
+        boost::shared_ptr<PointVisual> inst_cp_visual_;
         std::vector<boost::shared_ptr<ArrowVisual> > grf_visual_;
         boost::shared_ptr<PolygonVisual> support_visual_;
 
@@ -120,15 +123,17 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
         rviz::FloatProperty* com_shaft_radius_property_;
         rviz::FloatProperty* com_shaft_length_property_;
 
-
 		rviz::ColorProperty* cop_color_property_;
         rviz::FloatProperty* cop_alpha_property_;
         rviz::FloatProperty* cop_radius_property_;
 
-
 		rviz::ColorProperty* cmp_color_property_;
         rviz::FloatProperty* cmp_alpha_property_;
         rviz::FloatProperty* cmp_radius_property_;
+
+		rviz::ColorProperty* inst_cp_color_property_;
+        rviz::FloatProperty* inst_cp_alpha_property_;
+        rviz::FloatProperty* inst_cp_radius_property_;
 
         rviz::ColorProperty* grf_color_property_;
         rviz::FloatProperty* grf_alpha_property_;
