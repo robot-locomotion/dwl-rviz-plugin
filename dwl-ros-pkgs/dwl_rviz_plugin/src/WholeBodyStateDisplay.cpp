@@ -543,11 +543,11 @@ void WholeBodyStateDisplay::processWholeBodyState()
 
 	// Computing the centroidal moment pivot position
 	Eigen::Vector3d cmp_pos;
-	wdyn_.computeCentroidalMomentPivot(com_pos, cmp_pos, contact_for, contact_pos, contact_names);
+	wdyn_.computeCentroidalMomentPivot(com_pos, cop_pos, cmp_pos, contact_for, contact_pos, contact_names);
 
 	// Computing the instantaneous capture point position
 	Eigen::Vector3d inst_cp_pos;
-	inst_cp_pos = cmp_pos;
+	wdyn_.computeInstantaneousCapturePoint(com_pos, com_vel, cop_pos, inst_cp_pos);
 
 
 	// Here we call the rviz::FrameManager to get the transform from the
