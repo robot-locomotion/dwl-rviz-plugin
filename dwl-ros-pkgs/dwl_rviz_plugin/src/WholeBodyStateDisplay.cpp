@@ -30,6 +30,7 @@ WholeBodyStateDisplay::WholeBodyStateDisplay() : is_info_(false),
 	// Category Groups
 	com_category_ = new rviz::Property("Center Of Mass", QVariant(), "", this);
 	cop_category_ = new rviz::Property("Center Of Pressure", QVariant(), "", this);
+	cmp_category_ = new rviz::Property("Centroidal Momentum Pivot", QVariant(), "", this);
 	grf_category_ = new rviz::Property("Contact Forces", QVariant(), "", this);
 	support_category_ = new rviz::Property("Support Region", QVariant(), "", this);
 
@@ -96,6 +97,24 @@ WholeBodyStateDisplay::WholeBodyStateDisplay() : is_info_(false),
 			new rviz::FloatProperty("Radius", 0.04,
 									"Radius of a point",
 									cop_category_, SLOT(updateCoPColorAndAlpha()), this);
+
+	// CMP properties
+	cmp_color_property_ =
+			new rviz::ColorProperty("Color", QColor(200, 41, 10),
+									"Color of a point",
+									cmp_category_, SLOT(updateCoPColorAndAlpha()), this);
+
+	cmp_alpha_property_ =
+			new rviz::FloatProperty("Alpha", 1.0,
+									"0 is fully transparent, 1.0 is fully opaque.",
+									cmp_category_, SLOT(updateCoPColorAndAlpha()), this);
+	cmp_alpha_property_->setMin(0);
+	cmp_alpha_property_->setMax(1);
+
+	cmp_radius_property_ =
+			new rviz::FloatProperty("Radius", 0.04,
+									"Radius of a point",
+									cmp_category_, SLOT(updateCoPColorAndAlpha()), this);
 
 	// GRF properties
 	grf_color_property_ =
@@ -321,6 +340,19 @@ void WholeBodyStateDisplay::updateCoPColorAndAlpha()
 	context_->queueRender();
 }
 
+void WholeBodyStateDisplay::updateCMPColorAndAlpha()
+{
+	float radius = cmp_radius_property_->getFloat();
+	Ogre::ColourValue color = cmp_color_property_->getOgreColor();
+	color.a = cmp_alpha_property_->getFloat();
+
+	cmp_visual_->setColor(color.r, color.g, color.b, color.a);
+	cmp_visual_->setRadius(radius);
+
+	context_->queueRender();
+}
+
+
 
 void WholeBodyStateDisplay::updateGRFColorAndAlpha()
 {
@@ -477,6 +509,10 @@ void WholeBodyStateDisplay::processWholeBodyState()
 	Eigen::Vector3d cop_pos;
 	wdyn_.computeCenterOfPressure(cop_pos, contact_for, contact_pos, contact_names);
 
+	// Computing the centroidal moment pivot position
+	Eigen::Vector3d cmp_pos;
+	wdyn_.computeCentroidalMomentPivot(com_pos, cmp_pos, contact_for, contact_pos, contact_names);
+
 
 	// Here we call the rviz::FrameManager to get the transform from the
 	// fixed frame to the frame in the header of this Point message.  If
@@ -495,6 +531,7 @@ void WholeBodyStateDisplay::processWholeBodyState()
 	com_visual_.reset(new PointVisual(context_->getSceneManager(), scene_node_));
 	comd_visual_.reset(new ArrowVisual(context_->getSceneManager(), scene_node_));
 	cop_visual_.reset(new PointVisual(context_->getSceneManager(), scene_node_));
+	cmp_visual_.reset(new PointVisual(context_->getSceneManager(), scene_node_));
 	support_visual_.reset(new PolygonVisual(context_->getSceneManager(), scene_node_));
 
 	// Defining the center of mass as Ogre::Vector3
@@ -541,11 +578,23 @@ void WholeBodyStateDisplay::processWholeBodyState()
 	cop_point.y = cop_pos(dwl::rbd::Y);
 	cop_point.z = cop_pos(dwl::rbd::Z);
 
+	// Defining the Centroidal Moment Pivot as Ogre::Vector3
+	Ogre::Vector3 cmp_point;
+	cmp_point.x = cmp_pos(dwl::rbd::X);
+	cmp_point.y = cmp_pos(dwl::rbd::Y);
+	cmp_point.z = cmp_pos(dwl::rbd::Z);
+
 	// Now set or update the contents of the chosen CoP visual
 	updateCoPColorAndAlpha();
 	cop_visual_->setPoint(cop_point);
 	cop_visual_->setFramePosition(position);
 	cop_visual_->setFrameOrientation(orientation);
+
+	// Now set or update the contents of the chosen CMP visual
+	updateCMPColorAndAlpha();
+	cmp_visual_->setPoint(cmp_point);
+	cmp_visual_->setFramePosition(position);
+	cmp_visual_->setFrameOrientation(orientation);
 
 	// Now set or update the contents of the chosen GRF visual
 	grf_visual_.clear();
