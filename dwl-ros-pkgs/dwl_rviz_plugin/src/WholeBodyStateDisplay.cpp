@@ -31,7 +31,7 @@ WholeBodyStateDisplay::WholeBodyStateDisplay() : is_info_(false),
 	com_category_ = new rviz::Property("Center Of Mass", QVariant(), "", this);
 	cop_category_ = new rviz::Property("Center Of Pressure", QVariant(), "", this);
 	cmp_category_ = new rviz::Property("Centroidal Momentum Pivot", QVariant(), "", this);
-	inst_cp_category_ = new rviz::Property("Instantaneous Capture Point", QVariant(), "", this);
+	icp_category_ = new rviz::Property("Instantaneous Capture Point", QVariant(), "", this);
 	grf_category_ = new rviz::Property("Contact Forces", QVariant(), "", this);
 	support_category_ = new rviz::Property("Support Region", QVariant(), "", this);
 
@@ -118,22 +118,22 @@ WholeBodyStateDisplay::WholeBodyStateDisplay() : is_info_(false),
 									cmp_category_, SLOT(updateCoPColorAndAlpha()), this);
 
 	// Instantaneous Capture Point properties
-	inst_cp_color_property_ =
+	icp_color_property_ =
 			new rviz::ColorProperty("Color", QColor(10, 41, 10),
 									"Color of a point",
-									inst_cp_category_, SLOT(updateCoPColorAndAlpha()), this);
+									icp_category_, SLOT(updateCoPColorAndAlpha()), this);
 
-	inst_cp_alpha_property_ =
+	icp_alpha_property_ =
 			new rviz::FloatProperty("Alpha", 1.0,
 									"0 is fully transparent, 1.0 is fully opaque.",
-									inst_cp_category_, SLOT(updateCoPColorAndAlpha()), this);
-	inst_cp_alpha_property_->setMin(0);
-	inst_cp_alpha_property_->setMax(1);
+									icp_category_, SLOT(updateCoPColorAndAlpha()), this);
+	icp_alpha_property_->setMin(0);
+	icp_alpha_property_->setMax(1);
 
-	inst_cp_radius_property_ =
+	icp_radius_property_ =
 			new rviz::FloatProperty("Radius", 0.04,
 									"Radius of a point",
-									inst_cp_category_, SLOT(updateCoPColorAndAlpha()), this);
+									icp_category_, SLOT(updateCoPColorAndAlpha()), this);
 
 
 	// GRF properties
@@ -374,12 +374,12 @@ void WholeBodyStateDisplay::updateCMPColorAndAlpha()
 
 void WholeBodyStateDisplay::updateInstCPColorAndAlpha()
 {
-	float radius = inst_cp_radius_property_->getFloat();
-	Ogre::ColourValue color = inst_cp_color_property_->getOgreColor();
-	color.a = inst_cp_alpha_property_->getFloat();
+	float radius = icp_radius_property_->getFloat();
+	Ogre::ColourValue color = icp_color_property_->getOgreColor();
+	color.a = icp_alpha_property_->getFloat();
 
-	inst_cp_visual_->setColor(color.r, color.g, color.b, color.a);
-	inst_cp_visual_->setRadius(radius);
+	icp_visual_->setColor(color.r, color.g, color.b, color.a);
+	icp_visual_->setRadius(radius);
 
 	context_->queueRender();
 }
@@ -571,7 +571,7 @@ void WholeBodyStateDisplay::processWholeBodyState()
 	comd_visual_.reset(new ArrowVisual(context_->getSceneManager(), scene_node_));
 	cop_visual_.reset(new PointVisual(context_->getSceneManager(), scene_node_));
 	cmp_visual_.reset(new PointVisual(context_->getSceneManager(), scene_node_));
-	inst_cp_visual_.reset(new PointVisual(context_->getSceneManager(), scene_node_));
+	icp_visual_.reset(new PointVisual(context_->getSceneManager(), scene_node_));
 	support_visual_.reset(new PolygonVisual(context_->getSceneManager(), scene_node_));
 
 	// Defining the center of mass as Ogre::Vector3
@@ -625,10 +625,10 @@ void WholeBodyStateDisplay::processWholeBodyState()
 	cmp_point.z = cmp_pos(dwl::rbd::Z);
 
 	// Defining the Instantaneous Capture Point as Ogre::Vector3
-	Ogre::Vector3 inst_cp_point;
-	inst_cp_point.x = icp_pos(dwl::rbd::X);
-	inst_cp_point.y = icp_pos(dwl::rbd::Y);
-	inst_cp_point.z = icp_pos(dwl::rbd::Z);
+	Ogre::Vector3 icp_point;
+	icp_point.x = icp_pos(dwl::rbd::X);
+	icp_point.y = icp_pos(dwl::rbd::Y);
+	icp_point.z = icp_pos(dwl::rbd::Z);
 
 	// Now set or update the contents of the chosen CoP visual
 	updateCoPColorAndAlpha();
@@ -644,9 +644,9 @@ void WholeBodyStateDisplay::processWholeBodyState()
 
 	// Now set or update the contents of the chosen Inst CP visual
 	updateInstCPColorAndAlpha();
-	inst_cp_visual_->setPoint(inst_cp_point);
-	inst_cp_visual_->setFramePosition(position);
-	inst_cp_visual_->setFrameOrientation(orientation);
+	icp_visual_->setPoint(icp_point);
+	icp_visual_->setFramePosition(position);
+	icp_visual_->setFrameOrientation(orientation);
 
 	// Now set or update the contents of the chosen GRF visual
 	grf_visual_.clear();
