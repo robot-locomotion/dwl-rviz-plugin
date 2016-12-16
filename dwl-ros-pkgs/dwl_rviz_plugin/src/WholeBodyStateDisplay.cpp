@@ -533,9 +533,12 @@ void WholeBodyStateDisplay::processWholeBodyState()
 
 	// Computing the center of mass position and velocity
 	dwl::rbd::Vector6d null_base_pos = dwl::rbd::Vector6d::Zero();
+	Eigen::Vector3d base_rpy = dwl::rbd::angularPart(base_pos);
 	Eigen::Vector3d com_pos = fbs_.getSystemCoM(null_base_pos, joint_pos);
-	Eigen::Vector3d com_vel = fbs_.getSystemCoMRate(null_base_pos, joint_pos,
+	Eigen::Vector3d com_vel_W = fbs_.getSystemCoMRate(base_pos, joint_pos,
 													base_vel, joint_vel);
+	Eigen::Vector3d com_vel_B =
+			frame_tf_.fromWorldToBaseFrame(com_vel_W, base_rpy);
 
 	// Computing the center of pressure position
 	Eigen::Vector3d cop_pos;
@@ -547,7 +550,7 @@ void WholeBodyStateDisplay::processWholeBodyState()
 
 	// Computing the instantaneous capture point position
 	Eigen::Vector3d icp_pos;
-	wdyn_.computeInstantaneousCapturePoint(icp_pos, com_pos, com_vel, cop_pos);
+	wdyn_.computeInstantaneousCapturePoint(icp_pos, com_pos, com_vel_B, cop_pos);
 
 
 	// Here we call the rviz::FrameManager to get the transform from the
@@ -590,7 +593,7 @@ void WholeBodyStateDisplay::processWholeBodyState()
 	// Defining the center of mass velocity orientation
 	Eigen::Vector3d com_ref_dir = -Eigen::Vector3d::UnitZ();
 	Eigen::Quaterniond com_q;
-	com_q.setFromTwoVectors(com_ref_dir, com_vel);
+	com_q.setFromTwoVectors(com_ref_dir, com_vel_B);
 	Ogre::Quaternion comd_for_orientation(com_q.w(), com_q.x(),
 										  com_q.y(), com_q.z());
 
@@ -599,7 +602,7 @@ void WholeBodyStateDisplay::processWholeBodyState()
 	com_visual_->setPoint(com_point);
 	com_visual_->setFramePosition(position);
 	com_visual_->setFrameOrientation(orientation);
-	float shaft_length = com_shaft_length_property_->getFloat() * com_vel.norm();
+	float shaft_length = com_shaft_length_property_->getFloat() * com_vel_B.norm();
 	float shaft_radius = com_shaft_radius_property_->getFloat();
 	float head_length = com_head_length_property_->getFloat();
 	float head_radius = com_head_radius_property_->getFloat();

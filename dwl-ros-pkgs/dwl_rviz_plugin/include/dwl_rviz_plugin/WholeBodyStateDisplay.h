@@ -152,6 +152,7 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
         /** @brief Whole-body dynamics */
         dwl::model::WholeBodyDynamics wdyn_;
         dwl::model::FloatingBaseSystem fbs_;
+        dwl::math::FrameTF frame_tf_;
 
         /** @brief Force threshold for detecting active contacts */
         double force_threshold_;
