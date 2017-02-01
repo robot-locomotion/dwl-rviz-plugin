@@ -286,7 +286,7 @@ void WholeBodyStateDisplay::load()
 	// Initializing the dynamics from the URDF model
 	wdyn_.modelFromURDFModel(robot_model_);
 	fbs_ = wdyn_.getFloatingBaseSystem();
-	weight_ = fbs_.getTotalMass() * fabs(fbs_.getGravityAcceleration());
+	weight_ = fbs_.getTotalMass() * fbs_.getGravityAcceleration();
 	initialized_model_ = true;
 
 	setStatus(StatusProperty::Ok, "URDF", "URDF parsed OK");
