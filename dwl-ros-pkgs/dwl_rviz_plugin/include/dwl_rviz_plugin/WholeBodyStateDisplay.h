@@ -77,7 +77,7 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 		void updateCoMArrowGeometry();
 		void updateCoPColorAndAlpha();
 		void updateCMPColorAndAlpha();
-		void updateInstCPColorAndAlpha();
+		void updateICPColorAndAlpha();
 		void updateGRFColorAndAlpha();
 		void updateGRFArrowGeometry();
 		void updateSupportLineColorAndAlpha();

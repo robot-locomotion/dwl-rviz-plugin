@@ -30,8 +30,8 @@ WholeBodyStateDisplay::WholeBodyStateDisplay() : is_info_(false),
 	// Category Groups
 	com_category_ = new rviz::Property("Center Of Mass", QVariant(), "", this);
 	cop_category_ = new rviz::Property("Center Of Pressure", QVariant(), "", this);
-	cmp_category_ = new rviz::Property("Centroidal Momentum Pivot", QVariant(), "", this);
 	icp_category_ = new rviz::Property("Instantaneous Capture Point", QVariant(), "", this);
+	cmp_category_ = new rviz::Property("Centroidal Momentum Pivot", QVariant(), "", this);
 	grf_category_ = new rviz::Property("Contact Forces", QVariant(), "", this);
 	support_category_ = new rviz::Property("Support Region", QVariant(), "", this);
 
@@ -99,24 +99,6 @@ WholeBodyStateDisplay::WholeBodyStateDisplay() : is_info_(false),
 									"Radius of a point",
 									cop_category_, SLOT(updateCoPColorAndAlpha()), this);
 
-	// CMP properties
-	cmp_color_property_ =
-			new rviz::ColorProperty("Color", QColor(200, 41, 10),
-									"Color of a point",
-									cmp_category_, SLOT(updateCoPColorAndAlpha()), this);
-
-	cmp_alpha_property_ =
-			new rviz::FloatProperty("Alpha", 1.0,
-									"0 is fully transparent, 1.0 is fully opaque.",
-									cmp_category_, SLOT(updateCoPColorAndAlpha()), this);
-	cmp_alpha_property_->setMin(0);
-	cmp_alpha_property_->setMax(1);
-
-	cmp_radius_property_ =
-			new rviz::FloatProperty("Radius", 0.04,
-									"Radius of a point",
-									cmp_category_, SLOT(updateCoPColorAndAlpha()), this);
-
 	// Instantaneous Capture Point properties
 	icp_color_property_ =
 			new rviz::ColorProperty("Color", QColor(10, 41, 10),
@@ -135,6 +117,23 @@ WholeBodyStateDisplay::WholeBodyStateDisplay() : is_info_(false),
 									"Radius of a point",
 									icp_category_, SLOT(updateCoPColorAndAlpha()), this);
 
+	// CMP properties
+	cmp_color_property_ =
+			new rviz::ColorProperty("Color", QColor(200, 41, 10),
+									"Color of a point",
+									cmp_category_, SLOT(updateCoPColorAndAlpha()), this);
+
+	cmp_alpha_property_ =
+			new rviz::FloatProperty("Alpha", 1.0,
+									"0 is fully transparent, 1.0 is fully opaque.",
+									cmp_category_, SLOT(updateCoPColorAndAlpha()), this);
+	cmp_alpha_property_->setMin(0);
+	cmp_alpha_property_->setMax(1);
+
+	cmp_radius_property_ =
+			new rviz::FloatProperty("Radius", 0.04,
+									"Radius of a point",
+									cmp_category_, SLOT(updateCoPColorAndAlpha()), this);
 
 	// GRF properties
 	grf_color_property_ =
@@ -360,6 +359,20 @@ void WholeBodyStateDisplay::updateCoPColorAndAlpha()
 	context_->queueRender();
 }
 
+
+void WholeBodyStateDisplay::updateICPColorAndAlpha()
+{
+	float radius = icp_radius_property_->getFloat();
+	Ogre::ColourValue color = icp_color_property_->getOgreColor();
+	color.a = icp_alpha_property_->getFloat();
+
+	icp_visual_->setColor(color.r, color.g, color.b, color.a);
+	icp_visual_->setRadius(radius);
+
+	context_->queueRender();
+}
+
+
 void WholeBodyStateDisplay::updateCMPColorAndAlpha()
 {
 	float radius = cmp_radius_property_->getFloat();
@@ -368,18 +381,6 @@ void WholeBodyStateDisplay::updateCMPColorAndAlpha()
 
 	cmp_visual_->setColor(color.r, color.g, color.b, color.a);
 	cmp_visual_->setRadius(radius);
-
-	context_->queueRender();
-}
-
-void WholeBodyStateDisplay::updateInstCPColorAndAlpha()
-{
-	float radius = icp_radius_property_->getFloat();
-	Ogre::ColourValue color = icp_color_property_->getOgreColor();
-	color.a = icp_alpha_property_->getFloat();
-
-	icp_visual_->setColor(color.r, color.g, color.b, color.a);
-	icp_visual_->setRadius(radius);
 
 	context_->queueRender();
 }
@@ -536,7 +537,7 @@ void WholeBodyStateDisplay::processWholeBodyState()
 	Eigen::Vector3d base_rpy = dwl::rbd::angularPart(base_pos);
 	Eigen::Vector3d com_pos = fbs_.getSystemCoM(null_base_pos, joint_pos);
 	Eigen::Vector3d com_vel_W = fbs_.getSystemCoMRate(base_pos, joint_pos,
-													base_vel, joint_vel);
+													  base_vel, joint_vel);
 	Eigen::Vector3d com_vel_B =
 			frame_tf_.fromWorldToBaseFrame(com_vel_W, base_rpy);
 
@@ -544,14 +545,14 @@ void WholeBodyStateDisplay::processWholeBodyState()
 	Eigen::Vector3d cop_pos;
 	wdyn_.computeCenterOfPressure(cop_pos, contact_for, contact_pos, contact_names);
 
-	// Computing the centroidal moment pivot position
-	Eigen::Vector3d cmp_pos;
-	wdyn_.computeCentroidalMomentPivot(cmp_pos, com_pos, cop_pos, contact_for, contact_pos, contact_names);
-
 	// Computing the instantaneous capture point position
 	Eigen::Vector3d icp_pos;
 	double height = com_pos(dwl::rbd::Z) - cop_pos(dwl::rbd::Z);
 	wdyn_.computeInstantaneousCapturePoint(icp_pos, com_pos, com_vel_B, height);
+
+	// Computing the centroidal moment pivot position
+	Eigen::Vector3d cmp_pos;
+	wdyn_.computeCentroidalMomentPivot(cmp_pos, com_pos, height, contact_for);
 
 
 	// Here we call the rviz::FrameManager to get the transform from the
@@ -571,8 +572,8 @@ void WholeBodyStateDisplay::processWholeBodyState()
 	com_visual_.reset(new PointVisual(context_->getSceneManager(), scene_node_));
 	comd_visual_.reset(new ArrowVisual(context_->getSceneManager(), scene_node_));
 	cop_visual_.reset(new PointVisual(context_->getSceneManager(), scene_node_));
-	cmp_visual_.reset(new PointVisual(context_->getSceneManager(), scene_node_));
 	icp_visual_.reset(new PointVisual(context_->getSceneManager(), scene_node_));
+	cmp_visual_.reset(new PointVisual(context_->getSceneManager(), scene_node_));
 	support_visual_.reset(new PolygonVisual(context_->getSceneManager(), scene_node_));
 
 	// Defining the center of mass as Ogre::Vector3
@@ -619,17 +620,17 @@ void WholeBodyStateDisplay::processWholeBodyState()
 	cop_point.y = cop_pos(dwl::rbd::Y);
 	cop_point.z = cop_pos(dwl::rbd::Z);
 
-	// Defining the Centroidal Moment Pivot as Ogre::Vector3
-	Ogre::Vector3 cmp_point;
-	cmp_point.x = cmp_pos(dwl::rbd::X);
-	cmp_point.y = cmp_pos(dwl::rbd::Y);
-	cmp_point.z = cmp_pos(dwl::rbd::Z);
-
 	// Defining the Instantaneous Capture Point as Ogre::Vector3
 	Ogre::Vector3 icp_point;
 	icp_point.x = icp_pos(dwl::rbd::X);
 	icp_point.y = icp_pos(dwl::rbd::Y);
 	icp_point.z = icp_pos(dwl::rbd::Z);
+
+	// Defining the Centroidal Moment Pivot as Ogre::Vector3
+	Ogre::Vector3 cmp_point;
+	cmp_point.x = cmp_pos(dwl::rbd::X);
+	cmp_point.y = cmp_pos(dwl::rbd::Y);
+	cmp_point.z = cmp_pos(dwl::rbd::Z);
 
 	// Now set or update the contents of the chosen CoP visual
 	updateCoPColorAndAlpha();
@@ -637,17 +638,17 @@ void WholeBodyStateDisplay::processWholeBodyState()
 	cop_visual_->setFramePosition(position);
 	cop_visual_->setFrameOrientation(orientation);
 
+	// Now set or update the contents of the chosen Inst CP visual
+	updateICPColorAndAlpha();
+	icp_visual_->setPoint(icp_point);
+	icp_visual_->setFramePosition(position);
+	icp_visual_->setFrameOrientation(orientation);
+
 	// Now set or update the contents of the chosen CMP visual
 	updateCMPColorAndAlpha();
 	cmp_visual_->setPoint(cmp_point);
 	cmp_visual_->setFramePosition(position);
 	cmp_visual_->setFrameOrientation(orientation);
-
-	// Now set or update the contents of the chosen Inst CP visual
-	updateInstCPColorAndAlpha();
-	icp_visual_->setPoint(icp_point);
-	icp_visual_->setFramePosition(position);
-	icp_visual_->setFrameOrientation(orientation);
 
 	// Now set or update the contents of the chosen GRF visual
 	grf_visual_.clear();
