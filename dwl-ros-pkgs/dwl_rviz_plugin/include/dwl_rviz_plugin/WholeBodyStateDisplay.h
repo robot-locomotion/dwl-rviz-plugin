@@ -76,6 +76,8 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 		void updateCoMColorAndAlpha();
 		void updateCoMArrowGeometry();
 		void updateCoPColorAndAlpha();
+		void updateCMPColorAndAlpha();
+		void updateICPColorAndAlpha();
 		void updateGRFColorAndAlpha();
 		void updateGRFArrowGeometry();
 		void updateSupportLineColorAndAlpha();
@@ -96,6 +98,8 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 		/** @brief Properties to show on side panel */
 		rviz::Property* com_category_;
 		rviz::Property* cop_category_;
+		rviz::Property* cmp_category_;
+		rviz::Property* icp_category_;
 		rviz::Property* grf_category_;
 		rviz::Property* support_category_;
 
@@ -103,6 +107,8 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
         boost::shared_ptr<PointVisual> com_visual_;
         boost::shared_ptr<ArrowVisual> comd_visual_;
         boost::shared_ptr<PointVisual> cop_visual_;
+        boost::shared_ptr<PointVisual> cmp_visual_;
+        boost::shared_ptr<PointVisual> icp_visual_;
         std::vector<boost::shared_ptr<ArrowVisual> > grf_visual_;
         boost::shared_ptr<PolygonVisual> support_visual_;
 
@@ -121,6 +127,14 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
         rviz::FloatProperty* cop_alpha_property_;
         rviz::FloatProperty* cop_radius_property_;
 
+		rviz::ColorProperty* cmp_color_property_;
+        rviz::FloatProperty* cmp_alpha_property_;
+        rviz::FloatProperty* cmp_radius_property_;
+
+		rviz::ColorProperty* icp_color_property_;
+        rviz::FloatProperty* icp_alpha_property_;
+        rviz::FloatProperty* icp_radius_property_;
+
         rviz::ColorProperty* grf_color_property_;
         rviz::FloatProperty* grf_alpha_property_;
         rviz::FloatProperty* grf_head_radius_property_;
@@ -138,6 +152,7 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
         /** @brief Whole-body dynamics */
         dwl::model::WholeBodyDynamics wdyn_;
         dwl::model::FloatingBaseSystem fbs_;
+        dwl::math::FrameTF frame_tf_;
 
         /** @brief Force threshold for detecting active contacts */
         double force_threshold_;
