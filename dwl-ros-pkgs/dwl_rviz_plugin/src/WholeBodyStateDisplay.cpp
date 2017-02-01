@@ -550,7 +550,8 @@ void WholeBodyStateDisplay::processWholeBodyState()
 
 	// Computing the instantaneous capture point position
 	Eigen::Vector3d icp_pos;
-	wdyn_.computeInstantaneousCapturePoint(icp_pos, com_pos, com_vel_B, cop_pos);
+	double height = com_pos(dwl::rbd::Z) - cop_pos(dwl::rbd::Z);
+	wdyn_.computeInstantaneousCapturePoint(icp_pos, com_pos, com_vel_B, height);
 
 
 	// Here we call the rviz::FrameManager to get the transform from the
