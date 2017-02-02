@@ -493,7 +493,6 @@ void WholeBodyStateDisplay::processWholeBodyState()
 
 	// Getting the contact wrenches and positions
 	Eigen::Vector3d total_force = Eigen::Vector3d::Zero();
-	dwl::rbd::BodySelector contact_names;
 	dwl::rbd::BodyVectorXd contact_pos;
 	dwl::rbd::BodyVector6d contact_for;
 	std::vector<Ogre::Vector3> support;
@@ -503,7 +502,6 @@ void WholeBodyStateDisplay::processWholeBodyState()
 
 		// Getting the name
 		std::string name = contact.name;
-		contact_names.push_back(name);
 
 		// Getting the contact position
 		Eigen::VectorXd position = Eigen::VectorXd::Zero(3);
@@ -543,7 +541,7 @@ void WholeBodyStateDisplay::processWholeBodyState()
 
 	// Computing the center of pressure position
 	Eigen::Vector3d cop_pos;
-	wdyn_.computeCenterOfPressure(cop_pos, contact_for, contact_pos, contact_names);
+	wdyn_.computeCenterOfPressure(cop_pos, contact_for, contact_pos);
 
 	// Computing the instantaneous capture point position
 	Eigen::Vector3d icp_pos;
