@@ -41,7 +41,7 @@ qt4_wrap_cpp(MOC_FILES
   include/dwl_rviz_plugin/WholeBodyStateDisplay.h
   include/dwl_rviz_plugin/WholeBodyTrajectoryDisplay.h
   include/dwl_rviz_plugin/ReducedTrajectoryDisplay.h
-  include/dwl_rviz_plugin/RewardMapDisplay.h
+  include/dwl_rviz_plugin/TerrainMapDisplay.h
   include/dwl_rviz_plugin/ObstacleMapDisplay.h
   include/dwl_rviz_plugin/FootstepRegionDisplay.h
   OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED)
@@ -54,7 +54,7 @@ set(SOURCE_FILES
   src/WholeBodyStateDisplay.cpp
   src/WholeBodyTrajectoryDisplay.cpp
   src/ReducedTrajectoryDisplay.cpp
-  src/RewardMapDisplay.cpp
+  src/TerrainMapDisplay.cpp
   src/ObstacleMapDisplay.cpp
   src/FootstepRegionDisplay.cpp
   ${MOC_FILES})

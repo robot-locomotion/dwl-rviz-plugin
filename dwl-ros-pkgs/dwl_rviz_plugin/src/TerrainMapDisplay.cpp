@@ -1,6 +1,6 @@
-#include <QObject>
+#include <dwl_rviz_plugin/TerrainMapDisplay.h>
 
-#include <dwl_rviz_plugin/RewardMapDisplay.h>
+#include <QObject>
 
 #include <OGRE/OgreSceneNode.h>
 #include <OGRE/OgreSceneManager.h>
@@ -23,14 +23,14 @@ namespace dwl_rviz_plugin
 
 enum VoxelColorMode {FULL_COLOR, GREY};
 
-RewardMapDisplay::RewardMapDisplay() : rviz::Display(), messages_received_(0),
+TerrainMapDisplay::TerrainMapDisplay() : rviz::Display(), messages_received_(0),
 		color_factor_(0.8),	grid_size_(std::numeric_limits<double>::max())
 {
-	rewardmap_topic_property_ =
+	topic_property_ =
 			new RosTopicProperty("Topic",
 								 "",
-								 QString::fromStdString(ros::message_traits::datatype<dwl_terrain::RewardMap>()),
-								 "dwl_terrain::RewardMap topic to subscribe to reward map",
+								 QString::fromStdString(ros::message_traits::datatype<dwl_terrain::TerrainMap>()),
+								 "dwl_terrain::TerrainMap topic to subscribe to terrain map",
 								 this, SLOT(updateTopic()));
 
 	queue_size_property_ =
@@ -56,7 +56,7 @@ RewardMapDisplay::RewardMapDisplay() : rviz::Display(), messages_received_(0),
 }
 
 
-RewardMapDisplay::~RewardMapDisplay()
+TerrainMapDisplay::~TerrainMapDisplay()
 {
 	unsubscribe();
 
@@ -67,7 +67,7 @@ RewardMapDisplay::~RewardMapDisplay()
 }
 
 
-void RewardMapDisplay::update(float wall_dt, float ros_dt)
+void TerrainMapDisplay::update(float wall_dt, float ros_dt)
 {
 	if (new_points_received_) {
 		boost::mutex::scoped_lock lock(mutex_);
@@ -82,16 +82,16 @@ void RewardMapDisplay::update(float wall_dt, float ros_dt)
 }
 
 
-void RewardMapDisplay::reset()
+void TerrainMapDisplay::reset()
 {
 	clear();
 	messages_received_ = 0;
 	setStatus(StatusProperty::Ok, "Messages",
-			QString("0 reward map messages received"));
+			QString("0 terrain map messages received"));
 }
 
 
-void RewardMapDisplay::onInitialize()
+void TerrainMapDisplay::onInitialize()
 {
 	boost::mutex::scoped_lock lock(mutex_);
 
@@ -104,14 +104,14 @@ void RewardMapDisplay::onInitialize()
 }
 
 
-void RewardMapDisplay::onEnable()
+void TerrainMapDisplay::onEnable()
 {
 	scene_node_->setVisible(true);
 	subscribe();
 }
 
 
-void RewardMapDisplay::onDisable()
+void TerrainMapDisplay::onDisable()
 {
 	scene_node_->setVisible(false);
 	unsubscribe();
@@ -120,7 +120,7 @@ void RewardMapDisplay::onDisable()
 }
 
 
-void RewardMapDisplay::subscribe()
+void TerrainMapDisplay::subscribe()
 {
 	if (!isEnabled())
 		return;
@@ -128,13 +128,13 @@ void RewardMapDisplay::subscribe()
 	try {
 		unsubscribe();
 
-		const std::string& topicStr = rewardmap_topic_property_->getStdString();
+		const std::string& topicStr = topic_property_->getStdString();
 
 		if (!topicStr.empty()) {
-			sub_.reset(new message_filters::Subscriber<dwl_terrain::RewardMap>());
+			sub_.reset(new message_filters::Subscriber<dwl_terrain::TerrainMap>());
 
 			sub_->subscribe(threaded_nh_, topicStr, queue_size_);
-			sub_->registerCallback(boost::bind(&RewardMapDisplay::incomingMessageCallback, this, _1));
+			sub_->registerCallback(boost::bind(&TerrainMapDisplay::incomingMessageCallback, this, _1));
 		}
 	}
 	catch (ros::Exception& e) {
@@ -144,7 +144,7 @@ void RewardMapDisplay::subscribe()
 }
 
 
-void RewardMapDisplay::unsubscribe()
+void TerrainMapDisplay::unsubscribe()
 {
 	clear();
 
@@ -159,11 +159,11 @@ void RewardMapDisplay::unsubscribe()
 }
 
 
-void RewardMapDisplay::incomingMessageCallback(const dwl_terrain::RewardMapConstPtr& msg)
+void TerrainMapDisplay::incomingMessageCallback(const dwl_terrain::TerrainMapConstPtr& msg)
 {
 	++messages_received_;
 	setStatus(StatusProperty::Ok, "Messages",
-			QString::number(messages_received_) + " reward map messages received");
+			QString::number(messages_received_) + " terrain map messages received");
 
 	// Getting tf transform
 	Ogre::Vector3 position;
@@ -241,11 +241,11 @@ void RewardMapDisplay::incomingMessageCallback(const dwl_terrain::RewardMapConst
 }
 
 
-void RewardMapDisplay::setColor(double value,
-								double min,
-								double max,
-								double factor,
-								rviz::PointCloud::Point& point)
+void TerrainMapDisplay::setColor(double value,
+								 double min,
+								 double max,
+								 double factor,
+								 rviz::PointCloud::Point& point)
 {
 	VoxelColorMode color_mode =
 			static_cast<VoxelColorMode>(voxel_color_property_->getOptionInt());
@@ -302,7 +302,7 @@ void RewardMapDisplay::setColor(double value,
 }
 
 
-void RewardMapDisplay::clear()
+void TerrainMapDisplay::clear()
 {
 	boost::mutex::scoped_lock lock(mutex_);
 
@@ -310,7 +310,7 @@ void RewardMapDisplay::clear()
 }
 
 
-void RewardMapDisplay::updateQueueSize()
+void TerrainMapDisplay::updateQueueSize()
 {
 	queue_size_ = queue_size_property_->getInt();
 
@@ -318,7 +318,7 @@ void RewardMapDisplay::updateQueueSize()
 }
 
 
-void RewardMapDisplay::updateTopic()
+void TerrainMapDisplay::updateTopic()
 {
 	unsubscribe();
 	reset();
@@ -326,7 +326,7 @@ void RewardMapDisplay::updateTopic()
 	context_->queueRender();
 }
 
-void RewardMapDisplay::updateColorMode()
+void TerrainMapDisplay::updateColorMode()
 {
 
 }
@@ -335,4 +335,4 @@ void RewardMapDisplay::updateColorMode()
 
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(dwl_rviz_plugin::RewardMapDisplay, rviz::Display)
+PLUGINLIB_EXPORT_CLASS(dwl_rviz_plugin::TerrainMapDisplay, rviz::Display)
