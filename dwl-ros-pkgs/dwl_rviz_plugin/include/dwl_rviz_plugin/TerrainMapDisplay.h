@@ -9,6 +9,7 @@
 #include <message_filters/subscriber.h>
 
 #include <dwl_terrain/TerrainMap.h>
+#include <dwl_rviz_plugin/ArrowVisual.h>
 
 #include <rviz/display.h>
 #include <rviz/ogre_helpers/point_cloud.h>
@@ -16,16 +17,28 @@
 
 namespace rviz
 {
-
-	class RosTopicProperty;
-	class IntProperty;
-	class EnumProperty;
-
+class RosTopicProperty;
+class IntProperty;
+class FloatProperty;
+class ColorProperty;
+class EnumProperty;
 } //@namespace rviz
 
 
 namespace dwl_rviz_plugin
 {
+
+struct Normal
+{
+	void setNormal(Ogre::Vector3 position,
+				   Ogre::Quaternion quaternion) {
+		origin = position;
+		orientation = quaternion;
+	}
+
+	Ogre::Vector3 origin;
+	Ogre::Quaternion orientation;
+};
 
 /**
  * @class TerrainMapDisplay
@@ -42,7 +55,7 @@ class TerrainMapDisplay : public rviz::Display
 		virtual ~TerrainMapDisplay();
 
 		/**
-		 * @brief Updates the informatio to display
+		 * @brief Updates the information to display
 		 * @param float wall_dt Wall delta time
 		 * @param float ros_dt Ros delta time
 		 */
@@ -62,13 +75,16 @@ class TerrainMapDisplay : public rviz::Display
 		/** @brief Disable the display */
 		virtual void onDisable();
 
+		/** Destroy all the objects for visualization */
+		void destroyObjects();
+
 		/** @brief Subscribes to the topic */
 		void subscribe();
 
 		/** @brief Unsubscribes to the topic */
 		void unsubscribe();
 
-		/** @brief Proccesing of the incoming message */
+		/** @brief Processing of the incoming message */
 		void incomingMessageCallback(const dwl_terrain::TerrainMapConstPtr& msg);
 
 		/**
@@ -88,6 +104,7 @@ class TerrainMapDisplay : public rviz::Display
 
 		/** @brief Vector of points */
 		typedef std::vector<rviz::PointCloud::Point> VPoint;
+		typedef std::vector<Normal> VNormal;
 
 		/** @brief Subscriber to the ObstacleMap messages */
 		boost::shared_ptr<message_filters::Subscriber<dwl_terrain::TerrainMap> > sub_;
@@ -98,14 +115,20 @@ class TerrainMapDisplay : public rviz::Display
 		/** @brief Ogre-rviz point clouds */
 		rviz::PointCloud* cloud_;
 
-		/** @brief Plugin properties */
+		/** @brief Properties to show on side panel */
+		rviz::Property* cost_category_;
+		rviz::Property* normal_category_;
+
+		/** @brief Property objects for user-editable properties */
 		rviz::IntProperty* queue_size_property_;
-
-		/** @brief Obstacle map topic properties */
 		rviz::RosTopicProperty* topic_property_;
-
-		/** @brief Color property */
 		rviz::EnumProperty* voxel_color_property_;
+        rviz::ColorProperty* normal_color_property_;
+        rviz::FloatProperty* normal_alpha_property_;
+        rviz::FloatProperty* normal_head_radius_property_;
+        rviz::FloatProperty* normal_head_length_property_;
+        rviz::FloatProperty* normal_shaft_radius_property_;
+        rviz::FloatProperty* normal_shaft_length_property_;
 
 		/** @brief Max tree areas */
 		int max_tree_areas_;
@@ -115,6 +138,12 @@ class TerrainMapDisplay : public rviz::Display
 
 		/** @brief Point buffer */
 		VPoint point_buf_;
+
+		/** @brief Array of normal vectors */
+		VNormal normal_buf_;
+
+		/** @brief Array of surface normals */
+		std::vector<boost::shared_ptr<ArrowVisual> > arrow_cloud_;
 
 		/** @brief Indicates if the new points was received */
 		bool new_points_received_;
@@ -134,6 +163,7 @@ class TerrainMapDisplay : public rviz::Display
 		/** @brief Height size */
 		double height_size_;
 
+
 	private Q_SLOTS:
 		/** @brief Updates queue size */
 		void updateQueueSize();
@@ -141,8 +171,23 @@ class TerrainMapDisplay : public rviz::Display
 		/** @brief Updates the topic name */
 		void updateTopic();
 
-		/** @brief Color mode */
+		/** @brief Updates surface normal properties */
 		void updateColorMode();
+		void updateNormalArrowGeometry();
+
+
+	private:
+		/** @brief Current position and orientation */
+		Ogre::Vector3 position_;
+		Ogre::Quaternion orientation_;
+
+		/** @brief Current terrain message */
+		dwl_terrain::TerrainMapConstPtr terrain_msg_;
+
+		/** @brief Terrain minimum and maximum values */
+		double min_reward_;
+		double max_reward_;
+		unsigned int min_key_z_;
 };
 
 } //@namespace dwl_rviz_plugin

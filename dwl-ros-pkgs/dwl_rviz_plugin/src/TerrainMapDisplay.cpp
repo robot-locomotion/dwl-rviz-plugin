@@ -9,6 +9,8 @@
 #include <rviz/frame_manager.h>
 #include <rviz/properties/int_property.h>
 #include <rviz/properties/ros_topic_property.h>
+#include <rviz/properties/float_property.h>
+#include <rviz/properties/color_property.h>
 #include <rviz/properties/enum_property.h>
 
 #include <dwl/environment/SpaceDiscretization.h>
@@ -24,7 +26,9 @@ namespace dwl_rviz_plugin
 enum VoxelColorMode {FULL_COLOR, GREY};
 
 TerrainMapDisplay::TerrainMapDisplay() : rviz::Display(), messages_received_(0),
-		color_factor_(0.8),	grid_size_(std::numeric_limits<double>::max())
+		color_factor_(0.8),	grid_size_(std::numeric_limits<double>::max()),
+		min_reward_(-1.), max_reward_(0.),
+		min_key_z_(std::numeric_limits<unsigned int>::max())
 {
 	topic_property_ =
 			new RosTopicProperty("Topic",
@@ -43,16 +47,53 @@ TerrainMapDisplay::TerrainMapDisplay() : rviz::Display(), messages_received_(0),
 
 	queue_size_property_->setMin(1);
 
+	// Category Groups
+	cost_category_ = new rviz::Property("CostMap", QVariant(), "", this);
+	normal_category_ = new rviz::Property("Surface Normal", QVariant(), "", this);
+
+
+	// Voxel color properties
 	voxel_color_property_ =
-			new rviz::EnumProperty("Color",
-								   "Full Color",
+			new rviz::EnumProperty("Color", "Full Color",
 								   "Select voxel coloring.",
-								   this,
-								   SLOT(updateColorMode()));
-
-
+								   cost_category_,
+								   SLOT(updateColorMode()), this);
 	voxel_color_property_->addOption("Full Color", FULL_COLOR);
 	voxel_color_property_->addOption("Grey", GREY);
+
+
+	// Surface normal vector properties
+	normal_color_property_ =
+			new rviz::ColorProperty("Color", QColor(255, 85, 127),
+									"Color of a point",
+									normal_category_, SLOT(updateNormalArrowGeometry()), this);
+
+	normal_alpha_property_ =
+			new rviz::FloatProperty("Alpha", 0.6,
+									"0 is fully transparent, 1.0 is fully opaque.",
+									normal_category_, SLOT(updateNormalArrowGeometry()), this);
+	normal_alpha_property_->setMin(0);
+	normal_alpha_property_->setMax(1);
+
+	normal_shaft_length_property_ =
+			new FloatProperty("Shaft Length", 0.04,
+							  "Length of the arrow's shaft, in meters.",
+							  normal_category_, SLOT(updateNormalArrowGeometry()), this);
+
+	normal_shaft_radius_property_ =
+			new FloatProperty("Shaft Radius", 0.005,
+							  "Radius of the arrow's shaft, in meters.",
+							  normal_category_, SLOT(updateNormalArrowGeometry()), this);
+
+	normal_head_length_property_ =
+			new FloatProperty("Head Length", 0.05,
+							  "Length of the arrow's head, in meters.",
+							  normal_category_, SLOT(updateNormalArrowGeometry()), this);
+
+	normal_head_radius_property_ =
+			new FloatProperty("Head Radius", 0.012,
+							  "Radius of the arrow's head, in meters.",
+							  normal_category_, SLOT(updateNormalArrowGeometry()), this);
 }
 
 
@@ -61,6 +102,7 @@ TerrainMapDisplay::~TerrainMapDisplay()
 	unsubscribe();
 
 	delete cloud_;
+	destroyObjects();
 
 	if (scene_node_)
 		scene_node_->detachAllObjects();
@@ -71,11 +113,36 @@ void TerrainMapDisplay::update(float wall_dt, float ros_dt)
 {
 	if (new_points_received_) {
 		boost::mutex::scoped_lock lock(mutex_);
+
+		// Drawing the terrain cost values
 		cloud_->clear();
 		cloud_->setDimensions(grid_size_, grid_size_, height_size_);
 		cloud_->addPoints(&new_points_.front(), new_points_.size());
 
-		new_points_.clear();
+		// Drawing the normal vectors
+		arrow_cloud_.clear();
+		arrow_cloud_.resize(normal_buf_.size());
+		for (unsigned int j = 0; j < normal_buf_.size(); j++) {
+			boost::shared_ptr<ArrowVisual> arrow;
+			arrow.reset(new ArrowVisual(context_->getSceneManager(), scene_node_));
+
+			arrow->setArrow(normal_buf_[j].origin, normal_buf_[j].orientation);
+			arrow->setFramePosition(position_);
+			arrow->setFrameOrientation(orientation_);
+
+			// Setting the arrow color and properties
+			Ogre::ColourValue color = normal_color_property_->getOgreColor();
+			color.a = normal_alpha_property_->getFloat();
+			arrow->setColor(color.r, color.g, color.b, color.a);
+			float shaft_length = normal_shaft_length_property_->getFloat();
+			float shaft_radius = normal_shaft_radius_property_->getFloat();
+			float head_length = normal_head_length_property_->getFloat();
+			float head_radius = normal_head_radius_property_->getFloat();
+			arrow->setProperties(shaft_length, shaft_radius,
+								 head_length, head_radius);
+
+			arrow_cloud_[j] = arrow;
+		}
 
 		new_points_received_ = false;
 	}
@@ -117,6 +184,14 @@ void TerrainMapDisplay::onDisable()
 	unsubscribe();
 
 	clear();
+}
+
+
+void TerrainMapDisplay::destroyObjects()
+{
+	point_buf_.clear();
+	new_points_.clear();
+	normal_buf_.clear();
 }
 
 
@@ -165,76 +240,93 @@ void TerrainMapDisplay::incomingMessageCallback(const dwl_terrain::TerrainMapCon
 	setStatus(StatusProperty::Ok, "Messages",
 			QString::number(messages_received_) + " terrain map messages received");
 
+	boost::mutex::scoped_lock lock(mutex_);
+	terrain_msg_ = msg;
+
+	// Destroy all the old elements
+	destroyObjects();
+
 	// Getting tf transform
-	Ogre::Vector3 position;
-	Ogre::Quaternion orientation;
-	if (!context_->getFrameManager()->getTransform(msg->header,
-												   position,
-												   orientation)) {
+	if (!context_->getFrameManager()->getTransform(terrain_msg_->header,
+												   position_,
+												   orientation_)) {
 		std::stringstream ss;
-		ss << "Failed to transform from frame [" << msg->header.frame_id << "] to frame ["
+		ss << "Failed to transform from frame [";
+		ss << terrain_msg_->header.frame_id << "] to frame ["
 		   << context_->getFrameManager()->getFixedFrame() << "]";
 		this->setStatusStd(StatusProperty::Error, "Message", ss.str());
 
 		return;
 	}
-	scene_node_->setOrientation(orientation);
-	scene_node_->setPosition(position);
+	scene_node_->setOrientation(orientation_);
+	scene_node_->setPosition(position_);
 
 	// Getting the number of cells
-	unsigned int num_cells = msg->cell.size();
-
-	// Clearing the old data of the buffers
-	point_buf_.clear();
+	unsigned int num_cells = terrain_msg_->cell.size();
 
 	// Computing the maximum and minimum reward of the map, and minimum key
 	// of the height
-	double min_reward = -1;
-	double max_reward = 0;
-	unsigned int min_key_z = std::numeric_limits<unsigned int>::max();
+	min_reward_ = -1;
+	max_reward_ = 0;
+	min_key_z_ = std::numeric_limits<unsigned int>::max();
 	for (unsigned int i = 0; i < num_cells; i++) {
-		if (min_reward > msg->cell[i].reward)
-			min_reward = msg->cell[i].reward;
+		if (min_reward_ > terrain_msg_->cell[i].reward)
+			min_reward_ = terrain_msg_->cell[i].reward;
 
-		if (max_reward < msg->cell[i].reward)
-			max_reward = msg->cell[i].reward;
+		if (max_reward_ < terrain_msg_->cell[i].reward)
+			max_reward_ = terrain_msg_->cell[i].reward;
 
-		if (min_key_z > msg->cell[i].key_z)
-			min_key_z = msg->cell[i].key_z;
+		if (min_key_z_ > terrain_msg_->cell[i].key_z)
+			min_key_z_ = terrain_msg_->cell[i].key_z;
 	}
-	grid_size_ = msg->plane_size;
-	height_size_ = msg->height_size;
+	grid_size_ = terrain_msg_->plane_size;
+	height_size_ = terrain_msg_->height_size;
 
 
-	// Getting reward values and size of the pixel
+	// Getting terrain values and size of the pixel
 	dwl::environment::SpaceDiscretization space_discretization(grid_size_);
 	space_discretization.setEnvironmentResolution(height_size_, false);
+	PointCloud::Point new_point;
 	for (unsigned int i = 0; i < num_cells; i++) {
-		// Getting the Cartesian information of the reward map
-		PointCloud::Point new_point;
+		// Getting the Cartesian information of the terrain map
 		double x, y, z;
-		space_discretization.keyToCoord(x, msg->cell[i].key_x, true);
-		space_discretization.keyToCoord(y, msg->cell[i].key_y, true);
+		space_discretization.keyToCoord(x, terrain_msg_->cell[i].key_x, true);
+		space_discretization.keyToCoord(y, terrain_msg_->cell[i].key_y, true);
+		space_discretization.keyToCoord(z, terrain_msg_->cell[i].key_z, false);
+		Ogre::Vector3 cell_position(x, y, z);
 
-		unsigned int key_z = msg->cell[i].key_z;
-		while (key_z >= min_key_z) {
+		unsigned int key_z = terrain_msg_->cell[i].key_z;
+		while (key_z >= min_key_z_) {
 			space_discretization.keyToCoord(z, key_z, false);
-			Ogre::Vector3 position(x, y, z);
-			new_point.position = position;
+			Ogre::Vector3 cell_position(x, y, z);
+			new_point.position = cell_position;
 
 			// Setting the color of the cell according the reward value
-			setColor(msg->cell[i].reward,
-					 min_reward, max_reward,
+			setColor(terrain_msg_->cell[i].reward,
+					 min_reward_, max_reward_,
 					 color_factor_, new_point);
 			key_z -= 1;
 
 			point_buf_.push_back(new_point);
 		}
+
+
+		// Defining the surface normal orientation
+		Eigen::Vector3d ref_dir = -Eigen::Vector3d::UnitZ();
+		Eigen::Quaterniond normal_q;
+		Eigen::Vector3d normal(msg->cell[i].normal.x,
+							   msg->cell[i].normal.y,
+							   msg->cell[i].normal.z);
+		normal_q.setFromTwoVectors(ref_dir, normal);
+		Ogre::Quaternion normal_orientation(normal_q.w(), normal_q.x(),
+											normal_q.y(), normal_q.z());
+
+		Normal new_normal;
+		new_normal.setNormal(cell_position, normal_orientation);
+		normal_buf_.push_back(new_normal);
 	}
 
 	// Recording the data from the buffers
-	boost::mutex::scoped_lock lock(mutex_);
-
 	new_points_.swap(point_buf_);
 
 	new_points_received_ = true;
@@ -307,6 +399,7 @@ void TerrainMapDisplay::clear()
 	boost::mutex::scoped_lock lock(mutex_);
 
 	cloud_->clear();
+	normal_buf_.clear();
 }
 
 
@@ -326,9 +419,78 @@ void TerrainMapDisplay::updateTopic()
 	context_->queueRender();
 }
 
+
 void TerrainMapDisplay::updateColorMode()
 {
+	if (messages_received_ != 0) {
+		boost::mutex::scoped_lock lock(mutex_);
 
+		// Clearing the voxel buffers
+		point_buf_.clear();
+		new_points_.clear();
+
+		// Getting the number of cells
+		unsigned int num_cells = terrain_msg_->cell.size();
+
+		// Getting terrain values and size of the pixel
+		dwl::environment::SpaceDiscretization space_discretization(grid_size_);
+		space_discretization.setEnvironmentResolution(height_size_, false);
+		PointCloud::Point new_point;
+		for (unsigned int i = 0; i < num_cells; i++) {
+			// Getting the Cartesian information of the terrain map
+			double x, y, z;
+			space_discretization.keyToCoord(x, terrain_msg_->cell[i].key_x, true);
+			space_discretization.keyToCoord(y, terrain_msg_->cell[i].key_y, true);
+			space_discretization.keyToCoord(z, terrain_msg_->cell[i].key_z, false);
+			Ogre::Vector3 cell_position(x, y, z);
+
+			unsigned int key_z = terrain_msg_->cell[i].key_z;
+			while (key_z >= min_key_z_) {
+				space_discretization.keyToCoord(z, key_z, false);
+				Ogre::Vector3 cell_position(x, y, z);
+				new_point.position = cell_position;
+
+				// Setting the color of the cell according the reward value
+				setColor(terrain_msg_->cell[i].reward,
+						 min_reward_, max_reward_,
+						 color_factor_, new_point);
+				key_z -= 1;
+
+				point_buf_.push_back(new_point);
+			}
+		}
+
+		// Recording the data from the buffers
+		new_points_.swap(point_buf_);
+
+		// Drawing the terrain cost values
+		if (new_points_.size() != 0) {
+			cloud_->clear();
+			cloud_->setDimensions(grid_size_, grid_size_, height_size_);
+			cloud_->addPoints(&new_points_.front(), new_points_.size());
+		}
+
+		context_->queueRender();
+	}
+}
+
+
+void TerrainMapDisplay::updateNormalArrowGeometry()
+{
+	Ogre::ColourValue color = normal_color_property_->getOgreColor();
+	color.a = normal_alpha_property_->getFloat();
+	float shaft_length = normal_shaft_length_property_->getFloat();
+	float shaft_radius = normal_shaft_radius_property_->getFloat();
+	float head_length = normal_head_length_property_->getFloat();
+	float head_radius = normal_head_radius_property_->getFloat();
+
+	for (unsigned int j = 0; j < arrow_cloud_.size(); j++) {
+		arrow_cloud_[j]->setColor(color.r, color.g, color.b, color.a);
+		arrow_cloud_[j]->setProperties(shaft_length, shaft_radius,
+									   head_length, head_radius);
+	}
+
+	context_->queueRender();
 }
 
 } //@namespace dwl_rviz_plugin
