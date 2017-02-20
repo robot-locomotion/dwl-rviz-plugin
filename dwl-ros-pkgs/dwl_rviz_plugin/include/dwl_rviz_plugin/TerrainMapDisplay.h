@@ -185,8 +185,8 @@ class TerrainMapDisplay : public rviz::Display
 		dwl_terrain::TerrainMapConstPtr terrain_msg_;
 
 		/** @brief Terrain minimum and maximum values */
-		double min_reward_;
-		double max_reward_;
+		double max_cost_;
+		double min_cost_;
 		unsigned int min_key_z_;
 };
 

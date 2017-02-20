@@ -27,7 +27,7 @@ enum VoxelColorMode {FULL_COLOR, GREY};
 
 TerrainMapDisplay::TerrainMapDisplay() : rviz::Display(), messages_received_(0),
 		color_factor_(0.8),	grid_size_(std::numeric_limits<double>::max()),
-		min_reward_(-1.), max_reward_(0.),
+		max_cost_(0.), min_cost_(std::numeric_limits<double>::max()),
 		min_key_z_(std::numeric_limits<unsigned int>::max())
 {
 	topic_property_ =
@@ -264,17 +264,18 @@ void TerrainMapDisplay::incomingMessageCallback(const dwl_terrain::TerrainMapCon
 	// Getting the number of cells
 	unsigned int num_cells = terrain_msg_->cell.size();
 
-	// Computing the maximum and minimum reward of the map, and minimum key
+	// Computing the maximum and minimum cost of the map, and minimum key
 	// of the height
-	min_reward_ = -1;
-	max_reward_ = 0;
+	max_cost_ = 0.;
+	min_cost_ = std::numeric_limits<double>::max();
 	min_key_z_ = std::numeric_limits<unsigned int>::max();
 	for (unsigned int i = 0; i < num_cells; i++) {
-		if (min_reward_ > terrain_msg_->cell[i].reward)
-			min_reward_ = terrain_msg_->cell[i].reward;
+		double cost = terrain_msg_->cell[i].cost;
+		if (max_cost_ < cost)
+			max_cost_ = cost;
 
-		if (max_reward_ < terrain_msg_->cell[i].reward)
-			max_reward_ = terrain_msg_->cell[i].reward;
+		if (min_cost_ > cost)
+			min_cost_ = cost;
 
 		if (min_key_z_ > terrain_msg_->cell[i].key_z)
 			min_key_z_ = terrain_msg_->cell[i].key_z;
@@ -302,8 +303,8 @@ void TerrainMapDisplay::incomingMessageCallback(const dwl_terrain::TerrainMapCon
 			new_point.position = cell_position;
 
 			// Setting the color of the cell according the reward value
-			setColor(terrain_msg_->cell[i].reward,
-					 min_reward_, max_reward_,
+			setColor(terrain_msg_->cell[i].cost,
+					 max_cost_, min_cost_,
 					 color_factor_, new_point);
 			key_z -= 1;
 
@@ -333,9 +334,9 @@ void TerrainMapDisplay::incomingMessageCallback(const dwl_terrain::TerrainMapCon
 }
 
 
-void TerrainMapDisplay::setColor(double value,
-								 double min,
-								 double max,
+void TerrainMapDisplay::setColor(double cost_value,
+								 double max_cost,
+								 double min_cost,
 								 double factor,
 								 rviz::PointCloud::Point& point)
 {
@@ -353,7 +354,8 @@ void TerrainMapDisplay::setColor(double value,
 		double v = 1.0;
 
 		double h = (1.0 -
-				std::min(std::max((value - min) / (max - min), 0.0), 1.0)) * factor;
+				std::min(std::max(
+						(cost_value - max_cost) / (min_cost - max_cost), 0.0), 1.0)) * factor;
 
 		h -= floor(h);
 		h *= 4;
@@ -385,7 +387,7 @@ void TerrainMapDisplay::setColor(double value,
 		break;
 	} case GREY:
 	{
-		double v = (value - min) / (max - min);
+		double v = (cost_value - max_cost) / (min_cost - max_cost);
 		point.setColor(v, v, v);
 		break;
 	} default:
@@ -450,9 +452,9 @@ void TerrainMapDisplay::updateColorMode()
 				Ogre::Vector3 cell_position(x, y, z);
 				new_point.position = cell_position;
 
-				// Setting the color of the cell according the reward value
-				setColor(terrain_msg_->cell[i].reward,
-						 min_reward_, max_reward_,
+				// Setting the color of the cell according the cost value
+				setColor(terrain_msg_->cell[i].cost,
+						 max_cost_, min_cost_,
 						 color_factor_, new_point);
 				key_z -= 1;
 
