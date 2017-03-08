@@ -174,9 +174,8 @@ void ObstacleMapDisplay::incomingMessageCallback(const dwl_terrain::ObstacleMapC
 	point_buf_.clear();
 
 	// Computing the minimun key of the height
-	double min_reward, max_reward = 0;
 	unsigned int min_key_z = std::numeric_limits<unsigned int>::max();
-	for (int i = 0; i < msg->cell.size(); i++) {
+	for (unsigned int i = 0; i < msg->cell.size(); i++) {
 		if (min_key_z > msg->cell[i].key_z)
 			min_key_z = msg->cell[i].key_z;
 	}
@@ -184,11 +183,10 @@ void ObstacleMapDisplay::incomingMessageCallback(const dwl_terrain::ObstacleMapC
 	height_size_ = msg->height_size;
 
 
-	// Getting reward values and size of the pixel
-	double cell_size = 0;
+	// Getting cell values and size of the pixel
 	dwl::environment::SpaceDiscretization space_discretization(grid_size_);
 	space_discretization.setEnvironmentResolution(height_size_, false);
-	for (int i = 0; i < msg->cell.size(); i++) {
+	for (unsigned int i = 0; i < msg->cell.size(); i++) {
 		// Getting cartesian information of the reward map
 		PointCloud::Point new_point;
 		double x, y, z;
