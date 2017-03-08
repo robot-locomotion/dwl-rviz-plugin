@@ -221,7 +221,6 @@ void ReducedTrajectoryDisplay::updateSupportAlpha()
 
 void ReducedTrajectoryDisplay::updatePendulumArrowGeometry()
 {
-	float line_radius = pendulum_line_radius_property_->getFloat();
 	pendulum_alpha_ = pendulum_alpha_property_->getFloat();
 
 	context_->queueRender();
@@ -313,7 +312,7 @@ void ReducedTrajectoryDisplay::updateDisplay()
 				next_ = true;
 				display_idx_++;
 
-				if (display_idx_ > msg_->trajectory.size() - 1) {
+				if (display_idx_ > (int) msg_->trajectory.size() - 1) {
 					display_idx_ = msg_->trajectory.size() - 1;
 					new_msg_ = false;
 				}
@@ -324,7 +323,7 @@ void ReducedTrajectoryDisplay::updateDisplay()
 				next_ = true;
 				display_idx_++;
 
-				if (display_idx_ > msg_->trajectory.size() - 1) {
+				if (display_idx_ > (int) msg_->trajectory.size() - 1) {
 					msg_time_ = msg_->actual.time;
 					display_idx_ = -1;
 				}
@@ -455,7 +454,7 @@ void ReducedTrajectoryDisplay::generateSetOfColors(std::vector<Ogre::ColourValue
 												   unsigned int num_points)
 {
 	colors.resize(num_points);
-	for (int i = 0; i < num_points; i++) {
+	for (unsigned int i = 0; i < num_points; i++) {
 		float hue = (float) i / (float) num_points;
 		float saturation = (float) (90 + rand() % 10) / 100;
 		float brightness = (float) (50 + rand() % 10) / 100;

@@ -70,7 +70,7 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 
 	private Q_SLOTS:
 		/** @brief Helper function to apply color and alpha to all visuals.
-		/* Set the current color and alpha values for each visual */
+		 * Set the current color and alpha values for each visual */
 		void updateRobotModel();
 		void updateCoMStyle();
 		void updateCoMColorAndAlpha();

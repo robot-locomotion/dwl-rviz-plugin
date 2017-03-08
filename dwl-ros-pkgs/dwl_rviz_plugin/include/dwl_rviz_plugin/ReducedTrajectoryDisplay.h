@@ -68,7 +68,7 @@ class ReducedTrajectoryDisplay :
 
 	private Q_SLOTS:
 		/** @brief Helper function to apply color and alpha to all visuals.
-		/* Set the current color and alpha values for each visual */
+		 * Set the current color and alpha values for each visual */
 		void updateModeDisplay();
 		void updateCoMRadiusAndAlpha();
 		void updateCoPRadiusAndAlpha();
