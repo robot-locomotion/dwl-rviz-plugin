@@ -94,6 +94,8 @@ TerrainMapDisplay::TerrainMapDisplay() : rviz::Display(), messages_received_(0),
 			new FloatProperty("Head Radius", 0.012,
 							  "Radius of the arrow's head, in meters.",
 							  normal_category_, SLOT(updateNormalArrowGeometry()), this);
+
+	new_points_received_ = false;
 }
 
 
