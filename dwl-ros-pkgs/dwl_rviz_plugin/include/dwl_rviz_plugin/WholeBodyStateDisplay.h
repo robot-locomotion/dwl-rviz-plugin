@@ -103,64 +103,64 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 		rviz::Property* grf_category_;
 		rviz::Property* support_category_;
 
-        /** @brief Object for visualization of the data */
-        boost::shared_ptr<PointVisual> com_visual_;
-        boost::shared_ptr<ArrowVisual> comd_visual_;
-        boost::shared_ptr<PointVisual> cop_visual_;
-        boost::shared_ptr<PointVisual> cmp_visual_;
-        boost::shared_ptr<PointVisual> icp_visual_;
-        std::vector<boost::shared_ptr<ArrowVisual> > grf_visual_;
-        boost::shared_ptr<PolygonVisual> support_visual_;
+		/** @brief Object for visualization of the data */
+		boost::shared_ptr<PointVisual> com_visual_;
+		boost::shared_ptr<ArrowVisual> comd_visual_;
+		boost::shared_ptr<PointVisual> cop_visual_;
+		boost::shared_ptr<PointVisual> cmp_visual_;
+		boost::shared_ptr<PointVisual> icp_visual_;
+		std::vector<boost::shared_ptr<ArrowVisual> > grf_visual_;
+		boost::shared_ptr<PolygonVisual> support_visual_;
 
 		/** @brief Property objects for user-editable properties */
 		rviz::StringProperty* robot_model_property_;
 		rviz::EnumProperty* com_style_property_;
 		rviz::ColorProperty* com_color_property_;
-        rviz::FloatProperty* com_alpha_property_;
-        rviz::FloatProperty* com_radius_property_;
-        rviz::FloatProperty* com_head_radius_property_;
-        rviz::FloatProperty* com_head_length_property_;
-        rviz::FloatProperty* com_shaft_radius_property_;
-        rviz::FloatProperty* com_shaft_length_property_;
+		rviz::FloatProperty* com_alpha_property_;
+		rviz::FloatProperty* com_radius_property_;
+		rviz::FloatProperty* com_head_radius_property_;
+		rviz::FloatProperty* com_head_length_property_;
+		rviz::FloatProperty* com_shaft_radius_property_;
+		rviz::FloatProperty* com_shaft_length_property_;
 
 		rviz::ColorProperty* cop_color_property_;
-        rviz::FloatProperty* cop_alpha_property_;
-        rviz::FloatProperty* cop_radius_property_;
+		rviz::FloatProperty* cop_alpha_property_;
+		rviz::FloatProperty* cop_radius_property_;
 
 		rviz::ColorProperty* cmp_color_property_;
-        rviz::FloatProperty* cmp_alpha_property_;
-        rviz::FloatProperty* cmp_radius_property_;
+		rviz::FloatProperty* cmp_alpha_property_;
+		rviz::FloatProperty* cmp_radius_property_;
 
 		rviz::ColorProperty* icp_color_property_;
-        rviz::FloatProperty* icp_alpha_property_;
-        rviz::FloatProperty* icp_radius_property_;
+		rviz::FloatProperty* icp_alpha_property_;
+		rviz::FloatProperty* icp_radius_property_;
 
-        rviz::ColorProperty* grf_color_property_;
-        rviz::FloatProperty* grf_alpha_property_;
-        rviz::FloatProperty* grf_head_radius_property_;
-        rviz::FloatProperty* grf_head_length_property_;
-        rviz::FloatProperty* grf_shaft_radius_property_;
-        rviz::FloatProperty* grf_shaft_length_property_;
+		rviz::ColorProperty* grf_color_property_;
+		rviz::FloatProperty* grf_alpha_property_;
+		rviz::FloatProperty* grf_head_radius_property_;
+		rviz::FloatProperty* grf_head_length_property_;
+		rviz::FloatProperty* grf_shaft_radius_property_;
+		rviz::FloatProperty* grf_shaft_length_property_;
 
 		rviz::ColorProperty* support_line_color_property_;
-        rviz::FloatProperty* support_line_alpha_property_;
-        rviz::FloatProperty* support_line_radius_property_;
+		rviz::FloatProperty* support_line_alpha_property_;
+		rviz::FloatProperty* support_line_radius_property_;
 		rviz::ColorProperty* support_mesh_color_property_;
-        rviz::FloatProperty* support_mesh_alpha_property_;
-        rviz::FloatProperty* support_force_threshold_property_;
+		rviz::FloatProperty* support_mesh_alpha_property_;
+		rviz::FloatProperty* support_force_threshold_property_;
 
-        /** @brief Whole-body dynamics */
-        dwl::model::WholeBodyDynamics wdyn_;
-        dwl::model::FloatingBaseSystem fbs_;
-        dwl::math::FrameTF frame_tf_;
+		/** @brief Whole-body dynamics */
+		dwl::model::WholeBodyDynamics wdyn_;
+		dwl::model::FloatingBaseSystem fbs_;
+		dwl::math::FrameTF frame_tf_;
 
-        /** @brief Force threshold for detecting active contacts */
-        double force_threshold_;
+		/** @brief Force threshold for detecting active contacts */
+		double force_threshold_;
 
-        /** @brief Weight of the robot */
-        double weight_;
+		/** @brief Weight of the robot */
+		double weight_;
 
-        /** @brief CoM style */
+		/** @brief CoM style */
 		enum CoMStyle {REAL, PROJECTED};
 		bool com_real_;
 };
