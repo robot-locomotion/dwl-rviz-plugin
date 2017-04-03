@@ -124,6 +124,12 @@ void TerrainMapDisplay::update(float wall_dt, float ros_dt)
 		// Drawing the normal vectors
 		arrow_cloud_.clear();
 		arrow_cloud_.resize(normal_buf_.size());
+		Ogre::ColourValue color = normal_color_property_->getOgreColor();
+		color.a = normal_alpha_property_->getFloat();
+		float shaft_length = normal_shaft_length_property_->getFloat();
+		float shaft_radius = normal_shaft_radius_property_->getFloat();
+		float head_length = normal_head_length_property_->getFloat();
+		float head_radius = normal_head_radius_property_->getFloat();
 		for (unsigned int j = 0; j < normal_buf_.size(); j++) {
 			boost::shared_ptr<ArrowVisual> arrow;
 			arrow.reset(new ArrowVisual(context_->getSceneManager(), scene_node_));
@@ -133,13 +139,7 @@ void TerrainMapDisplay::update(float wall_dt, float ros_dt)
 			arrow->setFrameOrientation(orientation_);
 
 			// Setting the arrow color and properties
-			Ogre::ColourValue color = normal_color_property_->getOgreColor();
-			color.a = normal_alpha_property_->getFloat();
 			arrow->setColor(color.r, color.g, color.b, color.a);
-			float shaft_length = normal_shaft_length_property_->getFloat();
-			float shaft_radius = normal_shaft_radius_property_->getFloat();
-			float head_length = normal_head_length_property_->getFloat();
-			float head_radius = normal_head_radius_property_->getFloat();
 			arrow->setProperties(shaft_length, shaft_radius,
 								 head_length, head_radius);
 
