@@ -52,6 +52,7 @@ qt4_wrap_cpp(MOC_FILES
   OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED)
 
 set(SOURCE_FILES
+  src/DisplayInterface.cpp
   src/PointVisual.cpp
   src/LineVisual.cpp
   src/ArrowVisual.cpp
@@ -69,7 +70,6 @@ add_library(${PROJECT_NAME}  ${SOURCE_FILES})
 target_link_libraries(${PROJECT_NAME}  ${QT_LIBRARIES}
                                        ${Boost_LIBRARIES}
                                        ${dwl_LIBRARIES}
-                                       ${catkin_LIBRARIES}
-                                       -ldefault_plugin)
+                                       ${catkin_LIBRARIES})
 add_dependencies(${PROJECT_NAME}  ${dwl_msgs_EXPORTED_TARGETS}
                                   ${dwl_terrain_EXPORTED_TARGETS})
