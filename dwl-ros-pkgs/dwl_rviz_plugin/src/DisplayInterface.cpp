@@ -190,4 +190,14 @@ void DisplayInterface::drawCone(const Eigen::Vector3d& vertex,
 	display_stack_.push_back(data);
 }
 
+
+void DisplayInterface::drawCone(const Eigen::Vector3d& vertex,
+		  	  	  	  	  	    const Eigen::Vector3d& rpy,
+								double height,
+								double radius,
+								const dwl::Color& color,
+								std::string frame)
+{
+	drawCone(vertex, dwl::math::getQuaternion(rpy), height, radius, color, frame);
+}
 } //@namespace dwl_rviz_plugin

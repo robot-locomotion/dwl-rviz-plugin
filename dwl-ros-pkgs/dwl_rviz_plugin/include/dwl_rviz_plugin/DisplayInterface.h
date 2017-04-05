@@ -175,6 +175,21 @@ class DisplayInterface
 					  const dwl::Color& color,
 					  std::string frame);
 
+		/**
+		 * @brief Draws a cone in a certain frame
+		 * @param const Eigen::Vector3d& Vertex of the cone
+		 * @param const Eigen::Vector3d& RPY orientation of the cone
+		 * @param double Height of the cone
+		 * @param double Radius of the cone
+		 * @param const dwl::Color& Color of the cone
+		 * @param std::string Frame where is described the cone
+		 */
+		void drawCone(const Eigen::Vector3d& vertex,
+				  	  const Eigen::Vector3d& rpy,
+					  double height,
+					  double radius,
+					  const dwl::Color& color,
+					  std::string frame);
 
 	private:
 		/** @brief ROS node handle */
