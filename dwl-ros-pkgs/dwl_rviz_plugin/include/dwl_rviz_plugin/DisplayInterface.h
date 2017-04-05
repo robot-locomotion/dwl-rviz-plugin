@@ -52,7 +52,8 @@ enum class DisplayType {
 	LINE = 0,
 	POINT = 1,
 	ARROW = 2,
-	SPHERE = 3
+	SPHERE = 3,
+	TEXT = 11
 };
 
 struct DisplayData {
@@ -71,6 +72,7 @@ struct DisplayData {
 	Eigen::Vector3d scale;
 	Color color;
 	DisplayType type;
+	std::string text;
 	std::string frame;
 };
 
@@ -190,6 +192,21 @@ class DisplayInterface
 					  double radius,
 					  const dwl::Color& color,
 					  std::string frame);
+
+		/**
+		 * @brief Draws a text in a certain frame
+		 * @param const std::string The text to be printed
+		 * @param const Eigen::Vector3d& Position of the text
+		 * @param double Height of the upper-case
+		 * @param const dwl::Color& Color of the cone
+		 * @param std::string Frame where is described the cone
+		 */
+		void drawText(std::string text,
+					  const Eigen::Vector3d& position,
+					  double uppercase_height,
+					  const dwl::Color& color,
+					  std::string frame);
+
 
 	private:
 		/** @brief ROS node handle */

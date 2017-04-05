@@ -93,6 +93,20 @@ void DisplayInterface::publishMarkerArray(const ros::Time& time)
 			marker.pose.position.y = display_stack_[i].p1(1);
 			marker.pose.position.z = display_stack_[i].p1(2);
 			markers.markers.push_back(marker);
+		} else if (display_stack_[i].type == dwl::DisplayType::TEXT) {
+			marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+			marker.text = display_stack_[i].text;
+			marker.color.g = display_stack_[i].color.g;
+			marker.color.b = display_stack_[i].color.b;
+			marker.color.a = display_stack_[i].color.a;
+			marker.scale.x = display_stack_[i].scale(0);
+			marker.scale.y = display_stack_[i].scale(1);
+			marker.scale.z = display_stack_[i].scale(2);
+			marker.pose.orientation.w = 1.0;
+			marker.pose.position.x = display_stack_[i].p1(0);
+			marker.pose.position.y = display_stack_[i].p1(1);
+			marker.pose.position.z = display_stack_[i].p1(2);
+			markers.markers.push_back(marker);
 		}
 	}
 	
@@ -200,4 +214,22 @@ void DisplayInterface::drawCone(const Eigen::Vector3d& vertex,
 {
 	drawCone(vertex, dwl::math::getQuaternion(rpy), height, radius, color, frame);
 }
+
+
+void DisplayInterface::drawText(std::string text,
+			  	  	  	  	    const Eigen::Vector3d& position,
+								double uppercase_height,
+								const dwl::Color& color,
+								std::string frame)
+{
+	dwl::DisplayData data;
+	data.text = text;
+	data.p1 = position;
+	data.scale = Eigen::Vector3d(0., 0., uppercase_height);
+	data.color = color;
+	data.type = dwl::DisplayType::TEXT;
+	data.frame = frame;
+	display_stack_.push_back(data);
+}
+
 } //@namespace dwl_rviz_plugin
