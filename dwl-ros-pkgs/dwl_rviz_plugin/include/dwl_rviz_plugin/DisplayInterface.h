@@ -76,6 +76,23 @@ struct DisplayData {
 	std::string frame;
 };
 
+struct ArrowProperties {
+	ArrowProperties() : shaft_diameter(0.1), head_diameter(0.5),
+			head_length(0.1) { }
+	ArrowProperties(double length) : shaft_diameter(length / 40),
+			head_diameter(length / 20),
+			head_length(length / 10) { }
+	ArrowProperties(double _shaft_diameter,
+					double _head_diameter,
+					double _head_length) : shaft_diameter(_shaft_diameter),
+							head_diameter(_head_diameter),
+							head_length(_head_length) { }
+
+	double shaft_diameter;
+	double head_diameter;
+	double head_length;
+};
+
 } //@namespace dwl
 
 
@@ -127,17 +144,17 @@ class DisplayInterface
 		 * @brief Draws an arrow in a certain frame
 		 * @param const Eigen::Vector3d& Start point of the arrow
 		 * @param const Eigen::Vector3d& End point of the arrow
-		 * @param double Diameter of the shaft
-		 * @param double Diameter of the head
-		 * @param double Length of the head
+		 * @param const dwl::ArrowProperties& Arrow properties
 		 * @param const dwl::Color& Color of the arrow
 		 * @param std::string Frame where is described the arrow
 		 */
 		void drawArrow(const Eigen::Vector3d& begin,
 					   const Eigen::Vector3d& end,
-					   double shaft_diameter,
-					   double head_diameter,
-					   double head_length,
+					   const dwl::ArrowProperties& arrow,
+					   const dwl::Color& color,
+					   std::string frame);
+		void drawArrow(const Eigen::Vector3d& begin,
+					   const Eigen::Vector3d& end,
 					   const dwl::Color& color,
 					   std::string frame);
 
@@ -145,18 +162,20 @@ class DisplayInterface
 		 * @brief Draws an arrow in a certain frame
 		 * @param const Eigen::Vector3d& Start point of the arrow
 		 * @param const Eigen::Vector3d& Direction of the arrow
-		 * @param double Diameter of the shaft
-		 * @param double Diameter of the head
-		 * @param double Length of the head
+		 * @param double Length of the arrow
+		 * @param const dwl::ArrowProperties& Arrow properties
 		 * @param const dwl::Color& Color of the arrow
 		 * @param std::string Frame where is described the arrow
 		 */
 		void drawArrow(const Eigen::Vector3d& origin,
 					   const Eigen::Vector3d& direction,
 					   double arrow_length,
-					   double shaft_diameter,
-					   double head_diameter,
-					   double head_length,
+					   const dwl::ArrowProperties& arrow,
+					   const dwl::Color& color,
+					   std::string frame);
+		void drawArrow(const Eigen::Vector3d& origin,
+					   const Eigen::Vector3d& direction,
+					   double arrow_length,
 					   const dwl::Color& color,
 					   std::string frame);
 
@@ -165,18 +184,19 @@ class DisplayInterface
 		 * @param const Eigen::Vector3d& Origin of the arrow
 		 * @param const Eigen::Quaterniond& Orientation of the arrow
 		 * @param double Length of the arrow
-		 * @param double Diameter of the shaft
-		 * @param double Diameter of the head
-		 * @param double Length of the head
+		 * @param const dwl::ArrowProperties& Arrow properties
 		 * @param const dwl::Color& Color of the arrow
 		 * @param std::string Frame where is described the arrow
 		 */
 		void drawArrow(const Eigen::Vector3d& origin,
 					   const Eigen::Quaterniond& orientation,
 					   double arrow_length,
-					   double shaft_diameter,
-					   double head_diameter,
-					   double head_length,
+					   const dwl::ArrowProperties& arrow,
+					   const dwl::Color& color,
+					   std::string frame);
+		void drawArrow(const Eigen::Vector3d& origin,
+					   const Eigen::Quaterniond& orientation,
+					   double arrow_length,
 					   const dwl::Color& color,
 					   std::string frame);
 

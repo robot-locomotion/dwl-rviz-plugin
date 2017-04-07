@@ -152,16 +152,16 @@ void DisplayInterface::drawSphere(const Eigen::Vector3d& position,
 
 void DisplayInterface::drawArrow(const Eigen::Vector3d& begin,
 								 const Eigen::Vector3d& end,
-								 double shaft_diameter,
-								 double head_diameter,
-								 double head_length,
+								 const dwl::ArrowProperties& arrow,
 								 const dwl::Color& color,
 								 std::string frame)
 {
 	dwl::DisplayData data;
 	data.p1 = begin;
 	data.p2 = end;
-	data.scale = Eigen::Vector3d(shaft_diameter, head_diameter, head_length);
+	data.scale = Eigen::Vector3d(arrow.shaft_diameter,
+								 arrow.head_diameter,
+								 arrow.head_length);
 	data.color = color;
 	data.type = dwl::DisplayType::ARROW;
 	data.frame = frame;
@@ -169,33 +169,61 @@ void DisplayInterface::drawArrow(const Eigen::Vector3d& begin,
 }
 
 
+void DisplayInterface::drawArrow(const Eigen::Vector3d& begin,
+								 const Eigen::Vector3d& end,
+								 const dwl::Color& color,
+								 std::string frame)
+{
+	double length = (end - begin).norm();
+	drawArrow(begin, end, dwl::ArrowProperties(length), color, frame);
+}
+
+
 void DisplayInterface::drawArrow(const Eigen::Vector3d& origin,
 								 const Eigen::Vector3d& direction,
 								 double arrow_length,
-								 double shaft_diameter,
-								 double head_diameter,
-								 double head_length,
+								 const dwl::ArrowProperties& arrow,
 								 const dwl::Color& color,
 								 std::string frame)
 {
 	Eigen::Vector3d end = origin + arrow_length * direction.normalized();
-	drawArrow(origin, end, shaft_diameter, head_diameter, head_length, color, frame);
+	drawArrow(origin, end, arrow, color, frame);
+}
+
+
+void DisplayInterface::drawArrow(const Eigen::Vector3d& origin,
+								 const Eigen::Vector3d& direction,
+								 double arrow_length,
+								 const dwl::Color& color,
+								 std::string frame)
+{
+	drawArrow(origin, direction, dwl::ArrowProperties(arrow_length), color, frame);
 }
 
 
 void DisplayInterface::drawArrow(const Eigen::Vector3d& origin,
 								 const Eigen::Quaterniond& orientation,
 								 double arrow_length,
-								 double shaft_diameter,
-								 double head_diameter,
-								 double head_length,
+								 const dwl::ArrowProperties& arrow,
 								 const dwl::Color& color,
 								 std::string frame)
 {
 	Eigen::Vector3d end = origin +
 			dwl::math::getDirectionCosineMatrix(orientation).transpose() *
 			Eigen::Vector3d(0., 0., arrow_length);
-	drawArrow(origin, end, shaft_diameter, head_diameter, head_length, color, frame);
+	drawArrow(origin, end, arrow, color, frame);
+}
+
+
+void DisplayInterface::drawArrow(const Eigen::Vector3d& origin,
+								 const Eigen::Quaterniond& orientation,
+								 double arrow_length,
+								 const dwl::Color& color,
+								 std::string frame)
+{
+	drawArrow(origin, orientation,
+			  arrow_length, dwl::ArrowProperties(arrow_length),
+			  color, frame);
 }
 
 
