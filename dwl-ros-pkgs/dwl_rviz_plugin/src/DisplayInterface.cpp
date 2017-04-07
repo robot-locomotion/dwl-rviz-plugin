@@ -170,6 +170,20 @@ void DisplayInterface::drawArrow(const Eigen::Vector3d& begin,
 
 
 void DisplayInterface::drawArrow(const Eigen::Vector3d& origin,
+								 const Eigen::Vector3d& direction,
+								 double arrow_length,
+								 double shaft_diameter,
+								 double head_diameter,
+								 double head_length,
+								 const dwl::Color& color,
+								 std::string frame)
+{
+	Eigen::Vector3d end = origin + arrow_length * direction.normalized();
+	drawArrow(origin, end, shaft_diameter, head_diameter, head_length, color, frame);
+}
+
+
+void DisplayInterface::drawArrow(const Eigen::Vector3d& origin,
 								 const Eigen::Quaterniond& orientation,
 								 double arrow_length,
 								 double shaft_diameter,
