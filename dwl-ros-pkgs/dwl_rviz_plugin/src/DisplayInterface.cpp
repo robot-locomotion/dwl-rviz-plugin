@@ -109,9 +109,9 @@ void DisplayInterface::publishMarkerArray(const ros::Time& time)
 			markers.markers.push_back(marker);
 		}
 	}
-	
+
+	display_stack_.clear();
 	if (markers_pub_->trylock()) {
-		display_stack_.clear();
 		markers_pub_->msg_ = markers;
 		markers_pub_->unlockAndPublish();
 	}
