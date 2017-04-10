@@ -14,7 +14,26 @@
 
 namespace dwl {
 
-enum ColorType { Red, Green, Blue, Yellow, White, Black };
+enum ColorType {
+	Red,
+	Salmon,
+	Green,
+	Lime,
+	Olive,
+	Blue,
+	RoyalBlue,
+	Brown,
+	Cyan,
+	Orange,
+	Gold,
+	Yellow,
+	Magenda,
+	Purple,
+	Pink,
+	White,
+	Black,
+	Grey
+};
 
 struct Color
 {
@@ -28,17 +47,57 @@ struct Color
 		a = _a;
  		if (color == ColorType::Red) {
 			r = 1.;
+ 		} else if (color == ColorType::Salmon) {
+ 			r = 0.98;
+ 			g = 0.5;
+ 			b = 0.45;
 		} else if (color == ColorType::Green) {
+			g = 0.5;
+		} else if (color == ColorType::Lime) {
 			g = 1.;
+		} else if (color == ColorType::Olive) {
+			r = 0.5;
+			g = 0.5;
 		} else if (color == ColorType::Blue) {
 			b = 1.;
+		} else if (color == ColorType::RoyalBlue) {
+			r = 0.25;
+			g = 0.41;
+			b = 0.88;
+		} else if (color == ColorType::Brown) {
+			r = 0.65;
+			g = 0.16;
+			b = 0.16;
+		} else if (color == ColorType::Cyan) {
+			g = 1.;
+			b = 1.;
+		} else if (color == ColorType::Orange) {
+			r = 1.;
+			g = 0.65;
+		} else if (color == ColorType::Gold) {
+			r = 1.;
+			g = 0.85;
 		} else if (color == ColorType::Yellow) {
 			r = 1.;
 			g = 1.;
+		} else if (color == ColorType::Magenda) {
+			r = 1.;
+			b = 1.;
+		} else if (color == ColorType::Purple) {
+			r = 0.5;
+			b = 0.5;
+		} else if (color == ColorType::Pink) {
+			r = 1.;
+			g = 0.75;
+			b = 0.8;
 		} else if (color == ColorType::White) {
 			r = 1.;
 			g = 1.;
 			b = 1.;
+		} else if (color == ColorType::Grey) {
+			r = 0.5;
+			g = 0.5;
+			b = 0.5;
 		}
 	}
 
