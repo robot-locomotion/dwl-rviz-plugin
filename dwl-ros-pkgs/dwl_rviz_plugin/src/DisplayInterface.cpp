@@ -248,18 +248,20 @@ void DisplayInterface::drawCone(const Eigen::Vector3d& vertex,
 
 
 void DisplayInterface::drawCone(const Eigen::Vector3d& vertex,
-		  	  	  	  	  	    const Eigen::Vector3d& rpy,
+								const Eigen::Vector3d& direction,
 								double height,
 								double radius,
 								const dwl::Color& color,
 								std::string frame)
 {
-	drawCone(vertex, dwl::math::getQuaternion(rpy), height, radius, color, frame);
+	Eigen::Quaterniond orientation;
+	orientation.setFromTwoVectors(Eigen::Vector3d::UnitZ(), direction);
+	drawCone(vertex, orientation, height, radius, color, frame);
 }
 
 
 void DisplayInterface::drawText(std::string text,
-			  	  	  	  	    const Eigen::Vector3d& position,
+								const Eigen::Vector3d& position,
 								double uppercase_height,
 								const dwl::Color& color,
 								std::string frame)

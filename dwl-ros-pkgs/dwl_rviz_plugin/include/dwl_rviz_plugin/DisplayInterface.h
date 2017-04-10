@@ -278,14 +278,14 @@ class DisplayInterface
 		/**
 		 * @brief Draws a cone in a certain frame
 		 * @param const Eigen::Vector3d& Vertex of the cone
-		 * @param const Eigen::Vector3d& RPY orientation of the cone
+		 * @param const Eigen::Vector3d& Directional vector
 		 * @param double Height of the cone
 		 * @param double Radius of the cone
 		 * @param const dwl::Color& Color of the cone
 		 * @param std::string Frame where is described the cone
 		 */
 		void drawCone(const Eigen::Vector3d& vertex,
-				  	  const Eigen::Vector3d& rpy,
+				  	  const Eigen::Vector3d& directional,
 					  double height,
 					  double radius,
 					  const dwl::Color& color,
