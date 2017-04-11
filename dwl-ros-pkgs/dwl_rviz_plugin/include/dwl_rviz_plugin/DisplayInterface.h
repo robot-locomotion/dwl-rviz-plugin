@@ -27,7 +27,7 @@ enum ColorType {
 	Orange,
 	Gold,
 	Yellow,
-	Magenda,
+	Magenta,
 	Purple,
 	Pink,
 	White,
@@ -80,7 +80,7 @@ struct Color
 		} else if (color == ColorType::Yellow) {
 			r = 1.;
 			g = 1.;
-		} else if (color == ColorType::Magenda) {
+		} else if (color == ColorType::Magenta) {
 			r = 1.;
 			b = 1.;
 		} else if (color == ColorType::Purple) {
