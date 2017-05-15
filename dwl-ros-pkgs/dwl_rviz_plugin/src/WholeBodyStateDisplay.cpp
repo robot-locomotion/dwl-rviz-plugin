@@ -613,10 +613,15 @@ void WholeBodyStateDisplay::processWholeBodyState()
 	com_visual_->setPoint(com_point);
 	com_visual_->setFramePosition(position);
 	com_visual_->setFrameOrientation(orientation);
-	float shaft_length = com_shaft_length_property_->getFloat() * com_vel_B.norm();
+	double com_vel = com_vel_B.norm();
+	float shaft_length = com_shaft_length_property_->getFloat() * com_vel;
 	float shaft_radius = com_shaft_radius_property_->getFloat();
-	float head_length = com_head_length_property_->getFloat();
-	float head_radius = com_head_radius_property_->getFloat();
+
+	float head_length = 0., head_radius = 0.;
+	if (com_vel > 0.01) {
+		head_length = com_head_length_property_->getFloat();
+		head_radius = com_head_radius_property_->getFloat();
+	}
 	comd_visual_->setProperties(shaft_length, shaft_radius,
 								head_length, head_radius);
 	comd_visual_->setArrow(com_point, comd_for_orientation);
