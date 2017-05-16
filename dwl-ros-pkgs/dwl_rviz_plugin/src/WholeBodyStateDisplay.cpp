@@ -103,37 +103,37 @@ WholeBodyStateDisplay::WholeBodyStateDisplay() : is_info_(false),
 	icp_color_property_ =
 			new rviz::ColorProperty("Color", QColor(10, 41, 10),
 									"Color of a point",
-									icp_category_, SLOT(updateCoPColorAndAlpha()), this);
+									icp_category_, SLOT(updateICPColorAndAlpha()), this);
 
 	icp_alpha_property_ =
 			new rviz::FloatProperty("Alpha", 1.0,
 									"0 is fully transparent, 1.0 is fully opaque.",
-									icp_category_, SLOT(updateCoPColorAndAlpha()), this);
+									icp_category_, SLOT(updateICPColorAndAlpha()), this);
 	icp_alpha_property_->setMin(0);
 	icp_alpha_property_->setMax(1);
 
 	icp_radius_property_ =
 			new rviz::FloatProperty("Radius", 0.04,
 									"Radius of a point",
-									icp_category_, SLOT(updateCoPColorAndAlpha()), this);
+									icp_category_, SLOT(updateICPColorAndAlpha()), this);
 
 	// CMP properties
 	cmp_color_property_ =
 			new rviz::ColorProperty("Color", QColor(200, 41, 10),
 									"Color of a point",
-									cmp_category_, SLOT(updateCoPColorAndAlpha()), this);
+									cmp_category_, SLOT(updateCMPColorAndAlpha()), this);
 
 	cmp_alpha_property_ =
 			new rviz::FloatProperty("Alpha", 1.0,
 									"0 is fully transparent, 1.0 is fully opaque.",
-									cmp_category_, SLOT(updateCoPColorAndAlpha()), this);
+									cmp_category_, SLOT(updateCMPColorAndAlpha()), this);
 	cmp_alpha_property_->setMin(0);
 	cmp_alpha_property_->setMax(1);
 
 	cmp_radius_property_ =
 			new rviz::FloatProperty("Radius", 0.04,
 									"Radius of a point",
-									cmp_category_, SLOT(updateCoPColorAndAlpha()), this);
+									cmp_category_, SLOT(updateCMPColorAndAlpha()), this);
 
 	// GRF properties
 	grf_color_property_ =
@@ -325,9 +325,13 @@ void WholeBodyStateDisplay::updateCoMColorAndAlpha()
 	Ogre::ColourValue color = com_color_property_->getOgreColor();
 	color.a = com_alpha_property_->getFloat();
 
-	com_visual_->setColor(color.r, color.g, color.b, color.a);
-	comd_visual_->setColor(color.r, color.g, color.b, color.a);
-	com_visual_->setRadius(radius);
+	if (com_visual_) {
+		com_visual_->setColor(color.r, color.g, color.b, color.a);
+		com_visual_->setRadius(radius);
+	}
+
+	if (comd_visual_)
+		comd_visual_->setColor(color.r, color.g, color.b, color.a);
 
 	context_->queueRender();
 }
@@ -340,8 +344,9 @@ void WholeBodyStateDisplay::updateCoMArrowGeometry()
 	float head_length = com_head_length_property_->getFloat();
 	float head_radius = com_head_radius_property_->getFloat();
 
-	comd_visual_->setProperties(shaft_length, shaft_radius,
-								head_length, head_radius);
+	if (comd_visual_)
+		comd_visual_->setProperties(shaft_length, shaft_radius,
+									head_length, head_radius);
 
 	context_->queueRender();
 }
@@ -353,8 +358,10 @@ void WholeBodyStateDisplay::updateCoPColorAndAlpha()
 	Ogre::ColourValue color = cop_color_property_->getOgreColor();
 	color.a = cop_alpha_property_->getFloat();
 
-	cop_visual_->setColor(color.r, color.g, color.b, color.a);
-	cop_visual_->setRadius(radius);
+	if (cop_visual_) {
+		cop_visual_->setColor(color.r, color.g, color.b, color.a);
+		cop_visual_->setRadius(radius);
+	}
 
 	context_->queueRender();
 }
@@ -365,9 +372,10 @@ void WholeBodyStateDisplay::updateICPColorAndAlpha()
 	float radius = icp_radius_property_->getFloat();
 	Ogre::ColourValue color = icp_color_property_->getOgreColor();
 	color.a = icp_alpha_property_->getFloat();
-
-	icp_visual_->setColor(color.r, color.g, color.b, color.a);
-	icp_visual_->setRadius(radius);
+	if (icp_visual_) {
+		icp_visual_->setColor(color.r, color.g, color.b, color.a);
+		icp_visual_->setRadius(radius);
+	}
 
 	context_->queueRender();
 }
@@ -379,8 +387,10 @@ void WholeBodyStateDisplay::updateCMPColorAndAlpha()
 	Ogre::ColourValue color = cmp_color_property_->getOgreColor();
 	color.a = cmp_alpha_property_->getFloat();
 
-	cmp_visual_->setColor(color.r, color.g, color.b, color.a);
-	cmp_visual_->setRadius(radius);
+	if (cmp_visual_) {
+		cmp_visual_->setColor(color.r, color.g, color.b, color.a);
+		cmp_visual_->setRadius(radius);
+	}
 
 	context_->queueRender();
 }
@@ -421,7 +431,7 @@ void WholeBodyStateDisplay::updateSupportLineColorAndAlpha()
 	force_threshold_ = support_force_threshold_property_->getFloat();
 
 	float radius = support_line_radius_property_->getFloat();
-	if (is_info_) {
+	if (support_visual_) {
 		support_visual_->setLineColor(color.r, color.g, color.b, color.a);
 		support_visual_->setLineRadius(radius);
 	}
@@ -435,7 +445,8 @@ void WholeBodyStateDisplay::updateSupportMeshColorAndAlpha()
 	Ogre::ColourValue color = support_mesh_color_property_->getOgreColor();
 	color.a = support_mesh_alpha_property_->getFloat();
 
-	support_visual_->setMeshColor(color.r, color.g, color.b, color.a);
+	if (support_visual_)
+		support_visual_->setMeshColor(color.r, color.g, color.b, color.a);
 
 	context_->queueRender();
 }
@@ -602,10 +613,15 @@ void WholeBodyStateDisplay::processWholeBodyState()
 	com_visual_->setPoint(com_point);
 	com_visual_->setFramePosition(position);
 	com_visual_->setFrameOrientation(orientation);
-	float shaft_length = com_shaft_length_property_->getFloat() * com_vel_B.norm();
+	double com_vel = com_vel_B.norm();
+	float shaft_length = com_shaft_length_property_->getFloat() * com_vel;
 	float shaft_radius = com_shaft_radius_property_->getFloat();
-	float head_length = com_head_length_property_->getFloat();
-	float head_radius = com_head_radius_property_->getFloat();
+
+	float head_length = 0., head_radius = 0.;
+	if (com_vel > 0.01) {
+		head_length = com_head_length_property_->getFloat();
+		head_radius = com_head_radius_property_->getFloat();
+	}
 	comd_visual_->setProperties(shaft_length, shaft_radius,
 								head_length, head_radius);
 	comd_visual_->setArrow(com_point, comd_for_orientation);
