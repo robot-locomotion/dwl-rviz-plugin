@@ -28,6 +28,7 @@ void DisplayInterface::publishMarkerArray(const ros::Time& time)
 		marker.header.frame_id = display_stack_[i].frame;
 		marker.ns = "dls";
 		marker.id = i;
+		marker.lifetime = ros::Duration(0.035);
 		if (display_stack_[i].type == dwl::DisplayType::LINE) {
 			marker.type = visualization_msgs::Marker::LINE_LIST;
 			marker.color.r = display_stack_[i].color.r;
