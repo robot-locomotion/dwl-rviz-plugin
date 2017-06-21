@@ -123,12 +123,13 @@ class TerrainMapDisplay : public rviz::Display
 		rviz::IntProperty* queue_size_property_;
 		rviz::RosTopicProperty* topic_property_;
 		rviz::EnumProperty* voxel_color_property_;
-        rviz::ColorProperty* normal_color_property_;
-        rviz::FloatProperty* normal_alpha_property_;
-        rviz::FloatProperty* normal_head_radius_property_;
-        rviz::FloatProperty* normal_head_length_property_;
-        rviz::FloatProperty* normal_shaft_radius_property_;
-        rviz::FloatProperty* normal_shaft_length_property_;
+		rviz::BoolProperty* normal_enable_property_;
+		rviz::ColorProperty* normal_color_property_;
+		rviz::FloatProperty* normal_alpha_property_;
+		rviz::FloatProperty* normal_head_radius_property_;
+		rviz::FloatProperty* normal_head_length_property_;
+		rviz::FloatProperty* normal_shaft_radius_property_;
+		rviz::FloatProperty* normal_shaft_length_property_;
 
 		/** @brief Max tree areas */
 		int max_tree_areas_;
@@ -173,6 +174,7 @@ class TerrainMapDisplay : public rviz::Display
 
 		/** @brief Updates surface normal properties */
 		void updateColorMode();
+		void updateNormalStatus();
 		void updateNormalArrowGeometry();
 
 

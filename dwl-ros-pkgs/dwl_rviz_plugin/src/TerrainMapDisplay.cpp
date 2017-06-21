@@ -44,13 +44,18 @@ TerrainMapDisplay::TerrainMapDisplay() : rviz::Display(), messages_received_(0),
 							"is useful if your incoming TF data is delayed significantly from your"
 							" image data, but it can greatly increase memory usage if the messages are big.",
 							this, SLOT(updateQueueSize()));
-
 	queue_size_property_->setMin(1);
+
+	normal_enable_property_ =
+			new rviz::BoolProperty("Normal", "Points",
+							 	   "Enable the rendering of surface normals.",
+								   this, SLOT(updateNormalStatus()), this);
+	normal_enable_property_->setValue(true);
+
 
 	// Category Groups
 	cost_category_ = new rviz::Property("CostMap", QVariant(), "", this);
 	normal_category_ = new rviz::Property("Surface Normal", QVariant(), "", this);
-
 
 	// Voxel color properties
 	voxel_color_property_ =
@@ -74,6 +79,7 @@ TerrainMapDisplay::TerrainMapDisplay() : rviz::Display(), messages_received_(0),
 									normal_category_, SLOT(updateNormalArrowGeometry()), this);
 	normal_alpha_property_->setMin(0);
 	normal_alpha_property_->setMax(1);
+
 
 	normal_shaft_length_property_ =
 			new FloatProperty("Shaft Length", 0.04,
@@ -123,27 +129,29 @@ void TerrainMapDisplay::update(float wall_dt, float ros_dt)
 
 		// Drawing the normal vectors
 		arrow_cloud_.clear();
-		arrow_cloud_.resize(normal_buf_.size());
-		Ogre::ColourValue color = normal_color_property_->getOgreColor();
-		color.a = normal_alpha_property_->getFloat();
-		float shaft_length = normal_shaft_length_property_->getFloat();
-		float shaft_radius = normal_shaft_radius_property_->getFloat();
-		float head_length = normal_head_length_property_->getFloat();
-		float head_radius = normal_head_radius_property_->getFloat();
-		for (unsigned int j = 0; j < normal_buf_.size(); j++) {
-			boost::shared_ptr<ArrowVisual> arrow;
-			arrow.reset(new ArrowVisual(context_->getSceneManager(), scene_node_));
+		if (normal_enable_property_) {
+			arrow_cloud_.resize(normal_buf_.size());
+			Ogre::ColourValue color = normal_color_property_->getOgreColor();
+			color.a = normal_alpha_property_->getFloat();
+			float shaft_length = normal_shaft_length_property_->getFloat();
+			float shaft_radius = normal_shaft_radius_property_->getFloat();
+			float head_length = normal_head_length_property_->getFloat();
+			float head_radius = normal_head_radius_property_->getFloat();
+			for (unsigned int j = 0; j < normal_buf_.size(); j++) {
+				boost::shared_ptr<ArrowVisual> arrow;
+				arrow.reset(new ArrowVisual(context_->getSceneManager(), scene_node_));
 
-			arrow->setArrow(normal_buf_[j].origin, normal_buf_[j].orientation);
-			arrow->setFramePosition(position_);
-			arrow->setFrameOrientation(orientation_);
+				arrow->setArrow(normal_buf_[j].origin, normal_buf_[j].orientation);
+				arrow->setFramePosition(position_);
+				arrow->setFrameOrientation(orientation_);
 
-			// Setting the arrow color and properties
-			arrow->setColor(color.r, color.g, color.b, color.a);
-			arrow->setProperties(shaft_length, shaft_radius,
-								 head_length, head_radius);
+				// Setting the arrow color and properties
+				arrow->setColor(color.r, color.g, color.b, color.a);
+				arrow->setProperties(shaft_length, shaft_radius,
+									 head_length, head_radius);
 
-			arrow_cloud_[j] = arrow;
+				arrow_cloud_[j] = arrow;
+			}
 		}
 
 		new_points_received_ = false;
@@ -290,6 +298,7 @@ void TerrainMapDisplay::incomingMessageCallback(const dwl_terrain::TerrainMapCon
 	dwl::environment::SpaceDiscretization space_discretization(grid_size_);
 	space_discretization.setEnvironmentResolution(height_size_, false);
 	PointCloud::Point new_point;
+	normal_buf_.resize(num_cells);
 	for (unsigned int i = 0; i < num_cells; i++) {
 		// Getting the Cartesian information of the terrain map
 		double x, y, z;
@@ -315,18 +324,20 @@ void TerrainMapDisplay::incomingMessageCallback(const dwl_terrain::TerrainMapCon
 
 
 		// Defining the surface normal orientation
-		Eigen::Vector3d ref_dir = -Eigen::Vector3d::UnitZ();
-		Eigen::Quaterniond normal_q;
-		Eigen::Vector3d normal(msg->cell[i].normal.x,
-							   msg->cell[i].normal.y,
-							   msg->cell[i].normal.z);
-		normal_q.setFromTwoVectors(ref_dir, normal);
-		Ogre::Quaternion normal_orientation(normal_q.w(), normal_q.x(),
-											normal_q.y(), normal_q.z());
+		if (normal_enable_property_->getBool()) {
+			Eigen::Vector3d ref_dir = -Eigen::Vector3d::UnitZ();
+			Eigen::Quaterniond normal_q;
+			Eigen::Vector3d normal(msg->cell[i].normal.x,
+								   msg->cell[i].normal.y,
+								   msg->cell[i].normal.z);
+			normal_q.setFromTwoVectors(ref_dir, normal);
+			Ogre::Quaternion normal_orientation(normal_q.w(), normal_q.x(),
+												normal_q.y(), normal_q.z());
 
-		Normal new_normal;
-		new_normal.setNormal(cell_position, normal_orientation);
-		normal_buf_.push_back(new_normal);
+			Normal new_normal;
+			new_normal.setNormal(cell_position, normal_orientation);
+			normal_buf_[i] = new_normal;
+		}
 	}
 
 	// Recording the data from the buffers
@@ -461,6 +472,28 @@ void TerrainMapDisplay::updateColorMode()
 		}
 
 		context_->queueRender();
+	}
+}
+
+
+void TerrainMapDisplay::updateNormalStatus()
+{
+	if (normal_enable_property_->getBool()) {
+		normal_category_->show();
+		normal_color_property_->show();
+		normal_alpha_property_->show();
+		normal_head_length_property_->show();
+		normal_head_radius_property_->show();
+		normal_shaft_length_property_->show();
+		normal_shaft_radius_property_->show();
+	} else {
+		normal_category_->hide();
+		normal_color_property_->hide();
+		normal_alpha_property_->hide();
+		normal_head_length_property_->hide();
+		normal_head_radius_property_->hide();
+		normal_shaft_length_property_->hide();
+		normal_shaft_radius_property_->hide();
 	}
 }
 
