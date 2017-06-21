@@ -89,14 +89,14 @@ class TerrainMapDisplay : public rviz::Display
 
 		/**
 		 * @brief Sets the color of the reward value
-		 * @param double reward_value Reward value of the cell
-		 * @param double min_reward Minimun reward value of the map
-		 * @param double max_reward Maximun reward value of the map
+		 * @param double Cost value of the cell
+		 * @param double Maximum cost value of the map
+		 * @param double Minimum cost value of the map
 		 * @param double color_factor Color factor
 		 * @param rviz::PointCloud::Point& point Point with color information
 		 */
-		void setColor(double reward_value,
-					  double min_reward, double max_reward,
+		void setColor(double cost_value,
+					  double max_cost, double min_cost,
 					  double color_factor, rviz::PointCloud::Point& point);
 
 		/** Clears the display data */

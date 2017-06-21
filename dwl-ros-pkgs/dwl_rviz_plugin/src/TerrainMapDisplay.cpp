@@ -304,7 +304,7 @@ void TerrainMapDisplay::incomingMessageCallback(const dwl_terrain::TerrainMapCon
 			Ogre::Vector3 cell_position(x, y, z);
 			new_point.position = cell_position;
 
-			// Setting the color of the cell according the reward value
+			// Setting the color of the cell according the cost value
 			setColor(terrain_msg_->cell[i].cost,
 					 max_cost_, min_cost_,
 					 color_factor_, new_point);
