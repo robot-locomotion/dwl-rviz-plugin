@@ -349,43 +349,29 @@ void TerrainMapDisplay::setColor(double cost_value,
 	{
 	case FULL_COLOR:
 	{
-		int i;
-		double m, n, f;
+		// This a color map method proposed by Paul Bourke. For further details
+		// please read: http://paulbourke.net/texture_colour/colourspace/
+		double r = 1., g = 1., b = 1.;
+		if (cost_value < min_cost)
+			cost_value = min_cost;
+		if (cost_value > max_cost)
+			cost_value = max_cost;
+		double dv = max_cost - min_cost;
 
-		double s = 1.0;
-		double v = 1.0;
-
-		double h = (1.0 -
-				std::min(std::max(
-						(cost_value - max_cost) / (min_cost - max_cost), 0.0), 1.0)) * factor;
-
-		h -= floor(h);
-		h *= 4;
-		i = floor(h);
-		f = h - i;
-		if (!(i & 1))
-			f = 1 - f; // if i is even
-		m = v * (1 - s);
-		n = v * (1 - s * f);
-
-		switch (i)
-		{
-		case 0:
-			point.setColor(m, n, v);
-			break;
-		case 1:
-			point.setColor(m, v, 1-n);
-			break;
-		case 2:
-			point.setColor(n, v, m);
-			break;
-		case 3:
-			point.setColor(v, 1-n, m);
-			break;
-		default:
-			point.setColor(1, 0.5, 0.5);
-			break;
+		if (cost_value < (min_cost + 0.25 * dv)) {
+			r = 0.;
+			g = 4 * (cost_value - min_cost) / dv;
+		} else if (cost_value < (min_cost + 0.5 * dv)) {
+			r = 0.;
+			b = 1 + 4 * (min_cost + 0.25 * dv - cost_value) / dv;
+		} else if (cost_value < (min_cost + 0.75 * dv)) {
+			r = 4 * (cost_value - min_cost - 0.5 * dv) / dv;
+			b = 0.;
+		} else {
+			g = 1 + 4 * (min_cost + 0.75 * dv - cost_value) / dv;
+			b = 0.;
 		}
+		point.setColor(r, g, b);
 		break;
 	} case GREY:
 	{
