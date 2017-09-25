@@ -11,8 +11,45 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(dwl REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
 
-find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
-include(${QT_USE_FILE})
+if(rviz_QT_VERSION VERSION_LESS "5")
+  message(STATUS "Using Qt4 based on the rviz_QT_VERSION: ${rviz_QT_VERSION}")
+  find_package(Qt4 ${rviz_QT_VERSION} EXACT REQUIRED QtCore QtGui)
+  ## pull in all required include dirs, define QT_LIBRARIES, etc.
+  include(${QT_USE_FILE})
+
+  qt4_wrap_cpp(MOC_FILES
+    include/dwl_rviz_plugin/PointVisual.h
+    include/dwl_rviz_plugin/LineVisual.h
+    include/dwl_rviz_plugin/ArrowVisual.h
+    include/dwl_rviz_plugin/PolygonVisual.h
+    include/dwl_rviz_plugin/WholeBodyStateDisplay.h
+    include/dwl_rviz_plugin/WholeBodyTrajectoryDisplay.h
+    include/dwl_rviz_plugin/ReducedTrajectoryDisplay.h
+    include/dwl_rviz_plugin/TerrainMapDisplay.h
+    include/dwl_rviz_plugin/ObstacleMapDisplay.h
+    include/dwl_rviz_plugin/FootstepRegionDisplay.h
+    OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED)
+
+else()
+  message(STATUS "Using Qt5 based on the rviz_QT_VERSION: ${rviz_QT_VERSION}")
+  find_package(Qt5 ${rviz_QT_VERSION} EXACT REQUIRED Core Widgets)
+  ## make target_link_libraries(${QT_LIBRARIES}) pull in all required dependencies
+  set(QT_LIBRARIES Qt5::Widgets)
+
+  qt5_wrap_cpp(MOC_FILES
+    include/dwl_rviz_plugin/PointVisual.h
+    include/dwl_rviz_plugin/LineVisual.h
+    include/dwl_rviz_plugin/ArrowVisual.h
+    include/dwl_rviz_plugin/PolygonVisual.h
+    include/dwl_rviz_plugin/WholeBodyStateDisplay.h
+    include/dwl_rviz_plugin/WholeBodyTrajectoryDisplay.h
+    include/dwl_rviz_plugin/ReducedTrajectoryDisplay.h
+    include/dwl_rviz_plugin/TerrainMapDisplay.h
+    include/dwl_rviz_plugin/ObstacleMapDisplay.h
+    include/dwl_rviz_plugin/FootstepRegionDisplay.h
+    OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED)
+
+endif()
 
 add_definitions(-DQT_NO_KEYWORDS)
 
@@ -21,7 +58,7 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
   CATKIN_DEPENDS roscpp rviz
-  DEPENDS system_lib)
+  )
 
 
 # Setting flags for optimization
@@ -38,18 +75,6 @@ link_directories(${catkin_LIBRARY_DIRS}
                  ${Boost_LIBRARY_DIRS}
                  ${dwl_LIBRARY_DIRS})
                  
-qt4_wrap_cpp(MOC_FILES
-  include/dwl_rviz_plugin/PointVisual.h
-  include/dwl_rviz_plugin/LineVisual.h
-  include/dwl_rviz_plugin/ArrowVisual.h
-  include/dwl_rviz_plugin/PolygonVisual.h
-  include/dwl_rviz_plugin/WholeBodyStateDisplay.h
-  include/dwl_rviz_plugin/WholeBodyTrajectoryDisplay.h
-  include/dwl_rviz_plugin/ReducedTrajectoryDisplay.h
-  include/dwl_rviz_plugin/TerrainMapDisplay.h
-  include/dwl_rviz_plugin/ObstacleMapDisplay.h
-  include/dwl_rviz_plugin/FootstepRegionDisplay.h
-  OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED)
 
 set(SOURCE_FILES
   src/DisplayInterface.cpp
