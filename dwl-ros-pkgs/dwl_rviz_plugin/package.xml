@@ -3,11 +3,11 @@
   <name>dwl_rviz_plugin</name>
   <version>0.0.2</version>
   <description>
-    A plugin for displaying reward map information from reward map messages.
+    A plugin for displaying dwl rviz messages.
   </description>
 
 
-  <maintainer email="carlos.mastalli@iit.it">Carlos Mastalli</maintainer>
+  <maintainer email="carlos.mastalli@laas.fr">Carlos Mastalli</maintainer>
 
   <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
   <license>TODO</license>
@@ -19,7 +19,7 @@
   <!-- <url type="website">http://wiki.ros.org/reward_map_plugin</url> -->
 
 
-  <author email="carlos.mastalli@iit.it">Carlos Mastalli</author>
+  <author email="carlos.mastalli@laas.fr">Carlos Mastalli</author>
 
 
   <buildtool_depend>catkin</buildtool_depend>
