@@ -1,78 +1,34 @@
-===============================================
-The Dynamic Whole-body Locomotion library (DWL)
-===============================================
+==============================================
+The DWL's rviz plugin messages
+==============================================
 
 Table of Contents
-===============================================
+==============================================
 1. [Introduction](#introduction)
 2. [Software Overview](#software-overview)
-3. [Building](#building)
-4. [Installation](#installation)
-5. [Publications](#publications)
-
 
 
 Introduction
-===============================================
-The Dynamic Whole Body Locomotion library (DWL) implements a set of functionalities to develop, design, and deploy locomotion algorithms, i.e. planning, control, etc. DWL has different modules such as: kinematics, dynamics, solvers (tree-search, optimization, etc), and environment descriptions. All these tools are designed for many different locomotion problems such as planning, control and state estimation. DWL library is developed to be able to deploy in different robot framework systems such as ROS, and test it on real-time kernels. DWL has different library dependencies, which most of them are optional. DWL is develop by Carlos Mastalli (carlos.mastalli@iit.it) at Istituto Italiano di Tecnologia.
+==============================================
+The Dynamic Whole Body Locomotion library (DWL) describes a set of core functions targeted to developed, design, and deploy locomotion algorithms, i.e. planning, control, etc. DWL is core library used in many projects of the Dynamic Legged Systems Lab of Istituto Italiano di Tecnologia (for more details about the project see http://www.iit.it/en/advr-labs/dynamic-legged-systems.html). For more details about DWL software infrastructure please visit https://github.com/robot-locomotion/dwl.
 
-As well as DWL source code, we provide implementation of different dwl-based locomotion modules such: control, planning and perception. All these modules use ROS as framework for communication between them. As standard message interface between them, we use dwl_msgs packages and a set of commons methods for controllers and planners.
+The DWL rviz plugin contains a set of tools and plugins for visualization of: the whole-body state of the robot (dwl_rviz_plugin::WholeBodyStateDisplay), the whole-body trajectory (dwl_rviz_plugin::WholeBodyTrajectoryDisplay), the terrain map (dwl_rviz_plugin::TerrainMapDisplay), the footstep regions (dwl_rviz_plugin::FootstepRegionDisplay), etc. These plugins subscribe to the standarized dwl messages (for more information see https://github.com/robot-locomotion/dwl-msgs).
 
-Visit the DWL installation page for detailed installation instructions, and also the Dynamic Legged Systems Lab of Istituto Italiano di Tecnologia (http://www.iit.it/en/advr-labs/dynamic-legged-systems.html) for more details about the project.
+You can also have tools that allows us to create our custom plugin such as: points (dwl_rviz_plugin::PointVisual), lines (dwl_rviz_plugin::LineVisual), polygons (dwl_rviz_plugin::PolygonVisual), arrows (dwl_rviz_plugin::ArrowVisual), etc.
 
 [![ScreenShot](https://j.gifs.com/zJEDWD.gif)](https://www.youtube.com/watch?v=ENHvCGrnr2g)
 
 
 Software Overview
-===============================================
+==============================================
 The algorithms are built primarily in C/C++. The library uses a number of the local dependencies, which some of them are optionals.
 
-DWL has the following required dependencies:
+The dwl-rviz-pluin is a ROS packages with the following required dependencies:
 * [Boost](http://www.boost.org) (version 1.5.4 or higher)
-* [CMake](http://www.cmake.org) (version 2.8.3 or higher)
-* [Eigen](http://eigen.tuxfamily.org) (version 3.2.10 or higher)
-* [Yaml-cpp](https://code.google.com/p/yaml-cpp/) (version 0.5.2 or higher)
-* [RBDL](http://rbdl.bitbucket.org/) (version 2.4.0 or higher)
-* [SWIG](http://www.swig.org/) (version 3.0.12 or higher)
-* [urdfdom_header](https://github.com/ros/urdfdom_headers) (version 0.2.3 or higher)
-* [console_bridge](https://github.com/ros/console_bridge) (version 0.2.7 or higher)
-* [urdfdom](https://github.com/ros/urdfdom) (version 0.2.10 or higher)
-* [Octomap](http://octomap.github.io) (version 1.6.8 or higher)
+* [Rviz](http://www.cmake.org)
+* [dwl](https://github.com/robot-locomotion/dwl)
+* [dwl-msgs](https://github.com/robot-locomotion/dwl-msgs)
 
 The following dependencies are optional:
 * [Doxygen](http://www.doxygen.org)
-* [qpOASES](https://projects.coin-or.org/qpOASES) (version 3.2.0 or higher)
-* [Ipopt](https://projects.coin-or.org/Ipopt) (version 3.12.4 or higher)
-* [libcmaes](https://github.com/beniz/libcmaes) (version 0.9.5 or higher)
 
-
-Building
-===============================================
-All these required dependencies must be installed using install_deps.sh script.
-
-Once dependencies are installed, you can build DWL on Linux. Go to the top-level directory of DWL and type the
-following commands:
-
-    mkdir -p build/Release
-    cd build/Release
-    cmake ../..
-
-Additionally you could installed as catkin project as follows:
-
-	cd your_ros_ws/
-	catkin_make
-
-
-Installation
-===============================================
-- go to top folder (the folder this file is located in)
-- execute cmake: "cmake ."
-- either simply compile the library: "make", or call the installation: "sudo make install" (this will copy the library and header to your system folder and create a corresponding FindDWL.cmake file)
-
-
-
-Publications
-===============================================
-* C. Mastalli, I. Havoutis, M. Focchi, D. G. Caldwell, C. Semini, [Hierarchical Planning of Dynamic Movements without Scheduled Contact Sequences](http://iit.it/images/stories/advanced-robotics/hyq_files/publications/icra16mastalli.pdf), IEEE International Conference on Robotics and Automation (ICRA), 2016
-* C. Mastalli, A. Winkler, I. Havoutis, D. G. Caldwell, C. Semini, [On-line and On-board Planning and Perception for Quadrupedal Locomotion](http://iit.it/images/stories/advanced-robotics/hyq_files/publications/mastalli15tepra.pdf), IEEE International Conference on Technologies for Practical Robot Applications (TEPRA), 2015
-* A. Winkler, C. Mastalli, I. Havoutis, M. Focchi, D. G. Caldwell, C. Semini, [Planning and Execution of Dynamic Whole-Body Locomotion for a Hydraulic Quadruped on Challenging Terrain](http://iit.it/images/stories/advanced-robotics/hyq_files/publications/winkler15icra.pdf), IEEE International Conference on Robotics and Automation (ICRA), 2015
