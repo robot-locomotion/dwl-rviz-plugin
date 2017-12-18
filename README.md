@@ -6,6 +6,7 @@ Table of Contents
 ==============================================
 1. [Introduction](#introduction)
 2. [Software Overview](#software-overview)
+3. [Building](#building)
 
 
 Introduction
@@ -16,7 +17,9 @@ The DWL rviz plugin contains a set of tools and plugins for visualization of: th
 
 You can also have tools that allows us to create our custom plugin such as: points (dwl_rviz_plugin::PointVisual), lines (dwl_rviz_plugin::LineVisual), polygons (dwl_rviz_plugin::PolygonVisual), arrows (dwl_rviz_plugin::ArrowVisual), etc.
 
-[![ScreenShot](https://j.gifs.com/zJEDWD.gif)](https://www.youtube.com/watch?v=ENHvCGrnr2g)
+[![ScreenShot](https://imgur.com/Ox7pa0e.gif)](https://www.youtube.com/watch?v=ENHvCGrnr2g)
+
+The source code is released under a [BSD 3-Clause license](LICENSE).
 
 
 Software Overview
@@ -32,3 +35,11 @@ The dwl-rviz-pluin is a ROS packages with the following required dependencies:
 The following dependencies are optional:
 * [Doxygen](http://www.doxygen.org)
 
+
+Building
+===============================================
+Before building the dwl_msgs you need to install the dependencies of DWL. Additionally you have to build dwl with catkin.
+
+The dwl_rviz_plugin is a catkin project which can be built as:
+	cd your_ros_ws/
+	catkin_make
