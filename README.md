@@ -1,4 +1,4 @@
-The DWL's rviz plugin messages
+The dwl-rviz-plugin
 ==============================================
 
 ## <img align="center" height="20" src="https://i.imgur.com/vAYeCzC.png"/> Introduction
