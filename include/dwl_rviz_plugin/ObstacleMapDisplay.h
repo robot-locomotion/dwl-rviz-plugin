@@ -8,7 +8,7 @@
 
 #include <message_filters/subscriber.h>
 
-#include <dwl_terrain/ObstacleMap.h>
+#include <terrain_server/ObstacleMap.h>
 
 #include <rviz/display.h>
 #include <rviz/ogre_helpers/point_cloud.h>
@@ -71,7 +71,7 @@ class ObstacleMapDisplay : public rviz::Display
 		void unsubscribe();
 
 		/** @brief Proccesing of the incoming message */
-		void incomingMessageCallback(const dwl_terrain::ObstacleMapConstPtr& msg);
+		void incomingMessageCallback(const terrain_server::ObstacleMapConstPtr& msg);
 
 		/** Clears the display data */
 		void clear();
@@ -80,7 +80,7 @@ class ObstacleMapDisplay : public rviz::Display
 		typedef std::vector<rviz::PointCloud::Point> VPoint;
 
 		/** @brief Subscriber to the ObstacleMap messages */
-		boost::shared_ptr<message_filters::Subscriber<dwl_terrain::ObstacleMap> > sub_;
+		boost::shared_ptr<message_filters::Subscriber<terrain_server::ObstacleMap> > sub_;
 
 		/** @brief Mutex of thread */
 		boost::mutex mutex_;

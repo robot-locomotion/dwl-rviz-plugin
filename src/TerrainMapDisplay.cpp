@@ -33,8 +33,8 @@ TerrainMapDisplay::TerrainMapDisplay() : rviz::Display(), messages_received_(0),
 	topic_property_ =
 			new RosTopicProperty("Topic",
 								 "",
-								 QString::fromStdString(ros::message_traits::datatype<dwl_terrain::TerrainMap>()),
-								 "dwl_terrain::TerrainMap topic to subscribe to terrain map",
+								 QString::fromStdString(ros::message_traits::datatype<terrain_server::TerrainMap>()),
+								 "terrain_server::TerrainMap topic to subscribe to terrain map",
 								 this, SLOT(updateTopic()));
 
 	queue_size_property_ =
@@ -216,7 +216,7 @@ void TerrainMapDisplay::subscribe()
 		const std::string& topicStr = topic_property_->getStdString();
 
 		if (!topicStr.empty()) {
-			sub_.reset(new message_filters::Subscriber<dwl_terrain::TerrainMap>());
+			sub_.reset(new message_filters::Subscriber<terrain_server::TerrainMap>());
 
 			sub_->subscribe(threaded_nh_, topicStr, queue_size_);
 			sub_->registerCallback(boost::bind(&TerrainMapDisplay::incomingMessageCallback, this, _1));
@@ -244,7 +244,7 @@ void TerrainMapDisplay::unsubscribe()
 }
 
 
-void TerrainMapDisplay::incomingMessageCallback(const dwl_terrain::TerrainMapConstPtr& msg)
+void TerrainMapDisplay::incomingMessageCallback(const terrain_server::TerrainMapConstPtr& msg)
 {
 	++messages_received_;
 	setStatus(StatusProperty::Ok, "Messages",

@@ -12,7 +12,6 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rviz)
 
-find_package(dwl REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
 
 if(rviz_QT_VERSION VERSION_LESS "5")
@@ -61,13 +60,12 @@ add_definitions(-DQT_NO_KEYWORDS)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS roscpp rviz
-  )
+  CATKIN_DEPENDS roscpp rviz dwl)
 
 
 # Setting flags for optimization
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++11")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -Wall -march=native -mno-avx -mtune=native -D EIGEN_NO_DEBUG")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+set(CMAKE_BUILD_TYPE "Release")
 
 
 include_directories(include
@@ -101,4 +99,4 @@ target_link_libraries(${PROJECT_NAME}  ${QT_LIBRARIES}
                                        ${dwl_LIBRARIES}
                                        ${catkin_LIBRARIES})
 add_dependencies(${PROJECT_NAME}  ${dwl_msgs_EXPORTED_TARGETS}
-                                  ${dwl_terrain_EXPORTED_TARGETS})
+                                  ${terrain_server_EXPORTED_TARGETS})

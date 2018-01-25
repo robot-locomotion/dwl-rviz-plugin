@@ -8,7 +8,7 @@
 
 #include <message_filters/subscriber.h>
 
-#include <dwl_terrain/TerrainMap.h>
+#include <terrain_server/TerrainMap.h>
 #include <dwl_rviz_plugin/ArrowVisual.h>
 
 #include <rviz/display.h>
@@ -85,7 +85,7 @@ class TerrainMapDisplay : public rviz::Display
 		void unsubscribe();
 
 		/** @brief Processing of the incoming message */
-		void incomingMessageCallback(const dwl_terrain::TerrainMapConstPtr& msg);
+		void incomingMessageCallback(const terrain_server::TerrainMapConstPtr& msg);
 
 		/**
 		 * @brief Sets the color of the reward value
@@ -107,7 +107,7 @@ class TerrainMapDisplay : public rviz::Display
 		typedef std::vector<Normal> VNormal;
 
 		/** @brief Subscriber to the ObstacleMap messages */
-		boost::shared_ptr<message_filters::Subscriber<dwl_terrain::TerrainMap> > sub_;
+		boost::shared_ptr<message_filters::Subscriber<terrain_server::TerrainMap> > sub_;
 
 		/** @brief Mutex of thread */
 		boost::mutex mutex_;
@@ -184,7 +184,7 @@ class TerrainMapDisplay : public rviz::Display
 		Ogre::Quaternion orientation_;
 
 		/** @brief Current terrain message */
-		dwl_terrain::TerrainMapConstPtr terrain_msg_;
+		terrain_server::TerrainMapConstPtr terrain_msg_;
 
 		/** @brief Terrain minimum and maximum values */
 		double max_cost_;
