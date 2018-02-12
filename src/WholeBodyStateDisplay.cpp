@@ -283,8 +283,9 @@ void WholeBodyStateDisplay::load()
 	robot_model_ = content;
 
 	// Initializing the dynamics from the URDF model
-	wdyn_.modelFromURDFModel(robot_model_);
-	fbs_ = wdyn_.getFloatingBaseSystem();
+	fbs_.resetFromURDFModel(robot_model_);
+	wkin_.reset(fbs_);
+	wdyn_.reset(fbs_, wkin_);
 	weight_ = fbs_.getTotalMass() * fbs_.getGravityAcceleration();
 	initialized_model_ = true;
 

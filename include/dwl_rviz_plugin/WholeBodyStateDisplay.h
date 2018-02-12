@@ -149,9 +149,11 @@ class WholeBodyStateDisplay: public rviz::MessageFilterDisplay<dwl_msgs::WholeBo
 		rviz::FloatProperty* support_mesh_alpha_property_;
 		rviz::FloatProperty* support_force_threshold_property_;
 
-		/** @brief Whole-body dynamics */
-		dwl::model::WholeBodyDynamics wdyn_;
+		/** @brief Whole-body kinematics and dynamics */
 		dwl::model::FloatingBaseSystem fbs_;
+		dwl::model::WholeBodyKinematics wkin_;
+		dwl::model::WholeBodyDynamics wdyn_;
+		
 		dwl::math::FrameTF frame_tf_;
 
 		/** @brief Force threshold for detecting active contacts */
