@@ -9,6 +9,7 @@ message("Released under the BSD 3-Clause License.")
 find_package(catkin REQUIRED COMPONENTS
   dwl
   dwl_msgs
+  terrain_server
   roscpp
   rviz)
 
