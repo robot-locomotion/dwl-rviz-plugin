@@ -101,3 +101,9 @@ target_link_libraries(${PROJECT_NAME}  ${QT_LIBRARIES}
                                        ${catkin_LIBRARIES})
 add_dependencies(${PROJECT_NAME}  ${dwl_msgs_EXPORTED_TARGETS}
                                   ${terrain_server_EXPORTED_TARGETS})
+
+install(FILES ${CMAKE_SOURCE_DIR}/plugin_description.xml DESTINATION share/${PROJECT_NAME})
+install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION lib)
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/
+            DESTINATION DESTINATION include
+            FILES_MATCHING PATTERN "*.h*")
