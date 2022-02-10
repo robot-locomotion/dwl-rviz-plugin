@@ -9,7 +9,8 @@
 
 #ifndef Q_MOC_RUN
 #include <message_filters/subscriber.h>
-#include <tf/message_filter.h>
+// #include <tf/message_filter.h>
+#include <tf2_ros/message_filter.h>
 #endif
 
 #include <boost/shared_ptr.hpp>
@@ -91,7 +92,7 @@ class FootstepRegionDisplay : public rviz::Display
 		message_filters::Subscriber<dwl_msgs::ContactRegion> sub_;
 
 		/** @brief Tf filter that synchronizes the messages */
-		tf::MessageFilter<dwl_msgs::ContactRegion>* tf_filter_;
+		tf2_ros::MessageFilter<dwl_msgs::ContactRegion>* tf_filter_;
 
 		/** @brief Topic properties */
 		rviz::RosTopicProperty* topic_property_;

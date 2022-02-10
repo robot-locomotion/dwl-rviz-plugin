@@ -5,7 +5,8 @@
 #include <OgreManualObject.h>
 #include <OgreBillboardSet.h>
 
-#include <tf/transform_listener.h>
+// #include <tf/transform_listener.h>
+#include <tf2_ros/transform_listener.h>
 
 #include <rviz/frame_manager.h>
 #include <rviz/ogre_helpers/arrow.h>
@@ -42,7 +43,7 @@ FootstepRegionDisplay::FootstepRegionDisplay() : Display(), messages_received_(0
 
 void FootstepRegionDisplay::onInitialize()
 {
-	tf_filter_ = new tf::MessageFilter<dwl_msgs::ContactRegion>(*context_->getTFClient(),
+	tf_filter_ = new tf2_ros::MessageFilter<dwl_msgs::ContactRegion>(*context_->getTF2BufferPtr(),
 			fixed_frame_.toStdString(),	10, update_nh_ );
 
 	static int count = 0;
