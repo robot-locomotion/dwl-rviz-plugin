@@ -1,6 +1,9 @@
 The dwl-rviz-plugin
 ==============================================
 
+DEPRECATED -- please use the following repor: https://github.com/loco-3d/whole_body_state_rviz_plugin
+This project will be archived soon. 
+
 ## <img align="center" height="20" src="https://i.imgur.com/vAYeCzC.png"/> Introduction
 
 The *Dynamic Whole-body Locomotion* library (DWL) describes a set of core functions targeted to developed, design, and deploy locomotion algorithms, i.e. planning, control, etc. DWL is core library used in many projects of the Dynamic Legged Systems Lab of Istituto Italiano di Tecnologia (for more details about the project see http://www.iit.it/en/advr-labs/dynamic-legged-systems.html). For more details about DWL software infrastructure please visit https://github.com/robot-locomotion/dwl.
