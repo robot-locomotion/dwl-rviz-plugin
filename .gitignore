@@ -6,6 +6,7 @@ thirdparty
 .cproject
 .pydevproject
 .settings
+.vscode
 dwl/doc/doxygen
 dwl-lcm-pkgs/dwl_lcmtypes/include
 doc.i
